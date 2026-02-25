@@ -1120,3 +1120,24 @@ async def debug_test_email(db: AsyncSession = Depends(get_db)):
         response["traceback"] = traceback.format_exc()
         
     return response
+
+
+# Serve static files (HTML, CSS, JS)
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/{full_path:path}")
+async def serve_static(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+    
+    # Try to serve a specific file from static directory if it exists
+    potential_file = os.path.join("static", full_path)
+    if os.path.isfile(potential_file):
+        return FileResponse(potential_file)
+    
+    # Otherwise, fallback to index.html for SPA routing
+    return FileResponse("static/index.html")
