@@ -1617,6 +1617,13 @@
             if (!data.birth_date) data.birth_date = null;
             if (!data.insurance_expiration_date) data.insurance_expiration_date = null;
 
+            // Convert empty strings to null for postgres compatibility
+            for (let key in data) {
+                if (data[key] === "") {
+                    data[key] = null;
+                }
+            }
+
             if (data.professional_id) data.professional_id = parseInt(data.professional_id);
             else data.professional_id = null;
 
@@ -1638,6 +1645,7 @@
                     form.reset();
                     document.getElementById('patient-id-field').value = '';
                     fetchPatients();
+                    showToast('Paciente salvo com sucesso!');
                 } else {
                     const err = await response.json();
                     alert('Erro ao salvar paciente: ' + (err.detail || JSON.stringify(err)));
@@ -3112,7 +3120,33 @@
                 e.target.value = e.target.value.replace(/\D/g, "");
             }
         });
+
+        // Toast Notification System
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type === 'error' ? 'toast-error' : ''}`;
+
+            const icon = type === 'error' ? '<i class="fas fa-exclamation-circle"></i>' : '<i class="fas fa-check-circle"></i>';
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 10);
+
+            // Remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
     </script>
+    <div id="toast-container" class="toast-container"></div>
 </body>
 
 </html>
