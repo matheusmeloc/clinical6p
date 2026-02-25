@@ -163,3 +163,104 @@ async def send_patient_welcome_email(patient_email: str, patient_name: str, pati
     # Run the blocking SMTP call in a thread pool
     result = await asyncio.to_thread(_send_email)
     return result
+
+async def send_professional_welcome_email(email: str, name: str, password: str):
+    server, port, username, smtp_password, from_email = await get_smtp_settings()
+    
+    if not server or not username or not email:
+        logger.warning(f"SMTP not configured or missing email. Skipping welcome email for {name}")
+        return False
+        
+    msg = EmailMessage()
+    msg['Subject'] = f"Bem-vindo ao Sistema do Instituto de Psicologia"
+    msg['From'] = from_email
+    msg['To'] = email
+    
+    html_content = f"""
+    <html>
+        <body>
+            <h2>Olá, {name}!</h2>
+            <p>Seu cadastro como profissional no sistema da clínica foi realizado com sucesso.</p>
+            <p>Agora você pode acessar o portal para gerenciar seus pacientes, consultas e painel.</p>
+            <br>
+            <p><strong>Seus dados de acesso:</strong></p>
+            <ul>
+                <li><strong>E-mail (Login):</strong> {email}</li>
+                <li><strong>Senha Provisória:</strong> {password}</li>
+            </ul>
+            <p>Recomendamos que troque esta senha ou guarde-a com segurança.</p>
+            <br>
+            <p>Atenciosamente,<br>Equipe do Instituto de Psicologia</p>
+        </body>
+    </html>
+    """
+    msg.set_content("Bem-vindo ao Sistema da Clínica", subtype="plain")
+    msg.add_alternative(html_content, subtype="html")
+    
+    def _send_email():
+        try:
+            with smtplib.SMTP(server, port) as smtp:
+                smtp.ehlo()
+                if settings.SMTP_TLS:
+                    smtp.starttls()
+                smtp.login(username, smtp_password)
+                smtp.send_message(msg)
+            logger.info(f"Welcome email sent to {email}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send welcome email to {email}: {e}")
+            return False
+
+    result = await asyncio.to_thread(_send_email)
+    return result
+
+async def send_forgot_password_email(email: str, is_patient: bool, login_id: str, temp_password: str):
+    server, port, username, smtp_password, from_email = await get_smtp_settings()
+    
+    if not server or not username or not email:
+        logger.warning(f"SMTP not configured or missing email. Skipping forgot password email for {email}")
+        return False
+        
+    msg = EmailMessage()
+    msg['Subject'] = f"Recuperação de Senha - Instituto de Psicologia"
+    msg['From'] = from_email
+    msg['To'] = email
+    
+    login_type = "CPF" if is_patient else "E-mail"
+    html_content = f"""
+    <html>
+        <body>
+            <h2>Olá!</h2>
+            <p>Recebemos uma solicitação de recuperação de senha para a sua conta.</p>
+            <p>Por questões de segurança, geramos uma nova senha provisória para você acessar o sistema.</p>
+            <br>
+            <p><strong>Seus dados de acesso:</strong></p>
+            <ul>
+                <li><strong>{login_type} (Login):</strong> {login_id}</li>
+                <li><strong>Nova Senha Provisória:</strong> {temp_password}</li>
+            </ul>
+            <p>Recomendamos que altere esta senha no painel de configurações do sistema.</p>
+            <br>
+            <p>Atenciosamente,<br>Equipe do Instituto de Psicologia</p>
+        </body>
+    </html>
+    """
+    msg.set_content("Recuperação de Senha", subtype="plain")
+    msg.add_alternative(html_content, subtype="html")
+    
+    def _send_email():
+        try:
+            with smtplib.SMTP(server, port) as smtp:
+                smtp.ehlo()
+                if settings.SMTP_TLS:
+                    smtp.starttls()
+                smtp.login(username, smtp_password)
+                smtp.send_message(msg)
+            logger.info(f"Forgot password email sent to {email}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send forgot password email to {email}: {e}")
+            return False
+
+    result = await asyncio.to_thread(_send_email)
+    return result

@@ -74,6 +74,39 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
         "role": user.role
     }
 
+from app.schemas import ForgotPasswordRequest
+
+@app.post("/api/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)):
+    from app.email_utils import send_forgot_password_email
+    import secrets
+    
+    email = request.email.strip()
+    
+    # 1. Check User (Admin/Professional)
+    result = await db.execute(select(User).where(User.email == email))
+    user = result.scalars().first()
+    
+    if user:
+        temp_pwd = secrets.token_urlsafe(8)
+        user.hashed_password = get_password_hash(temp_pwd)
+        await db.commit()
+        await send_forgot_password_email(email, temp_pwd)
+        return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
+        
+    # 2. Check Patient
+    result_pat = await db.execute(select(Patient).where(Patient.email == email))
+    patient = result_pat.scalars().first()
+    
+    if patient:
+        temp_pwd = secrets.token_urlsafe(8)
+        patient.hashed_password = get_password_hash(temp_pwd)
+        await db.commit()
+        await send_forgot_password_email(email, temp_pwd)
+        return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
+        
+    raise HTTPException(status_code=404, detail="E-mail não encontrado no sistema.")
+
 @app.get("/api/dashboard/stats")
 async def get_dashboard_stats(db: AsyncSession = Depends(get_db)):
     # Total Patients
@@ -246,7 +279,30 @@ from sqlalchemy import desc
 from sqlalchemy.orm import selectinload
 
 # System Settings Endpoints
-from app.models import SystemSettings
+from app.models import SystemSettings, User
+from app.schemas import UpdateUserPasswordRequest  # assuming we create this if not exist, or just use a generic update schema
+from app.auth import get_password_hash
+
+class UserUpdate(BaseModel):
+    full_name: str | None = None
+    password: str | None = None
+
+@app.put("/api/users/{user_id}")
+async def update_user(user_id: int, user_update: UserUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User).where(User.id == user_id))
+    db_user = result.scalars().first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    if user_update.full_name is not None:
+        db_user.full_name = user_update.full_name
+        
+    if user_update.password:
+        db_user.hashed_password = get_password_hash(user_update.password)
+        
+    await db.commit()
+    await db.refresh(db_user)
+    return {"message": "User updated successfully", "full_name": db_user.full_name}
 
 @app.get("/api/system/settings", response_model=SystemSettingsResponse)
 async def get_system_settings(db: AsyncSession = Depends(get_db)):
@@ -486,6 +542,12 @@ async def create_professional(professional: ProfessionalCreate, db: AsyncSession
 
         await db.commit()
         await db.refresh(db_professional)
+        
+        # Send welcome email
+        if prof_data.get("email") and password:
+            from app.email_utils import send_professional_welcome_email
+            await send_professional_welcome_email(prof_data["email"], prof_data["name"], password)
+
         return db_professional
     except IntegrityError as e:
         await db.rollback()
@@ -505,6 +567,7 @@ async def update_professional(professional_id: int, professional_update: Profess
     
     old_email = db_professional.email
     update_data = professional_update.dict(exclude_unset=True)
+    password = update_data.pop("password", None)
     
     # Check if email is being updated
     new_email = update_data.get("email")
@@ -519,6 +582,15 @@ async def update_professional(professional_id: int, professional_update: Profess
         db_user = result_user.scalars().first()
         if db_user:
             db_user.email = new_email
+
+    # Also check if password requires updating
+    if password:
+        user_email_to_search = new_email if (new_email and old_email and new_email != old_email) else old_email
+        if user_email_to_search:
+            result_user_pw = await db.execute(select(User).where(User.email == user_email_to_search))
+            db_user_pw = result_user_pw.scalars().first()
+            if db_user_pw:
+                db_user_pw.hashed_password = get_password_hash(password)
 
     for key, value in update_data.items():
         setattr(db_professional, key, value)

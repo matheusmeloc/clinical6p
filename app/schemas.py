@@ -68,8 +68,15 @@ class ProfessionalBase(BaseModel):
 class ProfessionalCreate(ProfessionalBase):
     password: Optional[str] = None
 
-class ProfessionalUpdate(ProfessionalBase):
-    pass
+class ProfessionalUpdate(BaseModel):
+    name: Optional[str] = None
+    role: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    professional_register: Optional[str] = None
+    specialty: Optional[str] = None
+    status: Optional[str] = None
+    password: Optional[str] = None
 
 class ProfessionalResponse(ProfessionalBase):
     id: int
@@ -224,3 +231,10 @@ class SystemSettingsResponse(SystemSettingsBase):
 
     class Config:
         from_attributes = True
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class UpdateUserPasswordRequest(BaseModel):
+    old_password: Optional[str] = None
+    new_password: str
