@@ -1087,3 +1087,36 @@ async def mark_message_read(id: int, db: AsyncSession = Depends(get_db)):
     msg.is_read = True
     await db.commit()
     return {"message": "Marcado como lido"}
+
+
+from app.email_utils import get_smtp_settings
+
+@app.get("/api/debug/test-email")
+async def debug_test_email(db: AsyncSession = Depends(get_db)):
+    import traceback
+    import smtplib
+    server, port, username, password, from_email = await get_smtp_settings(db)
+    
+    response = {
+        "server": server,
+        "port": port,
+        "username": username,
+        "from_email": from_email,
+        "success": False,
+        "error": None,
+        "traceback": None
+    }
+    
+    try:
+        with smtplib.SMTP(server, port, timeout=10) as smtp:
+            smtp.ehlo()
+            from app.config import settings
+            if settings.SMTP_TLS:
+                smtp.starttls()
+            smtp.login(username, password)
+            response["success"] = True
+    except Exception as e:
+        response["error"] = str(e)
+        response["traceback"] = traceback.format_exc()
+        
+    return response
