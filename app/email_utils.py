@@ -66,7 +66,8 @@ async def send_appointment_alarm(professional_email: str, professional_name: str
             return False
 
     # Run the blocking SMTP call in a thread pool
-    result = await asyncio.to_thread(_send_email)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _send_email)
     return result
 
 async def send_patient_message_notification(professional_email: str, professional_name: str, patient_name: str):
@@ -110,7 +111,8 @@ async def send_patient_message_notification(professional_email: str, professiona
             return False
 
     # Run the blocking SMTP call in a thread pool
-    result = await asyncio.to_thread(_send_email)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _send_email)
     return result
 
 async def send_patient_welcome_email(patient_email: str, patient_name: str, patient_cpf: str, patient_password: str):
@@ -161,7 +163,8 @@ async def send_patient_welcome_email(patient_email: str, patient_name: str, pati
             return False
 
     # Run the blocking SMTP call in a thread pool
-    result = await asyncio.to_thread(_send_email)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _send_email)
     return result
 
 async def send_professional_welcome_email(email: str, name: str, password: str):
@@ -211,7 +214,8 @@ async def send_professional_welcome_email(email: str, name: str, password: str):
             logger.error(f"Failed to send welcome email to {email}: {e}")
             return False
 
-    result = await asyncio.to_thread(_send_email)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _send_email)
     return result
 
 async def send_forgot_password_email(email: str, is_patient: bool, login_id: str, temp_password: str):
@@ -262,5 +266,6 @@ async def send_forgot_password_email(email: str, is_patient: bool, login_id: str
             logger.error(f"Failed to send forgot password email to {email}: {e}")
             return False
 
-    result = await asyncio.to_thread(_send_email)
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(None, _send_email)
     return result
