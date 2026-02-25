@@ -1159,6 +1159,53 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Email Configuration Card (Admin Only) -->
+                    <div class="card" id="email-config-card" style="max-width: 700px; margin-top: 2rem; display: none;">
+                        <div class="card-header">
+                            <h2 class="card-title"><i class="fas fa-envelope"></i> Infraestrutura de E-mail (SMTP)</h2>
+                        </div>
+                        <div style="padding: 1.5rem;">
+                            <p class="text-sm text-muted" style="margin-bottom: 1.5rem;">Configure aqui o servidor de
+                                e-mail que fará os disparos automáticos do sistema (como lembretes e boas-vindas).</p>
+                            <form id="email-config-form" onsubmit="saveSystemSettings(event)">
+                                <div class="form-group">
+                                    <label class="form-label">Servidor SMTP</label>
+                                    <input type="text" name="smtp_server" class="form-input" id="smtp-server"
+                                        placeholder="Ex: smtp.gmail.com">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label class="form-label">Porta</label>
+                                        <input type="number" name="smtp_port" class="form-input" id="smtp-port"
+                                            placeholder="Ex: 587">
+                                    </div>
+                                    <div class="form-group" style="flex: 2;">
+                                        <label class="form-label">Remetente (Opcional)</label>
+                                        <input type="text" name="smtp_from_email" class="form-input"
+                                            id="smtp-from-email" placeholder="Ex: Sistema da Clínica <seu@email.com>">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Usuário (E-mail)</label>
+                                    <input type="email" name="smtp_username" class="form-input" id="smtp-username"
+                                        placeholder="Ex: seu.email@gmail.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Senha / Senha de App</label>
+                                    <input type="password" name="smtp_password" class="form-input" id="smtp-password"
+                                        placeholder="Sua senha ou senha de aplicativo">
+                                    <p class="text-xs text-muted" style="margin-top: 4px;">Para Gmail, use uma Senha de
+                                        Aplicativo.</p>
+                                </div>
+                                <div class="modal-footer"
+                                    style="padding: 1rem 0 0 0; border-top: 1px solid var(--border-subtle); margin-top: 1rem;">
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar
+                                        Configurações</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Patient Profile Modal -->
@@ -2344,9 +2391,18 @@
                     photoEl.style.backgroundSize = 'cover';
                     photoEl.style.backgroundPosition = 'center';
                 } else {
-                    photoEl.style.backgroundImage = 'none';
-                    photoEl.innerText = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'AD';
+                    photoEl.innerHTML = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'AD';
+                    photoEl.style.backgroundImage = '';
                 }
+            }
+
+            // Show admin specific cards
+            const emailCard = document.getElementById('email-config-card');
+            if (user.role === 'admin' && emailCard) {
+                emailCard.style.display = 'block';
+                loadSystemSettings();
+            } else if (emailCard) {
+                emailCard.style.display = 'none';
             }
         }
 

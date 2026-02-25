@@ -239,10 +239,41 @@ from app.schemas import (
     AppointmentCreate, AppointmentUpdate, AppointmentResponse,
     PrescriptionCreate, PrescriptionUpdate, PrescriptionResponse,
     CertificateCreate, CertificateUpdate, CertificateResponse,
-    PatientMessageCreate, PatientMessageResponse
+    PatientMessageCreate, PatientMessageResponse,
+    SystemSettingsCreate, SystemSettingsUpdate, SystemSettingsResponse
 )
 from sqlalchemy import desc
 from sqlalchemy.orm import selectinload
+
+# System Settings Endpoints
+from app.models import SystemSettings
+
+@app.get("/api/system/settings", response_model=SystemSettingsResponse)
+async def get_system_settings(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(SystemSettings).order_by(SystemSettings.id))
+    settings = result.scalars().first()
+    if not settings:
+        settings = SystemSettings()
+        db.add(settings)
+        await db.commit()
+        await db.refresh(settings)
+    return settings
+
+@app.put("/api/system/settings", response_model=SystemSettingsResponse)
+async def update_system_settings(settings_update: SystemSettingsUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(SystemSettings).order_by(SystemSettings.id))
+    settings = result.scalars().first()
+    
+    if not settings:
+        settings = SystemSettings(**settings_update.dict())
+        db.add(settings)
+    else:
+        for key, value in settings_update.dict(exclude_unset=True).items():
+            setattr(settings, key, value)
+            
+    await db.commit()
+    await db.refresh(settings)
+    return settings
 
 def _patient_to_dict(p):
     return {

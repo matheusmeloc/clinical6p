@@ -2,18 +2,36 @@ import smtplib
 from email.message import EmailMessage
 import logging
 from app.config import settings
+from app.database import SessionLocal
+from app.models import SystemSettings
+from sqlalchemy import select
 import asyncio
 
 logger = logging.getLogger(__name__)
 
+async def get_smtp_settings():
+    async with SessionLocal() as db:
+        result = await db.execute(select(SystemSettings).order_by(SystemSettings.id))
+        db_settings = result.scalars().first()
+        
+        server = db_settings.smtp_server if db_settings and db_settings.smtp_server else settings.SMTP_SERVER
+        port = db_settings.smtp_port if db_settings and db_settings.smtp_port else settings.SMTP_PORT
+        username = db_settings.smtp_username if db_settings and db_settings.smtp_username else settings.SMTP_USERNAME
+        password = db_settings.smtp_password if db_settings and db_settings.smtp_password else settings.SMTP_PASSWORD
+        from_email = db_settings.smtp_from_email if db_settings and db_settings.smtp_from_email else (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)
+        
+        return server, port, username, password, from_email
+
 async def send_appointment_alarm(professional_email: str, professional_name: str, patient_name: str, date_str: str, time_str: str):
-    if not settings.SMTP_SERVER or not settings.SMTP_USERNAME or not professional_email:
+    server, port, username, password, from_email = await get_smtp_settings()
+    
+    if not server or not username or not professional_email:
         logger.warning(f"SMTP not configured or missing professional email. Skipping alarm for {professional_name}")
         return False
         
     msg = EmailMessage()
     msg['Subject'] = f"Lembrete de Consulta: {patient_name} às {time_str}"
-    msg['From'] = settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME
+    msg['From'] = from_email
     msg['To'] = professional_email
     
     html_content = f"""
@@ -52,13 +70,15 @@ async def send_appointment_alarm(professional_email: str, professional_name: str
     return result
 
 async def send_patient_message_notification(professional_email: str, professional_name: str, patient_name: str):
-    if not settings.SMTP_SERVER or not settings.SMTP_USERNAME or not professional_email:
+    server, port, username, password, from_email = await get_smtp_settings()
+    
+    if not server or not username or not professional_email:
         logger.warning(f"SMTP not configured or missing professional email. Skipping message notification for {professional_name}")
         return False
         
     msg = EmailMessage()
     msg['Subject'] = f"Nova Mensagem de Paciente: {patient_name}"
-    msg['From'] = settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME
+    msg['From'] = from_email
     msg['To'] = professional_email
     
     html_content = f"""
@@ -77,12 +97,12 @@ async def send_patient_message_notification(professional_email: str, professiona
     
     def _send_email():
         try:
-            with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
-                server.ehlo()
+            with smtplib.SMTP(server, port) as smtp:
+                smtp.ehlo()
                 if settings.SMTP_TLS:
-                    server.starttls()
-                server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-                server.send_message(msg)
+                    smtp.starttls()
+                smtp.login(username, password)
+                smtp.send_message(msg)
             logger.info(f"Message notification email sent to {professional_email} for patient {patient_name}")
             return True
         except Exception as e:
@@ -94,13 +114,15 @@ async def send_patient_message_notification(professional_email: str, professiona
     return result
 
 async def send_patient_welcome_email(patient_email: str, patient_name: str, patient_cpf: str, patient_password: str):
-    if not settings.SMTP_SERVER or not settings.SMTP_USERNAME or not patient_email:
+    server, port, username, password, from_email = await get_smtp_settings()
+    
+    if not server or not username or not patient_email:
         logger.warning(f"SMTP not configured or missing patient email. Skipping welcome email for {patient_name}")
         return False
         
     msg = EmailMessage()
     msg['Subject'] = f"Bem-vindo ao Sistema do Instituto de Psicologia"
-    msg['From'] = settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME
+    msg['From'] = from_email
     msg['To'] = patient_email
     
     html_content = f"""
@@ -126,12 +148,12 @@ async def send_patient_welcome_email(patient_email: str, patient_name: str, pati
     
     def _send_email():
         try:
-            with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
-                server.ehlo()
+            with smtplib.SMTP(server, port) as smtp:
+                smtp.ehlo()
                 if settings.SMTP_TLS:
-                    server.starttls()
-                server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
-                server.send_message(msg)
+                    smtp.starttls()
+                smtp.login(username, password)
+                smtp.send_message(msg)
             logger.info(f"Welcome email sent to {patient_email}")
             return True
         except Exception as e:

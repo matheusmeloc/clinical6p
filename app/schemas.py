@@ -189,3 +189,24 @@ class PatientMessageResponse(PatientMessageBase):
 
     class Config:
         from_attributes = True
+
+# System Settings Schemas
+class SystemSettingsBase(BaseModel):
+    smtp_server: Optional[str] = None
+    smtp_port: Optional[int] = 587
+    smtp_username: Optional[str] = None
+    smtp_password: Optional[str] = None
+    smtp_from_email: Optional[str] = None
+
+class SystemSettingsCreate(SystemSettingsBase):
+    pass
+
+class SystemSettingsUpdate(SystemSettingsBase):
+    pass
+
+class SystemSettingsResponse(SystemSettingsBase):
+    id: int
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
