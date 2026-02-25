@@ -2406,6 +2406,56 @@
             }
         }
 
+        async function loadSystemSettings() {
+            try {
+                const response = await fetch('/api/system/settings');
+                const settings = await response.json();
+
+                document.getElementById('smtp-server').value = settings.smtp_server || '';
+                document.getElementById('smtp-port').value = settings.smtp_port || 587;
+                document.getElementById('smtp-username').value = settings.smtp_username || '';
+                document.getElementById('smtp-password').value = settings.smtp_password || '';
+                document.getElementById('smtp-from-email').value = settings.smtp_from_email || '';
+            } catch (e) {
+                console.error("Error loading system settings:", e);
+            }
+        }
+
+        async function saveSystemSettings(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+
+            // Fix empty string conversions for port
+            data.smtp_port = data.smtp_port ? parseInt(data.smtp_port) : 587;
+
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/system/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert('Configurações de E-mail salvas com sucesso!');
+                } else {
+                    const err = await response.json();
+                    alert('Erro ao salvar as configurações: ' + JSON.stringify(err));
+                }
+            } catch (e) {
+                console.error("Error saving system settings:", e);
+                alert('Erro de conexão ao salvar configurações.');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
         function saveProfile(event) {
             event.preventDefault();
             const form = event.target;

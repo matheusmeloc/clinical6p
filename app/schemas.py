@@ -190,6 +190,8 @@ class PatientMessageResponse(PatientMessageBase):
     class Config:
         from_attributes = True
 
+from pydantic import BaseModel, Field, EmailStr, validator
+
 # System Settings Schemas
 class SystemSettingsBase(BaseModel):
     smtp_server: Optional[str] = None
@@ -197,6 +199,18 @@ class SystemSettingsBase(BaseModel):
     smtp_username: Optional[str] = None
     smtp_password: Optional[str] = None
     smtp_from_email: Optional[str] = None
+
+    @validator('smtp_server', 'smtp_username', 'smtp_password', 'smtp_from_email', pre=True)
+    def empty_string_to_none(cls, v):
+        if v == "":
+            return None
+        return v
+        
+    @validator('smtp_port', pre=True)
+    def empty_port_to_default(cls, v):
+        if v == "" or v is None:
+            return 587
+        return int(v)
 
 class SystemSettingsCreate(SystemSettingsBase):
     pass
