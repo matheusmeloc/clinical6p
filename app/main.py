@@ -282,17 +282,40 @@ def _patient_to_dict(p):
         "created_at": p.created_at,
     }
 
+import secrets
+import string
+
 @app.post("/api/patients")
 async def create_patient(patient: PatientCreate, db: AsyncSession = Depends(get_db)):
     patient_data = patient.dict()
-    if patient_data.get("password"):
-        patient_data["hashed_password"] = get_password_hash(patient_data["password"])
-    del patient_data["password"]
+    raw_password = patient_data.get("password")
+    
+    # Auto-generate password if the user has an email and cpf but no password
+    if not raw_password and patient_data.get("email") and patient_data.get("cpf"):
+        alphabet = string.ascii_letters + string.digits
+        raw_password = ''.join(secrets.choice(alphabet) for _ in range(8))
+    
+    if raw_password:
+        patient_data["hashed_password"] = get_password_hash(raw_password)
+        
+    if "password" in patient_data:
+        del patient_data["password"]
     
     db_patient = Patient(**patient_data)
     db.add(db_patient)
     await db.commit()
     await db.refresh(db_patient)
+
+    # Send welcome email asynchronously if password was generated and email exists
+    if raw_password and patient_data.get("email") and patient_data.get("cpf"):
+        from app.email_utils import send_patient_welcome_email
+        asyncio.create_task(send_patient_welcome_email(
+            patient_email=patient_data["email"],
+            patient_name=patient_data["name"],
+            patient_cpf=patient_data["cpf"],
+            patient_password=raw_password
+        ))
+
     # Reload with relationship
     result = await db.execute(select(Patient).options(selectinload(Patient.professional)).where(Patient.id == db_patient.id))
     db_patient = result.scalars().first()
