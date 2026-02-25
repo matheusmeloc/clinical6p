@@ -91,7 +91,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: AsyncSession = Dep
         temp_pwd = secrets.token_urlsafe(8)
         user.hashed_password = get_password_hash(temp_pwd)
         await db.commit()
-        await send_forgot_password_email(email, temp_pwd)
+        await send_forgot_password_email(email, False, email, temp_pwd)
         return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
         
     # 2. Check Patient
@@ -102,7 +102,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: AsyncSession = Dep
         temp_pwd = secrets.token_urlsafe(8)
         patient.hashed_password = get_password_hash(temp_pwd)
         await db.commit()
-        await send_forgot_password_email(email, temp_pwd)
+        await send_forgot_password_email(email, True, patient.cpf or "Não cadastrado", temp_pwd)
         return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
         
     raise HTTPException(status_code=404, detail="E-mail não encontrado no sistema.")
