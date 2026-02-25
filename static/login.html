@@ -203,7 +203,12 @@
                 <input type="email" name="email" class="form-input" required placeholder="seu@email.com" autofocus>
             </div>
             <div class="form-group">
-                <label class="form-label">Senha</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <label class="form-label" style="margin-bottom: 0;">Senha</label>
+                    <a href="#" onclick="openForgotPasswordModal()"
+                        style="font-size: 0.85rem; color: #2563eb; text-decoration: none; font-weight: 600;">Esqueceu a
+                        senha?</a>
+                </div>
                 <input type="password" name="password" class="form-input" required placeholder="••••••••">
             </div>
             <button type="submit" class="btn"><i class="fa-solid fa-right-to-bracket"></i> Entrar no Painel</button>
@@ -217,7 +222,12 @@
                 <input type="text" name="cpf" class="form-input" required placeholder="000.000.000-00">
             </div>
             <div class="form-group">
-                <label class="form-label">Senha de Acesso</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                    <label class="form-label" style="margin-bottom: 0;">Senha de Acesso</label>
+                    <a href="#" onclick="openForgotPasswordModal()"
+                        style="font-size: 0.85rem; color: #2563eb; text-decoration: none; font-weight: 600;">Esqueceu a
+                        senha?</a>
+                </div>
                 <input type="password" name="password" class="form-input" required placeholder="••••••••">
             </div>
             <div class="form-group">
@@ -229,6 +239,33 @@
             <p class="error-msg" id="error-patient"></p>
             <p class="success-msg" id="success-patient"></p>
         </form>
+        <!-- Forgot Password Modal -->
+        <div id="forgot-password-modal"
+            style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 50; align-items: center; justify-content: center;">
+            <div
+                style="background: white; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); animation: fadeIn 0.3s ease;">
+                <h3 style="margin-top: 0; margin-bottom: 0.5rem; color: #1e293b; font-weight: 700;">Recuperar Senha</h3>
+                <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.5;">Digite seu e-mail
+                    de cadastro, mesmo se você for paciente e usa o CPF para o login. Se encontrarmos sua conta
+                    vinculada, enviaremos uma senha provisória.</p>
+                <form id="form-forgot" onsubmit="handleForgotPassword(event)">
+                    <div class="form-group">
+                        <label class="form-label">E-mail</label>
+                        <input type="email" name="email" class="form-input" required placeholder="seu@email.com">
+                    </div>
+                    <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                        <button type="button" onclick="closeForgotPasswordModal()"
+                            style="flex: 1; padding: 0.875rem; background: #f1f5f9; color: #475569; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+                            onmouseover="this.style.background='#e2e8f0'"
+                            onmouseout="this.style.background='#f1f5f9'">Cancelar</button>
+                        <button type="submit"
+                            style="flex: 1; padding: 0.875rem; background: #2563eb; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: background 0.2s;"
+                            onmouseover="this.style.background='#1d4ed8'"
+                            onmouseout="this.style.background='#2563eb'">Enviar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
     </div>
 
@@ -326,6 +363,48 @@
                 errorEl.innerText = 'Erro de conexão';
                 errorEl.style.display = 'block';
                 btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar';
+                btn.disabled = false;
+            }
+        }
+
+        function openForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').style.display = 'flex';
+        }
+
+        function closeForgotPasswordModal() {
+            document.getElementById('forgot-password-modal').style.display = 'none';
+            document.getElementById('form-forgot').reset();
+        }
+
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = Object.fromEntries(new FormData(form).entries());
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+
+            try {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...';
+                btn.disabled = true;
+
+                const response = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const resData = await response.json();
+                    alert(resData.message);
+                    closeForgotPasswordModal();
+                } else {
+                    const err = await response.json();
+                    alert(err.detail || 'Falha ao processar solicitação.');
+                }
+            } catch (e) {
+                alert('Erro de conexão. Tente novamente mais tarde.');
+            } finally {
+                btn.innerHTML = originalText;
                 btn.disabled = false;
             }
         }
