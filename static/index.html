@@ -114,8 +114,13 @@
                         style="font-size: 1.1rem; color: var(--text-muted); cursor: pointer; margin-left: 1rem;"
                         title="Restaurar Layout Padrão"></i>
 
-                    <i class="far fa-bell"
-                        style="font-size: 1.2rem; color: var(--text-muted); cursor: pointer; margin-left: 1rem;"></i>
+                    <div style="position: relative; margin-left: 1rem; cursor: pointer; display: none;"
+                        id="nav-bell-container" onclick="loadView('mensagens')">
+                        <i class="far fa-bell" style="font-size: 1.2rem; color: var(--text-muted);"
+                            title="Mensagens não lidas"></i>
+                        <span id="unread-badge"
+                            style="position: absolute; top: -5px; right: -8px; background: var(--danger); color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem; font-weight: bold; display: none;">0</span>
+                    </div>
                 </div>
             </header>
 
@@ -884,8 +889,13 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label class="form-label">Email</label>
+                                    <label class="form-label">Email (Usado para Login)</label>
                                     <input type="email" name="email" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Senha de Acesso</label>
+                                    <input type="password" name="password" class="form-input"
+                                        placeholder="Para novos funcionários">
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">Contato</label>
@@ -1666,6 +1676,26 @@
             }
         }
 
+        async function openPatientProfileByName(name) {
+            try {
+                const res = await fetch('/api/patients');
+                const patients = await res.json();
+                const patient = patients.find(p => p.name === name);
+                if (patient) {
+                    if (typeof openPatientProfile === 'function') {
+                        openPatientProfile(patient.id);
+                    } else {
+                        console.error("openPatientProfile function is missing!");
+                    }
+                } else {
+                    alert('Paciente não encontrado!');
+                }
+            } catch (e) {
+                console.error("Error finding patient:", e);
+                alert("Erro ao achar paciente.");
+            }
+        }
+
         // Appointments Logic
         async function fetchAppointments() {
             try {
@@ -2256,9 +2286,16 @@
             if (userNameEl) userNameEl.innerText = user.full_name;
             if (userRoleEl) userRoleEl.innerText = user.role === 'admin' ? 'Administrador' : 'Usuário';
 
-            // Hide messages tab for admin
+            // Hide messages tab and bell for admin
             const msgNav = document.getElementById('nav-item-mensagens');
+            const bellContainer = document.getElementById('nav-bell-container');
             if (msgNav) msgNav.style.display = user.role === 'admin' ? 'none' : 'flex';
+            if (bellContainer) bellContainer.style.display = user.role === 'admin' ? 'none' : 'block';
+
+            if (user.role !== 'admin') {
+                updateUnreadBadge();
+                setInterval(updateUnreadBadge, 60000); // Check every minute
+            }
 
             if (userAvatarEl) {
                 const profile = JSON.parse(localStorage.getItem('profile_' + user.email) || '{}');
@@ -3095,6 +3132,36 @@
                 document.querySelectorAll('.widget-period-btn.active').forEach(b => b.classList.remove('active'));
             }
         });
+
+        // ===== NOTIFICATIONS =====
+        async function updateUnreadBadge() {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) return;
+            const user = JSON.parse(userStr);
+            if (user.role === 'admin') return;
+
+            try {
+                // Find professional ID by email
+                const res = await fetch('/api/professionals');
+                const professionals = await res.json();
+                const prof = professionals.find(p => p.email === user.email);
+
+                if (prof) {
+                    const badgeRes = await fetch(`/api/patient-messages/unread?professional_id=${prof.id}`);
+                    const badgeData = await badgeRes.json();
+
+                    const badgeEl = document.getElementById('unread-badge');
+                    if (badgeData.count > 0) {
+                        badgeEl.innerText = badgeData.count;
+                        badgeEl.style.display = 'block';
+                    } else {
+                        badgeEl.style.display = 'none';
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching unread messages:", e);
+            }
+        }
 
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {

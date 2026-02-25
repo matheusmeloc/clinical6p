@@ -66,7 +66,7 @@ class ProfessionalBase(BaseModel):
     status: Optional[str] = "Ativo"
 
 class ProfessionalCreate(ProfessionalBase):
-    pass
+    password: Optional[str] = None
 
 class ProfessionalUpdate(ProfessionalBase):
     pass

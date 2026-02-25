@@ -413,8 +413,23 @@ async def get_professionals(db: AsyncSession = Depends(get_db)):
 @app.post("/api/professionals", response_model=ProfessionalResponse)
 async def create_professional(professional: ProfessionalCreate, db: AsyncSession = Depends(get_db)):
     try:
-        db_professional = Professional(**professional.dict())
+        prof_data = professional.dict()
+        password = prof_data.pop("password", None)
+
+        db_professional = Professional(**prof_data)
         db.add(db_professional)
+
+        # Also create a User for login if email and password are provided
+        if prof_data.get("email") and password:
+            hashed_password = get_password_hash(password)
+            db_user = User(
+                email=prof_data["email"],
+                hashed_password=hashed_password,
+                full_name=prof_data["name"],
+                role="user"
+            )
+            db.add(db_user)
+
         await db.commit()
         await db.refresh(db_professional)
         return db_professional
@@ -880,6 +895,16 @@ async def get_all_patient_messages(professional_id: int | None = None, db: Async
             "created_at": m.created_at
         } for m in messages
     ]
+
+@app.get("/api/patient-messages/unread")
+async def get_unread_patient_messages_count(professional_id: int | None = None, db: AsyncSession = Depends(get_db)):
+    query = select(func.count(PatientMessage.id)).where(PatientMessage.is_read == False)
+    if professional_id:
+        query = query.where(PatientMessage.professional_id == professional_id)
+
+    result = await db.execute(query)
+    count = result.scalar() or 0
+    return {"count": count}
 
 @app.put("/api/patient-messages/{id}/read")
 async def mark_message_read(id: int, db: AsyncSession = Depends(get_db)):
