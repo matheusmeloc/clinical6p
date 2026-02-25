@@ -58,21 +58,47 @@ class LoginRequest(BaseModel):
 
 @app.post("/api/login")
 async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == request.email))
+    # Safely strip whitespace to prevent copy-paste errors
+    clean_email_or_cpf = request.email.strip()
+    clean_password = request.password.strip()
+    
+    # Check for Admin or Employee (User)
+    result = await db.execute(select(User).where(User.email == clean_email_or_cpf))
     user = result.scalars().first()
     
-    if not user or not verify_password(request.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Email ou senha incorretos")
-    
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Usuário inativo")
+    if user:
+        if not verify_password(clean_password, user.hashed_password):
+            raise HTTPException(status_code=401, detail="Email ou senha incorretos")
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Usuário inativo")
+            
+        return {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role
+        }
         
-    return {
-        "id": user.id,
-        "email": user.email,
-        "full_name": user.full_name,
-        "role": user.role
-    }
+    # Check for Patient (login using CPF instead of email)
+    # The frontend might send CPF in the "email" field of LoginRequest
+    from app.models import Patient
+    result_pat = await db.execute(select(Patient).where(Patient.cpf == clean_email_or_cpf))
+    patient = result_pat.scalars().first()
+    
+    if patient and patient.hashed_password:
+        if not verify_password(clean_password, patient.hashed_password):
+            raise HTTPException(status_code=401, detail="CPF ou senha incorretos")
+        if patient.status != "Ativo":
+            raise HTTPException(status_code=403, detail="Paciente inativo")
+            
+        return {
+            "id": patient.id,
+            "email": patient.cpf, # Keep it as email so frontend saves it the same way
+            "full_name": patient.name,
+            "role": "patient"
+        }
+        
+    raise HTTPException(status_code=401, detail="Conta não encontrada ou senha incorreta")
 
 from app.schemas import ForgotPasswordRequest
 
