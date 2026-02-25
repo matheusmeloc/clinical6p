@@ -261,7 +261,7 @@ async def send_forgot_password_email(db: AsyncSession, email: str, is_patient: b
         msg.add_alternative(html_content, subtype="html")
         
         try:
-            with smtplib.SMTP(server, port) as smtp:
+            with smtplib.SMTP(server, port, timeout=10) as smtp:
                 smtp.ehlo()
                 if settings.SMTP_TLS:
                     smtp.starttls()
