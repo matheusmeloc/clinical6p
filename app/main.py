@@ -117,7 +117,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: AsyncSession = Dep
         temp_pwd = secrets.token_urlsafe(8)
         user.hashed_password = get_password_hash(temp_pwd)
         await db.commit()
-        await send_forgot_password_email(email, False, email, temp_pwd)
+        await send_forgot_password_email(db, email, False, email, temp_pwd)
         return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
         
     # 2. Check Patient
@@ -128,7 +128,7 @@ async def forgot_password(request: ForgotPasswordRequest, db: AsyncSession = Dep
         temp_pwd = secrets.token_urlsafe(8)
         patient.hashed_password = get_password_hash(temp_pwd)
         await db.commit()
-        await send_forgot_password_email(email, True, patient.cpf or "Não cadastrado", temp_pwd)
+        await send_forgot_password_email(db, email, True, patient.cpf or "Não cadastrado", temp_pwd)
         return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
         
     raise HTTPException(status_code=404, detail="E-mail não encontrado no sistema.")
@@ -422,12 +422,13 @@ async def create_patient(patient: PatientCreate, db: AsyncSession = Depends(get_
     # Send welcome email asynchronously if password was generated and email exists
     if raw_password and patient_data.get("email") and patient_data.get("cpf"):
         from app.email_utils import send_patient_welcome_email
-        asyncio.create_task(send_patient_welcome_email(
+        await send_patient_welcome_email(
+            db=db,
             patient_email=patient_data["email"],
             patient_name=patient_data["name"],
             patient_cpf=patient_data["cpf"],
             patient_password=raw_password
-        ))
+        )
 
     # Reload with relationship
     result = await db.execute(select(Patient).options(selectinload(Patient.professional)).where(Patient.id == db_patient.id))
@@ -515,6 +516,7 @@ async def appointment_alarm_task():
                         
                         if professional and professional.email:
                             success = await send_appointment_alarm(
+                                db=session,
                                 professional_email=professional.email,
                                 professional_name=professional.name,
                                 patient_name=patient.name if patient else "Desconhecido",
@@ -572,7 +574,7 @@ async def create_professional(professional: ProfessionalCreate, db: AsyncSession
         # Send welcome email
         if prof_data.get("email") and password:
             from app.email_utils import send_professional_welcome_email
-            await send_professional_welcome_email(prof_data["email"], prof_data["name"], password)
+            await send_professional_welcome_email(db, prof_data["email"], prof_data["name"], password)
 
         return db_professional
     except IntegrityError as e:
@@ -1030,11 +1032,12 @@ async def create_patient_contact(message_data: PatientMessageCreate, db: AsyncSe
     
     # Try sending email notification
     if patient.professional and patient.professional.email:
-        asyncio.create_task(send_patient_message_notification(
+        await send_patient_message_notification(
+            db=db,
             professional_email=patient.professional.email,
             professional_name=patient.professional.name,
             patient_name=patient.name
-        ))
+        )
         
     return {"message": "Mensagem enviada com sucesso"}
 

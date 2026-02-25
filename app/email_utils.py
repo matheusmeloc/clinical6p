@@ -2,54 +2,40 @@ import smtplib
 from email.message import EmailMessage
 import logging
 from app.config import settings
-from app.database import SessionLocal
+from app.database import SessionLocal, AsyncSession
 from app.models import SystemSettings
 from sqlalchemy import select
 import asyncio
 
 logger = logging.getLogger(__name__)
 
-def get_smtp_settings_sync():
-    """Fetches SMTP settings using a synchronous, isolated connection to avoid async pool deadlocks in threads."""
-    from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    
-    # Convert asyncpg URL to standard psycopg2 or fallback synchronous URL
-    import os
-    sync_url = os.getenv("DATABASE_URL", "sqlite:///./clinic.db")
-    if sync_url.startswith("postgresql+asyncpg://"):
-        sync_url = sync_url.replace("postgresql+asyncpg://", "postgresql://")
-    elif sync_url.startswith("postgres://"):
-        sync_url = sync_url.replace("postgres://", "postgresql://")
-        
+async def get_smtp_settings(db: AsyncSession):
+    """Fetches SMTP settings safely using the existing route session before entering a thread."""
     try:
-        sync_engine = create_engine(sync_url)
-        SyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
+        result = await db.execute(select(SystemSettings).order_by(SystemSettings.id))
+        db_settings = result.scalars().first()
         
-        with SyncSessionLocal() as db:
-            result = db.execute(select(SystemSettings).order_by(SystemSettings.id))
-            db_settings = result.scalars().first()
-            
-            server = db_settings.smtp_server if db_settings and db_settings.smtp_server else settings.SMTP_SERVER
-            port = db_settings.smtp_port if db_settings and db_settings.smtp_port else settings.SMTP_PORT
-            username = db_settings.smtp_username if db_settings and db_settings.smtp_username else settings.SMTP_USERNAME
-            password = db_settings.smtp_password if db_settings and db_settings.smtp_password else settings.SMTP_PASSWORD
-            from_email = db_settings.smtp_from_email if db_settings and db_settings.smtp_from_email else (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)
-            
-            return server, port, username, password, from_email
+        server = db_settings.smtp_server if db_settings and db_settings.smtp_server else settings.SMTP_SERVER
+        port = db_settings.smtp_port if db_settings and db_settings.smtp_port else settings.SMTP_PORT
+        username = db_settings.smtp_username if db_settings and db_settings.smtp_username else settings.SMTP_USERNAME
+        password = db_settings.smtp_password if db_settings and db_settings.smtp_password else settings.SMTP_PASSWORD
+        from_email = db_settings.smtp_from_email if db_settings and db_settings.smtp_from_email else (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)
+        
+        return server, port, username, password, from_email
     except Exception as e:
-        logger.error(f"Error fetching SMTP settings synchronously: {e}")
+        logger.error(f"Error fetching SMTP settings from DB: {e}")
         return settings.SMTP_SERVER, settings.SMTP_PORT, settings.SMTP_USERNAME, settings.SMTP_PASSWORD, (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)
 
 
-async def send_appointment_alarm(professional_email: str, professional_name: str, patient_name: str, date_str: str, time_str: str):
-    def _send_email():
-        server, port, username, password, from_email = get_smtp_settings_sync()
+async def send_appointment_alarm(db: AsyncSession, professional_email: str, professional_name: str, patient_name: str, date_str: str, time_str: str):
+    server, port, username, password, from_email = await get_smtp_settings(db)
+    
+    if not server or not username or not professional_email:
+        logger.warning(f"SMTP not configured or missing professional email. Skipping alarm for {professional_name}")
+        return False
         
-        if not server or not username or not professional_email:
-            logger.warning(f"SMTP not configured or missing professional email. Skipping alarm for {professional_name}")
-            return False
-            
+    def _send_email():
+        
         msg = EmailMessage()
         msg['Subject'] = f"Lembrete de Consulta: {patient_name} às {time_str}"
         msg['From'] = from_email
@@ -89,13 +75,14 @@ async def send_appointment_alarm(professional_email: str, professional_name: str
     result = await loop.run_in_executor(None, _send_email)
     return result
 
-async def send_patient_message_notification(professional_email: str, professional_name: str, patient_name: str):
-    def _send_email():
-        server, port, username, password, from_email = get_smtp_settings_sync()
+async def send_patient_message_notification(db: AsyncSession, professional_email: str, professional_name: str, patient_name: str):
+    server, port, username, password, from_email = await get_smtp_settings(db)
+    
+    if not server or not username or not professional_email:
+        logger.warning(f"SMTP not configured or missing professional email. Skipping message notification for {professional_name}")
+        return False
         
-        if not server or not username or not professional_email:
-            logger.warning(f"SMTP not configured or missing professional email. Skipping message notification for {professional_name}")
-            return False
+    def _send_email():
             
         msg = EmailMessage()
         msg['Subject'] = f"Nova Mensagem de Paciente: {patient_name}"
@@ -133,13 +120,14 @@ async def send_patient_message_notification(professional_email: str, professiona
     result = await loop.run_in_executor(None, _send_email)
     return result
 
-async def send_patient_welcome_email(patient_email: str, patient_name: str, patient_cpf: str, patient_password: str):
-    def _send_email():
-        server, port, username, password, from_email = get_smtp_settings_sync()
+async def send_patient_welcome_email(db: AsyncSession, patient_email: str, patient_name: str, patient_cpf: str, patient_password: str):
+    server, port, username, password, from_email = await get_smtp_settings(db)
+    
+    if not server or not username or not patient_email:
+        logger.warning(f"SMTP not configured or missing patient email. Skipping welcome email for {patient_name}")
+        return False
         
-        if not server or not username or not patient_email:
-            logger.warning(f"SMTP not configured or missing patient email. Skipping welcome email for {patient_name}")
-            return False
+    def _send_email():
             
         msg = EmailMessage()
         msg['Subject'] = f"Bem-vindo ao Sistema do Instituto de Psicologia"
@@ -184,13 +172,14 @@ async def send_patient_welcome_email(patient_email: str, patient_name: str, pati
     result = await loop.run_in_executor(None, _send_email)
     return result
 
-async def send_professional_welcome_email(email: str, name: str, password: str):
-    def _send_email():
-        server, port, username, smtp_password, from_email = get_smtp_settings_sync()
+async def send_professional_welcome_email(db: AsyncSession, email: str, name: str, str_password: str):
+    server, port, username, smtp_password, from_email = await get_smtp_settings(db)
+    
+    if not server or not username or not email:
+        logger.warning(f"SMTP not configured or missing email. Skipping welcome email for {name}")
+        return False
         
-        if not server or not username or not email:
-            logger.warning(f"SMTP not configured or missing email. Skipping welcome email for {name}")
-            return False
+    def _send_email():
             
         msg = EmailMessage()
         msg['Subject'] = f"Bem-vindo ao Sistema do Instituto de Psicologia"
@@ -207,7 +196,7 @@ async def send_professional_welcome_email(email: str, name: str, password: str):
                 <p><strong>Seus dados de acesso:</strong></p>
                 <ul>
                     <li><strong>E-mail (Login):</strong> {email}</li>
-                    <li><strong>Senha Provisória:</strong> {password}</li>
+                    <li><strong>Senha Provisória:</strong> {str_password}</li>
                 </ul>
                 <p>Recomendamos que troque esta senha ou guarde-a com segurança.</p>
                 <br>
@@ -235,13 +224,14 @@ async def send_professional_welcome_email(email: str, name: str, password: str):
     result = await loop.run_in_executor(None, _send_email)
     return result
 
-async def send_forgot_password_email(email: str, is_patient: bool, login_id: str, temp_password: str):
-    def _send_email():
-        server, port, username, smtp_password, from_email = get_smtp_settings_sync()
+async def send_forgot_password_email(db: AsyncSession, email: str, is_patient: bool, login_id: str, temp_password: str):
+    server, port, username, smtp_password, from_email = await get_smtp_settings(db)
+    
+    if not server or not username or not email:
+        logger.warning(f"SMTP not configured or missing email. Skipping forgot password email for {email}")
+        return False
         
-        if not server or not username or not email:
-            logger.warning(f"SMTP not configured or missing email. Skipping forgot password email for {email}")
-            return False
+    def _send_email():
             
         msg = EmailMessage()
         msg['Subject'] = f"Recuperação de Senha - Instituto de Psicologia"
