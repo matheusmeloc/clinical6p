@@ -63,7 +63,7 @@
                     <div class="nav-icon"><i class="fas fa-file-medical"></i></div>
                     <span>Atestados</span>
                 </div>
-                <div class="nav-item" onclick="loadView('mensagens')">
+                <div class="nav-item" id="nav-item-mensagens" onclick="loadView('mensagens')">
                     <div class="nav-icon"><i class="fas fa-envelope"></i></div>
                     <span>Mensagens</span>
                 </div>
@@ -1085,7 +1085,7 @@
                 <div id="view-configuracoes" class="view-section" style="display:none;">
                     <div class="card" style="max-width: 700px;">
                         <div class="card-header">
-                            <h2 class="card-title">Perfil do Administrador</h2>
+                            <h2 class="card-title" id="profile-main-title">Perfil do Administrador</h2>
                         </div>
                         <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
                             <!-- Profile Photo -->
@@ -2255,15 +2255,20 @@
 
             if (userNameEl) userNameEl.innerText = user.full_name;
             if (userRoleEl) userRoleEl.innerText = user.role === 'admin' ? 'Administrador' : 'Usuário';
+
+            // Hide messages tab for admin
+            const msgNav = document.getElementById('nav-item-mensagens');
+            if (msgNav) msgNav.style.display = user.role === 'admin' ? 'none' : 'flex';
+
             if (userAvatarEl) {
-                const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+                const profile = JSON.parse(localStorage.getItem('profile_' + user.email) || '{}');
                 if (profile.photo) {
                     userAvatarEl.innerText = '';
                     userAvatarEl.style.backgroundImage = `url(${profile.photo})`;
                     userAvatarEl.style.backgroundSize = 'cover';
                     userAvatarEl.style.backgroundPosition = 'center';
                 } else {
-                    userAvatarEl.innerText = user.full_name.substring(0, 2).toUpperCase();
+                    userAvatarEl.innerText = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'AU';
                 }
             }
         }
@@ -2278,7 +2283,10 @@
             const userStr = localStorage.getItem('user');
             if (!userStr) return;
             const user = JSON.parse(userStr);
-            const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+            const profile = JSON.parse(localStorage.getItem('profile_' + user.email) || '{}');
+
+            const titleEl = document.getElementById('profile-main-title');
+            if (titleEl) titleEl.innerText = user.role === 'admin' ? 'Perfil do Administrador' : 'Perfil do Profissional';
 
             const nameEl = document.getElementById('profile-name');
             const emailEl = document.getElementById('profile-email');
@@ -2299,6 +2307,7 @@
                     photoEl.style.backgroundSize = 'cover';
                     photoEl.style.backgroundPosition = 'center';
                 } else {
+                    photoEl.style.backgroundImage = 'none';
                     photoEl.innerText = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'AD';
                 }
             }
@@ -2308,15 +2317,15 @@
             event.preventDefault();
             const form = event.target;
             const formData = new FormData(form);
-            const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const profile = JSON.parse(localStorage.getItem('profile_' + user.email) || '{}');
 
             profile.phone = formData.get('phone') || '';
             profile.role_title = formData.get('role_title') || '';
             profile.crp = formData.get('crp') || '';
-            localStorage.setItem('profile', JSON.stringify(profile));
+            localStorage.setItem('profile_' + user.email, JSON.stringify(profile));
 
             // Update user name in localStorage
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
             const newName = formData.get('full_name');
             if (newName) {
                 user.full_name = newName;
@@ -2355,9 +2364,10 @@
                 }
 
                 // Save to localStorage
-                const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                const profile = JSON.parse(localStorage.getItem('profile_' + user.email) || '{}');
                 profile.photo = dataUrl;
-                localStorage.setItem('profile', JSON.stringify(profile));
+                localStorage.setItem('profile_' + user.email, JSON.stringify(profile));
             };
             reader.readAsDataURL(file);
         }
@@ -2442,13 +2452,25 @@
             dashboardGrid.batchUpdate();
             const gridEl = document.getElementById('dashboard-grid');
             DEFAULT_LAYOUT.forEach(item => {
-                const el = gridEl.querySelector(`[gs - id= "${item.id}"]`);
+                const el = gridEl.querySelector(`[gs-id="${item.id}"]`);
                 if (el) {
                     dashboardGrid.update(el, { x: item.x, y: item.y, w: item.w, h: item.h });
                 }
             });
             dashboardGrid.batchUpdate(false);
             localStorage.removeItem('dashboard-layout');
+            if (typeof showToast === 'function') showToast('Layout restaurado com sucesso!');
+        }
+
+        function resetCardColors() {
+            if (!confirm('Deseja restaurar as cores originais dos cards?')) return;
+            localStorage.removeItem('widget-colors');
+            // Reload colors to defaults
+            document.querySelectorAll('.kpi-card, .widget-card').forEach(card => {
+                card.style.backgroundColor = '';
+                card.style.borderColor = '';
+            });
+            if (typeof showToast === 'function') showToast('Cores restauradas com sucesso!');
         }
 
         // ===== COLOR PICKER =====
