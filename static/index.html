@@ -1,0 +1,3118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instituto de Psicologia - Gestão</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Gridstack -->
+    <link href="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack-all.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="/static/css/styles.css?v=5">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Login Modal Removed (Using /login page) -->
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div>
+                    <div class="logo-text">Instituto Integrado de Saúde</div>
+                    <span class="logo-subtext">Sistema de Gestão</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-item active" onclick="loadView('dashboard')">
+                    <div class="nav-icon"><i class="fas fa-home"></i></div>
+                    <span>Dashboard</span>
+                </div>
+
+                <div class="nav-item" onclick="loadView('funcionarios')">
+                    <div class="nav-icon"><i class="fas fa-briefcase"></i></div>
+                    <span>Funcionários</span>
+                </div>
+                <div class="nav-item" onclick="loadView('pacientes')">
+                    <div class="nav-icon"><i class="fas fa-user-injured"></i></div>
+                    <span>Pacientes</span>
+                </div>
+                <div class="nav-item" onclick="loadView('agendamentos')">
+                    <div class="nav-icon"><i class="fas fa-calendar-alt"></i></div>
+                    <span>Agendamentos</span>
+                </div>
+                <div class="nav-item" onclick="loadView('receitas')">
+                    <div class="nav-icon"><i class="fas fa-file-prescription"></i></div>
+                    <span>Receitas</span>
+                </div>
+                <div class="nav-item" onclick="loadView('atestados')">
+                    <div class="nav-icon"><i class="fas fa-file-medical"></i></div>
+                    <span>Atestados</span>
+                </div>
+                <div class="nav-item" onclick="loadView('mensagens')">
+                    <div class="nav-icon"><i class="fas fa-envelope"></i></div>
+                    <span>Mensagens</span>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-avatar">AU</div>
+                <div class="user-info">
+                    <div class="user-name">Admin User</div>
+                    <div class="user-role">Administrador</div>
+                </div>
+                <div class="settings-btn" onclick="loadView('configuracoes')" title="Configurações"><i
+                        class="fas fa-cog"></i></div>
+                <div class="logout-btn" onclick="if(confirm('Deseja sair do sistema?')) logout()" title="Sair"><i
+                        class="fas fa-sign-out-alt"></i></div>
+            </div>
+        </aside>
+
+        <!-- Sidebar Toggle (on the border) -->
+        <div class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-chevron-left" id="toggle-icon"></i>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div style="display:flex;align-items:center;gap:1rem;">
+                    <h1 class="page-title" id="page-title">Dashboard</h1>
+                    <button id="reset-layout-btn" class="btn btn-secondary" onclick="resetDashboardLayout()"
+                        style="font-size:0.75rem;padding:0.35rem 0.75rem;border-radius:8px;"
+                        title="Restaurar layout padrão">
+                        <i class="fas fa-undo"></i> Restaurar Padrões
+                    </button>
+                    <button id="reset-colors-btn" class="btn btn-secondary" onclick="resetCardColors()"
+                        style="font-size:0.75rem;padding:0.35rem 0.75rem;border-radius:8px;"
+                        title="Restaurar cores padrão">
+                        <i class="fas fa-palette"></i> Restaurar Cor
+                    </button>
+                </div>
+                <div class="header-actions">
+                    <div class="theme-slider-container" title="Ajustar tema (Claro <-> Escuro)">
+                        <i class="fas fa-sun text-xs text-muted"></i>
+                        <input type="range" id="theme-slider" min="0" max="100" value="0" class="theme-slider">
+                        <i class="fas fa-moon text-xs text-muted"></i>
+                    </div>
+
+                    <i class="fas fa-undo" onclick="if(confirm('Restaurar layout padrão?')) resetDashboardLayout()"
+                        style="font-size: 1.1rem; color: var(--text-muted); cursor: pointer; margin-left: 1rem;"
+                        title="Restaurar Layout Padrão"></i>
+
+                    <i class="far fa-bell"
+                        style="font-size: 1.2rem; color: var(--text-muted); cursor: pointer; margin-left: 1rem;"></i>
+                </div>
+            </header>
+
+            <div class="content-area" id="content-area">
+                <!-- Dashboard View (Default) -->
+                <div id="view-dashboard" class="view-section">
+                    <div class="grid-stack" id="dashboard-grid">
+                        <!-- KPI: Total Pacientes -->
+                        <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="3" gs-h="3" gs-id="kpi-patients">
+                            <div class="grid-stack-item-content">
+                                <div class="kpi-card card-mint skeleton skeleton-card" id="kpi-card-patients">
+                                    <div class="widget-controls">
+                                        <div class="widget-period-toggle">
+                                            <button class="widget-period-btn" onclick="togglePeriodMenu(this)"
+                                                title="Período"><i class="fas fa-cog"></i></button>
+                                            <div class="widget-period-menu">
+                                                <div class="period-option active" data-period="daily"
+                                                    onclick="setPeriod(this)">Diário</div>
+                                                <div class="period-option" data-period="weekly"
+                                                    onclick="setPeriod(this)">
+                                                    Semanal</div>
+                                                <div class="period-option" data-period="monthly"
+                                                    onclick="setPeriod(this)">
+                                                    Mensal</div>
+                                            </div>
+                                        </div>
+                                        <button class="widget-color-btn" onclick="openColorPicker(this)"
+                                            title="Cor do card"><i class="fas fa-palette"></i></button>
+                                        <input type="color" class="widget-color-input" onchange="applyCardColor(this)"
+                                            style="display:none">
+                                    </div>
+                                    <div class="kpi-icon-wrapper"><i class="fas fa-users"></i></div>
+                                    <div class="kpi-content">
+                                        <h3>Total de Pacientes</h3>
+                                        <div class="kpi-value" id="kpi-patients">--</div>
+                                    </div>
+                                    <div class="sparkline-container" id="sparkline-patients"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI: Agendamentos Hoje -->
+                        <div class="grid-stack-item" gs-x="3" gs-y="0" gs-w="3" gs-h="3" gs-id="kpi-today">
+                            <div class="grid-stack-item-content">
+                                <div class="kpi-card card-yellow skeleton skeleton-card" id="kpi-card-today">
+                                    <div class="widget-controls">
+                                        <div class="widget-period-toggle">
+                                            <button class="widget-period-btn" onclick="togglePeriodMenu(this)"
+                                                title="Período"><i class="fas fa-cog"></i></button>
+                                            <div class="widget-period-menu">
+                                                <div class="period-option active" data-period="daily"
+                                                    onclick="setPeriod(this)">Diário</div>
+                                                <div class="period-option" data-period="weekly"
+                                                    onclick="setPeriod(this)">
+                                                    Semanal</div>
+                                                <div class="period-option" data-period="monthly"
+                                                    onclick="setPeriod(this)">
+                                                    Mensal</div>
+                                            </div>
+                                        </div>
+                                        <button class="widget-color-btn" onclick="openColorPicker(this)"
+                                            title="Cor do card"><i class="fas fa-palette"></i></button>
+                                        <input type="color" class="widget-color-input" onchange="applyCardColor(this)"
+                                            style="display:none">
+                                    </div>
+                                    <div class="kpi-icon-wrapper"><i class="far fa-calendar-check"></i></div>
+                                    <div class="kpi-content">
+                                        <h3>Agendamentos Hoje</h3>
+                                        <div class="kpi-value" id="kpi-today">--</div>
+                                    </div>
+                                    <div class="sparkline-container" id="sparkline-today"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI: Próximo Atendimento -->
+                        <div class="grid-stack-item" gs-x="6" gs-y="0" gs-w="3" gs-h="3" gs-id="kpi-next">
+                            <div class="grid-stack-item-content">
+                                <div class="kpi-card card-purple skeleton skeleton-card" id="kpi-card-next">
+                                    <div class="widget-controls">
+                                        <div class="widget-period-toggle">
+                                            <button class="widget-period-btn" onclick="togglePeriodMenu(this)"
+                                                title="Período"><i class="fas fa-cog"></i></button>
+                                            <div class="widget-period-menu">
+                                                <div class="period-option active" data-period="daily"
+                                                    onclick="setPeriod(this)">Diário</div>
+                                                <div class="period-option" data-period="weekly"
+                                                    onclick="setPeriod(this)">
+                                                    Semanal</div>
+                                                <div class="period-option" data-period="monthly"
+                                                    onclick="setPeriod(this)">
+                                                    Mensal</div>
+                                            </div>
+                                        </div>
+                                        <button class="widget-color-btn" onclick="openColorPicker(this)"
+                                            title="Cor do card"><i class="fas fa-palette"></i></button>
+                                        <input type="color" class="widget-color-input" onchange="applyCardColor(this)"
+                                            style="display:none">
+                                    </div>
+                                    <div class="kpi-icon-wrapper"><i class="far fa-clock"></i></div>
+                                    <div class="kpi-content">
+                                        <h3>Próximo Atendimento</h3>
+                                        <div class="kpi-value" id="kpi-next">--:--</div>
+                                    </div>
+                                    <div class="sparkline-container" id="sparkline-next"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KPI: Atendimentos (Sem) -->
+                        <div class="grid-stack-item" gs-x="9" gs-y="0" gs-w="3" gs-h="3" gs-id="kpi-week">
+                            <div class="grid-stack-item-content">
+                                <div class="kpi-card card-dark skeleton skeleton-card" id="kpi-card-week">
+                                    <div class="widget-controls">
+                                        <div class="widget-period-toggle">
+                                            <button class="widget-period-btn" onclick="togglePeriodMenu(this)"
+                                                title="Período"><i class="fas fa-cog"></i></button>
+                                            <div class="widget-period-menu">
+                                                <div class="period-option active" data-period="daily"
+                                                    onclick="setPeriod(this)">Diário</div>
+                                                <div class="period-option" data-period="weekly"
+                                                    onclick="setPeriod(this)">
+                                                    Semanal</div>
+                                                <div class="period-option" data-period="monthly"
+                                                    onclick="setPeriod(this)">
+                                                    Mensal</div>
+                                            </div>
+                                        </div>
+                                        <button class="widget-color-btn" onclick="openColorPicker(this)"
+                                            title="Cor do card"><i class="fas fa-palette"></i></button>
+                                        <input type="color" class="widget-color-input" onchange="applyCardColor(this)"
+                                            style="display:none">
+                                    </div>
+                                    <div class="kpi-icon-wrapper"><i class="fas fa-chart-line"></i></div>
+                                    <div class="kpi-content">
+                                        <h3>Atendimentos (Sem)</h3>
+                                        <div class="kpi-value" id="kpi-week">--</div>
+                                    </div>
+                                    <div class="sparkline-container" id="sparkline-week"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agenda de Hoje -->
+                        <div class="grid-stack-item" gs-x="0" gs-y="3" gs-w="7" gs-h="8" gs-id="agenda-today">
+                            <div class="grid-stack-item-content">
+                                <div class="card widget-card">
+                                    <div class="card-header">
+                                        <h2 class="card-title">Agenda de Hoje</h2>
+                                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                                            <span class="text-muted text-sm" id="current-date">Carregando data...</span>
+                                            <div class="widget-controls" style="position:static;display:flex;gap:4px;">
+                                                <div class="widget-period-toggle" style="position:static;">
+                                                    <button class="widget-period-btn" onclick="togglePeriodMenu(this)"
+                                                        title="Período"><i class="fas fa-cog"></i></button>
+                                                    <div class="widget-period-menu">
+                                                        <div class="period-option active" data-period="daily"
+                                                            onclick="setPeriod(this)">Diário</div>
+                                                        <div class="period-option" data-period="weekly"
+                                                            onclick="setPeriod(this)">Semanal</div>
+                                                        <div class="period-option" data-period="monthly"
+                                                            onclick="setPeriod(this)">Mensal</div>
+                                                    </div>
+                                                </div>
+                                                <button class="widget-color-btn" onclick="openColorPicker(this)"
+                                                    title="Cor do card"><i class="fas fa-palette"></i></button>
+                                                <input type="color" class="widget-color-input"
+                                                    onchange="applyCardColor(this)" style="display:none">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="timeline-agenda" id="today-agenda">
+                                        <div class="skeleton-timeline-item">
+                                            <div class="skeleton skeleton-circle"
+                                                style="width:10px;height:10px;border-radius:50%"></div>
+                                            <div style="flex:1">
+                                                <div class="skeleton skeleton-line medium"></div>
+                                                <div class="skeleton skeleton-line short"></div>
+                                            </div>
+                                        </div>
+                                        <div class="skeleton-timeline-item">
+                                            <div class="skeleton skeleton-circle"
+                                                style="width:10px;height:10px;border-radius:50%"></div>
+                                            <div style="flex:1">
+                                                <div class="skeleton skeleton-line medium"></div>
+                                                <div class="skeleton skeleton-line short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Próximos Atendimentos -->
+                        <div class="grid-stack-item" gs-x="7" gs-y="3" gs-w="5" gs-h="5" gs-id="upcoming">
+                            <div class="grid-stack-item-content">
+                                <div class="card widget-card">
+                                    <div class="card-header">
+                                        <h2 class="card-title">Próximos Atendimentos</h2>
+                                        <div class="widget-controls" style="position:static;display:flex;gap:4px;">
+                                            <div class="widget-period-toggle" style="position:static;">
+                                                <button class="widget-period-btn" onclick="togglePeriodMenu(this)"
+                                                    title="Período"><i class="fas fa-cog"></i></button>
+                                                <div class="widget-period-menu">
+                                                    <div class="period-option active" data-period="daily"
+                                                        onclick="setPeriod(this)">Diário</div>
+                                                    <div class="period-option" data-period="weekly"
+                                                        onclick="setPeriod(this)">Semanal</div>
+                                                    <div class="period-option" data-period="monthly"
+                                                        onclick="setPeriod(this)">Mensal</div>
+                                                </div>
+                                            </div>
+                                            <button class="widget-color-btn" onclick="openColorPicker(this)"
+                                                title="Cor do card"><i class="fas fa-palette"></i></button>
+                                            <input type="color" class="widget-color-input"
+                                                onchange="applyCardColor(this)" style="display:none">
+                                        </div>
+                                    </div>
+                                    <div class="upcoming-list" id="upcoming-list">
+                                        <div class="skeleton-timeline-item">
+                                            <div style="flex:1">
+                                                <div class="skeleton skeleton-line"></div>
+                                                <div class="skeleton skeleton-line short"></div>
+                                            </div>
+                                        </div>
+                                        <div class="skeleton-timeline-item">
+                                            <div style="flex:1">
+                                                <div class="skeleton skeleton-line"></div>
+                                                <div class="skeleton skeleton-line short"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráfico de Agendamentos -->
+                        <div class="grid-stack-item" gs-x="0" gs-y="11" gs-w="12" gs-h="5" gs-id="chart-appointments">
+                            <div class="grid-stack-item-content">
+                                <div class="card widget-card" id="chart-card-appointments">
+                                    <div class="card-header">
+                                        <h2 class="card-title">Agendamentos</h2>
+                                        <div class="widget-controls" style="position:static;display:flex;gap:4px;">
+                                            <div class="widget-period-toggle">
+                                                <button class="widget-period-btn" onclick="togglePeriodMenu(this)"
+                                                    title="Período"><i class="fas fa-cog"></i></button>
+                                                <div class="widget-period-menu">
+                                                    <div class="period-option active" data-period="daily"
+                                                        onclick="setChartPeriod(this)">Diário</div>
+                                                    <div class="period-option" data-period="weekly"
+                                                        onclick="setChartPeriod(this)">Semanal</div>
+                                                    <div class="period-option" data-period="monthly"
+                                                        onclick="setChartPeriod(this)">Mensal</div>
+                                                </div>
+                                            </div>
+                                            <button class="widget-color-btn" onclick="openColorPicker(this)"
+                                                title="Cor do card"><i class="fas fa-palette"></i></button>
+                                            <input type="color" class="widget-color-input"
+                                                onchange="applyCardColor(this)" style="display:none">
+                                        </div>
+                                    </div>
+                                    <div style="flex:1;position:relative;min-height:0;padding:0.5rem;">
+                                        <canvas id="appointments-chart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calendário de Agendamentos -->
+                        <div class="grid-stack-item" gs-x="0" gs-y="16" gs-w="6" gs-h="6" gs-id="calendar-widget">
+                            <div class="grid-stack-item-content">
+                                <div class="card widget-card" id="calendar-card">
+                                    <div class="card-header">
+                                        <h2 class="card-title">Calendário</h2>
+                                        <div class="widget-controls"
+                                            style="position:static;display:flex;gap:4px;align-items:center;">
+                                            <div class="calendar-nav" style="display:flex;gap:2px;align-items:center;">
+                                                <button class="widget-period-btn" onclick="toggleCalendarMode()"
+                                                    title="Alternar Visualização" id="cal-mode-toggle"
+                                                    style="min-width: 80px;">Semana</button>
+                                                <div
+                                                    style="width:1px;height:20px;background:var(--border-subtle);margin:0 4px;">
+                                                </div>
+                                                <button class="widget-period-btn" onclick="changeCalendarOffset(-1)"
+                                                    title="Anterior"><i class="fas fa-chevron-left"></i></button>
+                                                <span id="calendar-month-label"
+                                                    style="font-size:0.8rem;font-weight:600;min-width:120px;text-align:center;"></span>
+                                                <button class="widget-period-btn" onclick="changeCalendarOffset(1)"
+                                                    title="Próximo"><i class="fas fa-chevron-right"></i></button>
+                                            </div>
+                                            <button class="widget-color-btn" onclick="openColorPicker(this)"
+                                                title="Cor do card"><i class="fas fa-palette"></i></button>
+                                            <input type="color" class="widget-color-input"
+                                                onchange="applyCardColor(this)" style="display:none">
+                                        </div>
+                                    </div>
+                                    <div class="calendar-container" id="calendar-grid">
+                                    </div>
+                                    <div class="calendar-day-detail" id="calendar-day-detail" style="display:none;">
+                                        <div class="calendar-detail-header">
+                                            <span id="calendar-detail-date"></span>
+                                            <button
+                                                onclick="document.getElementById('calendar-day-detail').style.display='none'"
+                                                style="background:none;border:none;cursor:pointer;color:inherit;font-size:1rem;">&times;</button>
+                                        </div>
+                                        <div id="calendar-detail-list"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notas removed -->
+                    </div>
+                </div>
+
+                <!-- Professionals View -->
+                <div id="view-funcionarios" class="view-section" style="display: none;">
+                    <div class="card-header">
+                        <h2 class="card-title">Gerenciamento de Funcionários</h2>
+                        <button class="btn btn-primary" onclick="openProfessionalModal()">
+                            <i class="fas fa-plus"></i> Novo Funcionário
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Categoria</th>
+                                        <th>Registro</th>
+                                        <th>Contato</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="professionals-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <!-- Prescriptions View -->
+                <div id="view-receitas" class="view-section" style="display: none;">
+                    <div class="card-header">
+                        <h2 class="card-title">Gerenciamento de Receitas</h2>
+                        <button class="btn btn-primary" onclick="openPrescriptionModal()">
+                            <i class="fas fa-plus"></i> Nova Receita
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Paciente</th>
+                                        <th>Profissional</th>
+                                        <th>Medicamento</th>
+                                        <th>Atestado</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="prescriptions-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patients View -->
+                <div id="view-pacientes" class="view-section" style="display: none;">
+                    <div class="card-header">
+                        <h2 class="card-title">Gerenciamento de Pacientes</h2>
+                        <button class="btn btn-primary" onclick="openModal('patient-modal')">
+                            <i class="fas fa-plus"></i> Novo Paciente
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Idade</th>
+                                        <th>CPF</th>
+                                        <th>Contato</th>
+                                        <th>Profissional</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="patients-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appointments View -->
+                <div id="view-agendamentos" class="view-section" style="display: none;">
+                    <div class="card-header">
+                        <h2 class="card-title">Gerenciamento de Agendamentos</h2>
+                        <button class="btn btn-primary" onclick="openAppointmentModal()">
+                            <i class="fas fa-plus"></i> Novo Agendamento
+                        </button>
+                    </div>
+
+                    <div class="card">
+                        <div class="table-container">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Hora</th>
+                                        <th>Paciente</th>
+                                        <th>Profissional</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="appointments-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Modal -->
+                <div id="patient-modal" class="modal" onclick="if(event.target === this) closeModal('patient-modal')">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="patient-modal-title">Novo Paciente</h3>
+                            <span class="close-modal" onclick="closeModal('patient-modal')">&times;</span>
+                        </div>
+                        <form id="patient-form" onsubmit="handlePatientSubmit(event)">
+                            <input type="hidden" name="patient_id" id="patient-id-field" value="">
+                            <div class="tabs-nav"
+                                style="display:flex; gap:10px; border-bottom: 2px solid var(--border-subtle); margin-bottom: 20px; padding-bottom: 10px; overflow-x: auto;">
+                                <button type="button" class="tab-btn active"
+                                    onclick="switchPatientTab('tab-identificacao')"
+                                    style="background:none; border:none; padding: 5px 10px; cursor:pointer; font-weight:bold; border-bottom: 2px solid var(--primary); color: var(--primary);">Identificação</button>
+                                <button type="button" class="tab-btn" onclick="switchPatientTab('tab-contato')"
+                                    style="background:none; border:none; padding: 5px 10px; cursor:pointer; color: var(--text-muted);">Contato/Localização</button>
+                                <button type="button" class="tab-btn" onclick="switchPatientTab('tab-convenio')"
+                                    style="background:none; border:none; padding: 5px 10px; cursor:pointer; color: var(--text-muted);">Convênio/Pagamento</button>
+                                <button type="button" class="tab-btn" onclick="switchPatientTab('tab-seguranca')"
+                                    style="background:none; border:none; padding: 5px 10px; cursor:pointer; color: var(--text-muted);">Segurança</button>
+                            </div>
+
+                            <style>
+                                .tab-btn {
+                                    transition: all 0.3s ease;
+                                    white-space: nowrap;
+                                }
+
+                                .patient-tab-content {
+                                    display: none;
+                                }
+
+                                .patient-tab-content.active {
+                                    display: block;
+                                }
+                            </style>
+
+                            <!-- Aba 1: Identificação -->
+                            <div id="tab-identificacao" class="patient-tab-content active">
+                                <div class="form-grid">
+                                    <div class="form-group full-width">
+                                        <label class="form-label">Nome Completo</label>
+                                        <input type="text" name="name" class="form-input" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Data de Nascimento</label>
+                                        <input type="date" name="birth_date" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">CPF</label>
+                                        <input type="text" name="cpf" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Gênero</label>
+                                        <select name="gender" class="form-select">
+                                            <option value="">Selecione</option>
+                                            <option value="Masculino">Masculino</option>
+                                            <option value="Feminino">Feminino</option>
+                                            <option value="Outro">Outro</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Estado Civil (Opcional)</label>
+                                        <input type="text" name="marital_status" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Profissão (Opcional)</label>
+                                        <input type="text" name="profession" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Modalidade de Atendimento</label>
+                                        <select name="care_modality" class="form-select">
+                                            <option value="Presencial">Presencial</option>
+                                            <option value="Online">Online</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group full-width">
+                                        <label class="form-label">Profissional Responsável</label>
+                                        <select name="professional_id" id="patient-professional-select"
+                                            class="form-select">
+                                            <option value="">Nenhum (sem vínculo)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group full-width">
+                                        <label class="form-label">Observações</label>
+                                        <textarea name="observations" class="form-textarea" rows="3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Aba 2: Contato e Localização -->
+                            <div id="tab-contato" class="patient-tab-content">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Telefone</label>
+                                        <input type="text" name="phone" class="form-input" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Email (Opcional)</label>
+                                        <input type="email" name="email" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">CEP</label>
+                                        <input type="text" name="address_cep" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Logradouro (Rua/Av/etc)</label>
+                                        <input type="text" name="address_street" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Número</label>
+                                        <input type="text" name="address_number" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Complemento</label>
+                                        <input type="text" name="address_complement" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Bairro</label>
+                                        <input type="text" name="address_neighborhood" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Cidade</label>
+                                        <input type="text" name="address_city" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Estado</label>
+                                        <input type="text" name="address_state" class="form-input">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Aba 3: Convênio/Pagamento -->
+                            <div id="tab-convenio" class="patient-tab-content">
+                                <div class="form-grid">
+                                    <div class="form-group full-width">
+                                        <label class="form-label">Tipo de Atendimento</label>
+                                        <select name="attendance_type" id="attendance_type_select" class="form-select"
+                                            onchange="toggleInsuranceFields()">
+                                            <option value="Particular">Particular</option>
+                                            <option value="Plano de Saúde">Plano de Saúde</option>
+                                        </select>
+                                    </div>
+
+                                    <div id="insurance_fields_container"
+                                        style="display: none; grid-column: 1 / -1; gap: 1rem; grid-template-columns: repeat(2, 1fr);"
+                                        class="form-grid">
+                                        <div class="form-group">
+                                            <label class="form-label">Nome do Plano</label>
+                                            <input type="text" name="insurance_plan" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Número da Carteirinha</label>
+                                            <input type="text" name="insurance_number" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label class="form-label">Validade</label>
+                                            <input type="date" name="insurance_expiration_date" class="form-input">
+                                        </div>
+                                    </div>
+                                    <script>
+                                        function toggleInsuranceFields() {
+                                            const type = document.getElementById('attendance_type_select').value;
+                                            const container = document.getElementById('insurance_fields_container');
+                                            if (type === 'Plano de Saúde') {
+                                                container.style.display = 'grid';
+                                            } else {
+                                                container.style.display = 'none';
+                                            }
+                                        }
+                                        function switchPatientTab(tabId) {
+                                            document.querySelectorAll('.patient-tab-content').forEach(el => el.classList.remove('active'));
+                                            document.querySelectorAll('.tab-btn').forEach(el => {
+                                                el.classList.remove('active');
+                                                el.style.borderBottom = 'none';
+                                                el.style.color = 'var(--text-muted)';
+                                                el.style.fontWeight = 'normal';
+                                            });
+
+                                            document.getElementById(tabId).classList.add('active');
+
+                                            const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
+                                            if (activeBtn) {
+                                                activeBtn.classList.add('active');
+                                                activeBtn.style.borderBottom = '2px solid var(--primary)';
+                                                activeBtn.style.color = 'var(--primary)';
+                                                activeBtn.style.fontWeight = 'bold';
+                                            }
+                                        }
+                                    </script>
+                                </div>
+                            </div>
+
+                            <!-- Aba 4: Segurança e Emergência -->
+                            <div id="tab-seguranca" class="patient-tab-content">
+                                <div class="form-grid">
+                                    <div class="form-group full-width">
+                                        <h4 style="margin-bottom:10px; color:var(--text-main);">Contato de Emergência
+                                        </h4>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Nome da pessoa de confiança</label>
+                                        <input type="text" name="emergency_contact_name" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Telefone</label>
+                                        <input type="text" name="emergency_contact_phone" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Grau de Parentesco</label>
+                                        <input type="text" name="emergency_contact_relation" class="form-input">
+                                    </div>
+                                    <div class="form-group full-width"
+                                        style="margin-top: 20px; align-items: flex-start; display: flex; flex-direction: column; gap: 8px;">
+                                        <h4 style="margin-bottom:5px; color:var(--text-main);">Termo de Consentimento
+                                        </h4>
+                                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                                            <input type="checkbox" name="consent_terms_accepted" value="true" required
+                                                style="width: 18px; height: 18px;">
+                                            <span style="font-size:0.9rem; color:var(--text-muted);">Confirmo que li e
+                                                autorizo a clínica a armazenar e processar meus dados de saúde.</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeModal('patient-modal')">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Appointment Modal -->
+                <div id="appointment-modal" class="modal"
+                    onclick="if(event.target === this) closeModal('appointment-modal')">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="appointment-modal-title">Novo Agendamento</h3>
+                            <span class="close-modal" onclick="closeModal('appointment-modal')">&times;</span>
+                        </div>
+                        <form id="appointment-form" onsubmit="handleAppointmentSubmit(event)">
+                            <input type="hidden" name="appointment_id" id="appointment-id-field" value="">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Paciente</label>
+                                    <select name="patient_id" id="appt-patient-select" class="form-select" required>
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Profissional</label>
+                                    <select name="professional_id" id="appt-professional-select" class="form-select"
+                                        required>
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Atestado / Declaração</label>
+                                    <select name="certificate_type" class="form-select">
+                                        <option value="Sem Atestado">Sem Atestado</option>
+                                        <option value="Atestado Médico">Atestado Médico</option>
+                                        <option value="Atestado de Comparecimento">Atestado de Comparecimento</option>
+                                        <option value="Declaração de Acompanhamento">Declaração de Acompanhamento
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Data</label>
+                                    <input type="date" name="date" id="appt-date-input" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Hora</label>
+                                    <input type="time" name="time" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status</label>
+                                    <select name="status" class="form-select">
+                                        <option value="Aguardando">Aguardando</option>
+                                        <option value="Confirmado">Confirmado</option>
+                                        <option value="Cancelado">Cancelado</option>
+                                        <option value="Concluído">Concluído</option>
+                                    </select>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Observações</label>
+                                    <textarea name="observations" class="form-textarea" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeModal('appointment-modal')">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Professional Modal -->
+                <div id="professional-modal" class="modal"
+                    onclick="if(event.target === this) closeModal('professional-modal')">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="professional-modal-title">Novo Funcionário</h3>
+                            <span class="close-modal" onclick="closeModal('professional-modal')">&times;</span>
+                        </div>
+                        <form id="professional-form" onsubmit="handleProfessionalSubmit(event)">
+                            <input type="hidden" name="professional_id" id="professional-id-field" value="">
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label class="form-label">Nome Completo</label>
+                                    <input type="text" name="name" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Categoria</label>
+                                    <select name="role" id="prof-role-select" class="form-select"
+                                        onchange="updateRegisterLabel()" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="Psicólogo">Psicólogo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Status</label>
+                                    <select name="status" class="form-select">
+                                        <option value="Active">Ativo</option>
+                                        <option value="Inactive">Inativo</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Contato</label>
+                                    <input type="text" name="phone" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" id="prof-register-label">Registro Profissional</label>
+                                    <input type="text" name="professional_register" class="form-input">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Especialidade</label>
+                                    <input type="text" name="specialty" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeModal('professional-modal')">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Prescription Modal -->
+                <div id="prescription-modal" class="modal"
+                    onclick="if(event.target === this) closeModal('prescription-modal')">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="prescription-modal-title">Nova Receita</h3>
+                            <span class="close-modal" onclick="closeModal('prescription-modal')">&times;</span>
+                        </div>
+                        <form id="prescription-form" onsubmit="handlePrescriptionSubmit(event)">
+                            <input type="hidden" name="prescription_id" id="prescription-id-field" value="">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Paciente</label>
+                                    <select name="patient_id" id="presc-patient-select" class="form-select" required>
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Profissional</label>
+                                    <select name="professional_id" id="presc-professional-select" class="form-select"
+                                        required>
+                                        <option value="">Selecione...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Medicamento</label>
+                                    <input type="text" name="medication_name" class="form-input"
+                                        placeholder="Ex: Amoxicilina 500mg" required>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Dosagem / Instruções</label>
+                                    <input type="text" name="dosage" class="form-input"
+                                        placeholder="Ex: Tomar 1 comprimido de 8 em 8 horas por 7 dias">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Atestado / Declaração</label>
+                                    <select name="certificate_type" class="form-select">
+                                        <option value="Sem Atestado">Sem Atestado</option>
+                                        <option value="Atestado Médico">Atestado Médico</option>
+                                        <option value="Atestado de Comparecimento">Atestado de Comparecimento</option>
+                                        <option value="Declaração de Acompanhamento">Declaração de Acompanhamento
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Data (Opcional)</label>
+                                    <input type="date" name="date" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeModal('prescription-modal')">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Atestados View -->
+                <div id="view-atestados" class="view-section" style="display: none;">
+                    <div class="view-header" style="margin-bottom: 2rem;">
+                        <h2 style="margin:0;">Gerenciar Atestados</h2>
+                        <button class="btn btn-primary" onclick="openCertificateModal()"><i class="fas fa-plus"></i>
+                            Novo
+                            Atestado</button>
+                    </div>
+
+                    <div class="card" style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Paciente</th>
+                                    <th>Profissional</th>
+                                    <th>Tipo</th>
+                                    <th>Dias</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="certificates-table-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Certificate Modal -->
+                <div id="certificate-modal" class="modal"
+                    onclick="if(event.target === this) closeModal('certificate-modal')">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="certificate-modal-title">Novo Atestado</h3>
+                            <button onclick="closeModal('certificate-modal')" class="close-modal">&times;</button>
+                        </div>
+                        <form id="certificate-form" onsubmit="handleCertificateSubmit(event)">
+                            <input type="hidden" id="certificate-id-field" name="certificate_id">
+
+                            <div class="form-group">
+                                <label class="form-label">Paciente</label>
+                                <select name="patient_id" class="form-input" id="cert-patient-select" required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Profissional Emissor</label>
+                                <select name="professional_id" class="form-input" id="cert-professional-select"
+                                    required>
+                                    <option value="">Selecione...</option>
+                                </select>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Tipo de Atestado</label>
+                                    <select name="type" class="form-input" required>
+                                        <option value="Médico">Atestado Médico</option>
+                                        <option value="Comparecimento">Declaração de Comparecimento</option>
+                                        <option value="Acompanhamento">Declaração de Acompanhamento</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Duração (Dias)</label>
+                                    <input type="number" name="duration_days" class="form-input" min="0"
+                                        placeholder="0 se não aplicável">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Data de Emissão</label>
+                                <input type="date" name="date" class="form-input" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Descrição / Observações</label>
+                                <textarea name="description" class="form-textarea"
+                                    placeholder="Detalhes adicionais, CID (opcional), etc..."></textarea>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    onclick="closeModal('certificate-modal')">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Mensagens View -->
+                <div id="view-mensagens" class="view-section" style="display: none;">
+                    <div class="view-header" style="margin-bottom: 2rem;">
+                        <h2 style="margin:0;">Mensagens de Pacientes</h2>
+                    </div>
+
+                    <div class="card" style="overflow-x: auto;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Paciente</th>
+                                    <th>Mensagem</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="messages-table-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Configurações View -->
+                <div id="view-configuracoes" class="view-section" style="display:none;">
+                    <div class="card" style="max-width: 700px;">
+                        <div class="card-header">
+                            <h2 class="card-title">Perfil do Administrador</h2>
+                        </div>
+                        <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
+                            <!-- Profile Photo -->
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div id="profile-photo"
+                                    style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; flex-shrink: 0;">
+                                    AD</div>
+                                <div>
+                                    <label class="btn btn-secondary" style="cursor: pointer; display: inline-block;">
+                                        <i class="fas fa-camera"></i> Alterar Foto
+                                        <input type="file" accept="image/*" id="photo-upload" style="display: none;"
+                                            onchange="handlePhotoUpload(event)">
+                                    </label>
+                                    <p style="font-size: 0.8rem; color: var(--text-tertiary); margin-top: 0.5rem;">JPG,
+                                        PNG. Máx 2MB.</p>
+                                </div>
+                            </div>
+
+                            <!-- Personal Data Form -->
+                            <form id="profile-form" onsubmit="saveProfile(event)">
+                                <div class="form-group">
+                                    <label class="form-label">Nome Completo</label>
+                                    <input type="text" name="full_name" class="form-input" id="profile-name"
+                                        placeholder="Seu nome completo">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">E-mail</label>
+                                    <input type="email" name="email" class="form-input" id="profile-email"
+                                        placeholder="seu@email.com" disabled>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Telefone</label>
+                                    <input type="tel" name="phone" class="form-input" id="profile-phone"
+                                        placeholder="(11) 99999-9999">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cargo / Função</label>
+                                    <input type="text" name="role_title" class="form-input" id="profile-role-title"
+                                        placeholder="Ex: Psicólogo, Diretor">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">CRP / Registro</label>
+                                    <input type="text" name="crp" class="form-input" id="profile-crp"
+                                        placeholder="CRP 00/00000">
+                                </div>
+                                <div class="modal-footer"
+                                    style="padding: 1rem 0 0 0; border-top: 1px solid var(--border-subtle);">
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar
+                                        Alterações</button>
+                                </div>
+                            </form>
+
+                            <!-- Logout -->
+                            <div
+                                style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: 0.5rem;">
+                                <button class="btn btn-secondary"
+                                    onclick="if(confirm('Deseja sair do sistema?')) logout()"
+                                    style="color: var(--color-danger);">
+                                    <i class="fas fa-sign-out-alt"></i> Sair do Sistema
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Patient Profile Modal -->
+                <div id="patient-profile-modal" class="modal"
+                    onclick="if(event.target === this) closeModal('patient-profile-modal')">
+                    <div class="modal-content" style="max-width: 800px;">
+                        <div class="modal-header">
+                            <h3 class="modal-title" id="profile-modal-title">Perfil do Paciente</h3>
+                            <button onclick="closeModal('patient-profile-modal')" class="close-modal">&times;</button>
+                        </div>
+                        <div class="profile-layout"
+                            style="display:grid;grid-template-columns: 250px 1fr; gap: 2rem; padding-top: 1rem;">
+                            <!-- Sidebar Info -->
+                            <div class="profile-sidebar"
+                                style="border-right:1px solid var(--border-subtle); padding-right:1rem;">
+                                <div class="profile-avatar"
+                                    style="width:80px;height:80px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;margin-bottom:1rem;">
+                                    <span id="profile-initials">--</span>
+                                </div>
+                                <h3 id="profile-name-display" style="margin-bottom:0.5rem;">Nome do Paciente</h3>
+                                <p id="profile-age-display" class="text-muted text-sm">-- anos</p>
+
+                                <div class="profile-stats" style="margin-top:1.5rem;">
+                                    <div class="stat-item" style="margin-bottom:1rem;">
+                                        <div class="text-xs text-muted uppercase">Status</div>
+                                        <div id="profile-status-display" class="font-medium">Ativo</div>
+                                    </div>
+                                    <div class="stat-item" style="margin-bottom:1rem;">
+                                        <div class="text-xs text-muted uppercase">Modalidade</div>
+                                        <div id="profile-modality-display" class="font-medium"
+                                            style="display:inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold;">
+                                            Presencial</div>
+                                    </div>
+                                    <div class="stat-item" style="margin-bottom:1rem;">
+                                        <div class="text-xs text-muted uppercase">Convênio</div>
+                                        <div id="profile-insurance-display">Particular</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="text-xs text-muted uppercase">Contato</div>
+                                        <div id="profile-contact-display" class="text-sm">--</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Main Content & Notes -->
+                            <div class="profile-main">
+                                <ul class="tabs"
+                                    style="display:flex;gap:1.5rem;border-bottom:1px solid var(--border-subtle);margin-bottom:1rem;padding-bottom:0.5rem;">
+                                    <li class="tab active profile-tab" onclick="switchProfileTab('notes', this)"
+                                        style="cursor:pointer;font-weight:600;color:var(--primary);border-bottom:2px solid var(--primary);">
+                                        Anotações Privadas</li>
+                                    <li class="tab profile-tab" onclick="switchProfileTab('messages', this)"
+                                        style="cursor:pointer;font-weight:600;color:var(--text-muted);border-bottom:2px solid transparent;">
+                                        Anotações do Paciente</li>
+                                </ul>
+
+                                <div id="profile-tab-notes" class="profile-content-section active">
+                                    <form id="patient-notes-form" onsubmit="savePatientNotes(event)">
+                                        <input type="hidden" id="profile-patient-id">
+                                        <div class="form-group full-width" style="height:100%;">
+                                            <label class="form-label"
+                                                style="display:flex;justify-content:space-between;">
+                                                <span>Minhas Anotações (Privado)</span>
+                                                <span class="text-xs text-muted"><i class="fas fa-lock"></i> Visível
+                                                    apenas
+                                                    para você</span>
+                                            </label>
+                                            <textarea id="profile-notes" class="form-textarea"
+                                                style="height:300px;resize:vertical;font-family:inherit;line-height:1.6;"
+                                                placeholder="Escreva aqui suas observações sobre o paciente..."></textarea>
+                                        </div>
+                                        <div class="form-actions" style="margin-top:1rem;">
+                                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i>
+                                                Salvar
+                                                Anotações</button>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div id="profile-tab-messages" class="profile-content-section" style="display:none;">
+                                    <div id="profile-messages-list"
+                                        style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 1rem; padding-right: 0.5rem;">
+                                        <p class="text-muted text-sm">Carregando mensagens do paciente...</p>
+                                    </div>
+                                </div>
+                                <script>
+                                    function switchProfileTab(tabId, el) {
+                                        document.querySelectorAll('.profile-tab').forEach(t => {
+                                            t.classList.remove('active');
+                                            t.style.color = 'var(--text-muted)';
+                                            t.style.borderBottom = '2px solid transparent';
+                                        });
+                                        el.classList.add('active');
+                                        el.style.color = 'var(--primary)';
+                                        el.style.borderBottom = '2px solid var(--primary)';
+
+                                        document.querySelectorAll('.profile-content-section').forEach(s => s.style.display = 'none');
+                                        document.getElementById('profile-tab-' + tabId).style.display = 'block';
+                                    }
+                                </script>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ... other placeholders ... -->
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript to handle navigation and data loading -->
+    <script>
+        // ===== ADJUSTABLE THEME =====
+        const themeSlider = document.getElementById('theme-slider');
+
+        function updateTheme(percent) {
+            // Set css variable for interpolation
+            document.documentElement.style.setProperty('--theme-inv', percent + '%');
+
+            // Calculate text contrast curve
+            // We want text to stay dark (0%) for a while, then flip to light (100%)
+            // A simple threshold or steep transition works best for legibility.
+            // If background is > 40% dark, start flipping text.
+
+            let textVal = 0;
+            const p = parseFloat(percent);
+
+            // Hard snap for text color to avoid gray-on-gray issues
+            // Keep text fully black (0%) until background is dark enough (>55%)
+            // Then snap to fully white (100%) immediately.
+            if (p < 55) {
+                textVal = 0;
+            } else {
+                textVal = 100;
+            }
+
+            document.documentElement.style.setProperty('--text-inv', textVal + '%');
+            localStorage.setItem('theme-percent', percent);
+        }
+
+        if (themeSlider) {
+            themeSlider.addEventListener('input', (e) => {
+                updateTheme(e.target.value);
+            });
+
+            // Restore saved theme
+            const saved = localStorage.getItem('theme-percent') || '0';
+            themeSlider.value = saved;
+            updateTheme(saved);
+        }
+
+        // ===== SPARKLINES (SVG) =====
+        function drawSparkline(containerId, color, dataPoints) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            // Generate smooth random-ish data if not provided
+            if (!dataPoints || dataPoints.length === 0) {
+                dataPoints = [];
+                let val = 3 + Math.random() * 4;
+                for (let i = 0; i < 12; i++) {
+                    val += (Math.random() - 0.4) * 2;
+                    val = Math.max(1, Math.min(10, val));
+                    dataPoints.push(val);
+                }
+            }
+
+            const w = 200;
+            const h = 50;
+            const max = Math.max(...dataPoints);
+            const min = Math.min(...dataPoints);
+            const range = max - min || 1;
+            const step = w / (dataPoints.length - 1);
+
+            let pathD = '';
+            const points = dataPoints.map((v, i) => ({
+                x: i * step,
+                y: h - ((v - min) / range) * (h - 8) - 4
+            }));
+
+            // Smooth curve
+            pathD = `M${points[0].x},${points[0].y}`;
+            for (let i = 1; i < points.length; i++) {
+                const cp1x = points[i - 1].x + step * 0.4;
+                const cp1y = points[i - 1].y;
+                const cp2x = points[i].x - step * 0.4;
+                const cp2y = points[i].y;
+                pathD += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${points[i].x},${points[i].y}`;
+            }
+
+            // Fill area
+            const fillD = pathD + ` L${points[points.length - 1].x},${h} L${points[0].x},${h} Z`;
+
+            container.innerHTML = `
+                <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="grad-${containerId}" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="${color}" stop-opacity="0.3"/>
+                            <stop offset="100%" stop-color="${color}" stop-opacity="0.02"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="${fillD}" fill="url(#grad-${containerId})" />
+                    <path d="${pathD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            `;
+        }
+
+        // ===== UTILITIES =====
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function removeSkeleton(elementId) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.classList.remove('skeleton', 'skeleton-card');
+            }
+        }
+
+        function getStatusClass(status) {
+            if (!status) return 'pending';
+            // Normalize for case safety
+            const s = status.toString();
+            if (s === 'Confirmado' || s === 'Active' || s === 'Ativo') return 'confirmed';
+            if (s === 'Cancelado' || s === 'Inactive' || s === 'Inativo') return 'cancelled';
+            if (s === 'Concluído' || s === 'Concluido') return 'completed';
+            return 'pending';
+        }
+
+        // Simple Navigation Logic
+        function loadView(viewName) {
+            const titles = {
+                'dashboard': 'Dashboard',
+                'funcionarios': 'Funcionários',
+                'pacientes': 'Pacientes',
+                'agendamentos': 'Agendamentos',
+                'receitas': 'Receitas',
+                'atestados': 'Atestados',
+                'configuracoes': 'Configurações'
+            };
+            document.getElementById('page-title').innerText = titles[viewName] || 'Sistema';
+
+            // Toggle visibility of dashboard-specific buttons
+            const resetLayoutBtn = document.getElementById('reset-layout-btn');
+            const resetColorsBtn = document.getElementById('reset-colors-btn');
+            if (resetLayoutBtn) resetLayoutBtn.style.display = viewName === 'dashboard' ? 'inline-block' : 'none';
+            if (resetColorsBtn) resetColorsBtn.style.display = viewName === 'dashboard' ? 'inline-block' : 'none';
+
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const activeNav = Array.from(document.querySelectorAll('.nav-item')).find(el => el.onclick && el.onclick.toString().includes(viewName));
+            if (activeNav) activeNav.classList.add('active');
+
+            const sections = document.querySelectorAll('.view-section');
+            sections.forEach(sec => sec.style.display = 'none');
+
+            const target = document.getElementById('view-' + viewName);
+            if (target) {
+                target.style.display = 'block';
+                if (viewName === 'pacientes') fetchPatients();
+                if (viewName === 'agendamentos') fetchAppointments();
+                if (viewName === 'funcionarios') fetchProfessionals();
+                if (viewName === 'receitas') fetchPrescriptions();
+                if (viewName === 'receitas') fetchPrescriptions();
+                if (viewName === 'atestados') fetchCertificates();
+                if (viewName === 'mensagens') fetchMessages();
+                if (viewName === 'configuracoes') loadProfile();
+            } else {
+                let placeholder = document.getElementById('view-placeholder');
+                if (!placeholder) {
+                    placeholder = document.createElement('div');
+                    placeholder.id = 'view-placeholder';
+                    placeholder.className = 'view-section';
+                    document.getElementById('content-area').appendChild(placeholder);
+                }
+                placeholder.style.display = 'block';
+                placeholder.innerHTML = `<h2>${titles[viewName]}</h2><p>Funcionalidade em desenvolvimento.</p>`;
+            }
+        }
+
+        // ===== DASHBOARD DATA =====
+        async function fetchDashboardData() {
+            try {
+                // KPIs
+                const responseStats = await fetch('/api/dashboard/stats');
+                const dataStats = await responseStats.json();
+
+                // Remove skeletons + populate
+                removeSkeleton('kpi-card-patients');
+                removeSkeleton('kpi-card-today');
+                removeSkeleton('kpi-card-week');
+                removeSkeleton('kpi-card-next');
+
+                document.getElementById('kpi-patients').innerText = dataStats.total_patients;
+                document.getElementById('kpi-today').innerText = dataStats.appointments_today;
+                document.getElementById('kpi-week').innerText = dataStats.appointments_week;
+                document.getElementById('kpi-next').innerText = dataStats.next_appointment;
+
+                // Draw sparklines
+                drawSparkline('sparkline-patients', '#065f46');
+                drawSparkline('sparkline-today', '#92400e');
+                drawSparkline('sparkline-week', '#f9fafb');
+                drawSparkline('sparkline-next', '#3730a3');
+
+                // Date
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
+
+                // Agenda Today — timeline
+                const responseToday = await fetch('/api/appointments/today');
+                const dataToday = await responseToday.json();
+                const agendaList = document.getElementById('today-agenda');
+                agendaList.innerHTML = '';
+
+                if (dataToday.length === 0) {
+                    agendaList.innerHTML = '<div class="timeline-empty"><i class="far fa-calendar" style="font-size:1.5rem;margin-bottom:8px;display:block;opacity:0.5"></i>Nenhum agendamento para hoje.</div>';
+                } else {
+                    dataToday.forEach(appt => {
+                        const item = document.createElement('div');
+                        item.className = 'timeline-item' + (appt.status === 'Confirmado' ? ' confirmed' : '');
+                        item.innerHTML = `
+                            <div class="timeline-time">${appt.time}</div>
+                            <div class="timeline-content">
+                                <div class="timeline-patient clickable-patient" onclick="openPatientProfileByName('${appt.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:600;">${appt.patient_name}</div>
+                                <div class="timeline-professional">${appt.professional_name}</div>
+                            </div>
+                            <div class="timeline-status">
+                                <span class="status-badge status-${getStatusClass(appt.status)}">${appt.status}</span>
+                            </div>
+                        `;
+                        agendaList.appendChild(item);
+                    });
+                }
+
+                // Upcoming
+                const responseUpcoming = await fetch('/api/appointments/upcoming');
+                const dataUpcoming = await responseUpcoming.json();
+                const upcomingList = document.getElementById('upcoming-list');
+                upcomingList.innerHTML = '';
+
+                if (dataUpcoming.length === 0) {
+                    upcomingList.innerHTML = '<p class="text-muted" style="text-align:center;padding:var(--spacing-md)">Nenhum agendamento futuro.</p>';
+                } else {
+                    dataUpcoming.forEach(appt => {
+                        const item = document.createElement('div');
+                        item.className = 'list-item';
+                        item.innerHTML = `
+                           <div style="width: 80px; font-size: 0.85rem; color: var(--text-muted);">${appt.date}</div>
+                           <div style="flex: 1;">
+                               <div class="clickable-patient" onclick="openPatientProfileByName('${appt.patient_name}')" style="font-size: 0.95rem; font-weight: 500; cursor:pointer; color:var(--primary);">${appt.patient_name}</div>
+                               <div class="text-sm text-muted">${appt.professional_name}</div>
+                           </div>
+                        `;
+                        upcomingList.appendChild(item);
+                    });
+                }
+
+            } catch (e) {
+                console.error("Error fetching dashboard data:", e);
+                const agendaFallback = document.getElementById('today-agenda');
+                if (agendaFallback) agendaFallback.innerHTML = '<div class="timeline-empty"><i class="far fa-calendar" style="font-size:1.5rem;margin-bottom:8px;display:block;opacity:0.5"></i>Erro ao carregar agenda.</div>';
+                const upcomingFallback = document.getElementById('upcoming-list');
+                if (upcomingFallback) upcomingFallback.innerHTML = '<p class="text-muted" style="text-align:center;padding:var(--spacing-md)">Erro ao carregar atendimentos.</p>';
+            }
+        }
+
+        // Patients Logic
+        async function fetchPatients() {
+            try {
+                const response = await fetch('/api/patients');
+                const patients = await response.json();
+                const tbody = document.getElementById('patients-table-body');
+                tbody.innerHTML = '';
+
+                patients.forEach(patient => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${patient.name}</td>
+                        <td>${patient.birth_date ? new Date(patient.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
+                        <td>${patient.cpf || '-'}</td>
+                        <td>${patient.phone || '-'}</td>
+                        <td>${patient.professional_name || '<span class="text-muted">-</span>'}</td>
+                        <td><span class="status-badge status-${getStatusClass(patient.status)}">${patient.status === 'Active' ? 'Ativo' : patient.status}</span></td>
+                        <td>
+                            <i class="fas fa-edit action-btn" style="color: var(--primary); cursor: pointer; margin-right: 8px;" onclick='editPatient(${JSON.stringify(patient)})'></i>
+                            <i class="fas fa-trash action-btn delete" onclick="deletePatient(${patient.id})"></i>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Error fetching patients:", e);
+            }
+        }
+
+        function editPatient(patient) {
+            openPatientModal(patient);
+        }
+
+        async function openPatientModal(prefill = null) {
+            document.getElementById('patient-modal-title').innerText = prefill ? 'Editar Paciente' : 'Novo Paciente';
+            document.getElementById('patient-id-field').value = prefill ? prefill.id : '';
+            openModal('patient-modal');
+
+            // Populate professional select
+            try {
+                const res = await fetch('/api/professionals');
+                const professionals = await res.json();
+                const select = document.getElementById('patient-professional-select');
+                select.innerHTML = '<option value="">Nenhum (sem vínculo)</option>';
+                professionals.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = p.name + ' (' + p.role + ')';
+                    select.appendChild(opt);
+                });
+
+                if (prefill) {
+                    const form = document.getElementById('patient-form');
+                    form.querySelector('[name="name"]').value = prefill.name || '';
+                    form.querySelector('[name="birth_date"]').value = prefill.birth_date || '';
+                    form.querySelector('[name="cpf"]').value = prefill.cpf || '';
+                    form.querySelector('[name="email"]').value = prefill.email || '';
+                    form.querySelector('[name="phone"]').value = prefill.phone || '';
+                    form.querySelector('[name="gender"]').value = prefill.gender || '';
+                    form.querySelector('[name="marital_status"]').value = prefill.marital_status || '';
+                    form.querySelector('[name="profession"]').value = prefill.profession || '';
+
+                    form.querySelector('[name="address_cep"]').value = prefill.address_cep || '';
+                    form.querySelector('[name="address_street"]').value = prefill.address_street || '';
+                    form.querySelector('[name="address_number"]').value = prefill.address_number || '';
+                    form.querySelector('[name="address_complement"]').value = prefill.address_complement || '';
+                    form.querySelector('[name="address_neighborhood"]').value = prefill.address_neighborhood || '';
+                    form.querySelector('[name="address_city"]').value = prefill.address_city || '';
+                    form.querySelector('[name="address_state"]').value = prefill.address_state || '';
+
+                    const attType = prefill.attendance_type || 'Particular';
+                    form.querySelector('[name="attendance_type"]').value = attType;
+                    form.querySelector('[name="insurance_plan"]').value = prefill.insurance_plan || '';
+                    form.querySelector('[name="insurance_number"]').value = prefill.insurance_number || '';
+                    form.querySelector('[name="insurance_expiration_date"]').value = prefill.insurance_expiration_date || '';
+
+                    form.querySelector('[name="emergency_contact_name"]').value = prefill.emergency_contact_name || '';
+                    form.querySelector('[name="emergency_contact_phone"]').value = prefill.emergency_contact_phone || '';
+                    form.querySelector('[name="emergency_contact_relation"]').value = prefill.emergency_contact_relation || '';
+                    form.querySelector('[name="consent_terms_accepted"]').checked = !!prefill.consent_terms_accepted;
+
+                    form.querySelector('[name="observations"]').value = prefill.observations || '';
+                    if (prefill.professional_id) select.value = prefill.professional_id;
+
+                    if (typeof toggleInsuranceFields === 'function') toggleInsuranceFields();
+                }
+            } catch (e) {
+                console.error("Error loading professionals:", e);
+            }
+        }
+
+        async function handlePatientSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            data.consent_terms_accepted = formData.get('consent_terms_accepted') === 'true';
+
+            if (!data.birth_date) data.birth_date = null;
+            if (!data.insurance_expiration_date) data.insurance_expiration_date = null;
+
+            if (data.professional_id) data.professional_id = parseInt(data.professional_id);
+            else data.professional_id = null;
+
+            const patientId = document.getElementById('patient-id-field').value;
+            const isEdit = patientId && patientId !== '';
+            const url = isEdit ? `/api/patients/${patientId}` : '/api/patients';
+            const method = isEdit ? 'PUT' : 'POST';
+            delete data.patient_id;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('patient-modal');
+                    form.reset();
+                    document.getElementById('patient-id-field').value = '';
+                    fetchPatients();
+                } else {
+                    const err = await response.json();
+                    alert('Erro ao salvar paciente: ' + (err.detail || JSON.stringify(err)));
+                }
+            } catch (e) {
+                console.error("Error saving patient:", e);
+            }
+        }
+
+        async function deletePatient(id) {
+            if (!confirm('Tem certeza que deseja desativar este paciente?')) return;
+
+            try {
+                const response = await fetch(`/api/patients/${id}`, { method: 'DELETE' });
+                if (response.ok) fetchPatients();
+            } catch (e) {
+                console.error("Error deleting patient:", e);
+            }
+        }
+
+        // Appointments Logic
+        async function fetchAppointments() {
+            try {
+                const response = await fetch('/api/appointments');
+                const appointments = await response.json();
+                const tbody = document.getElementById('appointments-table-body');
+                tbody.innerHTML = '';
+
+                appointments.forEach(appt => {
+                    const tr = document.createElement('tr');
+                    const dateObj = new Date(appt.date);
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+
+                    tr.innerHTML = `
+                        <td>${dateStr}</td>
+                        <td>${appt.time.substring(0, 5)}</td>
+                        <td><span class="clickable-patient" onclick="openPatientProfileByName('${appt.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:500;">${appt.patient_name}</span></td>
+                        <td>${appt.professional_name}</td>
+                        <td><span class="status-badge status-${getStatusClass(appt.status)}">${appt.status}</span></td>
+                        <td>
+                            <i class="fas fa-edit action-btn" style="color: var(--primary); cursor: pointer; margin-right: 8px;" onclick='editAppointment(${JSON.stringify(appt)})'></i>
+                            <i class="fas fa-trash action-btn delete" onclick="deleteAppointment(${appt.id})"></i>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Error fetching appointments:", e);
+            }
+        }
+
+        function editAppointment(appt) {
+            openAppointmentModal(appt);
+        }
+
+        async function openAppointmentModal(prefill = null) {
+            document.getElementById('appointment-modal-title').innerText = prefill ? 'Editar Agendamento' : 'Novo Agendamento';
+            document.getElementById('appointment-id-field').value = prefill ? prefill.id : '';
+            openModal('appointment-modal');
+
+            try {
+                const resPat = await fetch('/api/patients');
+                const patients = await resPat.json();
+                const patSelect = document.getElementById('appt-patient-select');
+                patSelect.innerHTML = '<option value="">Selecione...</option>';
+                patients.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = p.name;
+                    patSelect.appendChild(opt);
+                });
+
+                const resProf = await fetch('/api/professionals');
+                const professionals = await resProf.json();
+                const profSelect = document.getElementById('appt-professional-select');
+                profSelect.innerHTML = '<option value="">Selecione...</option>';
+                professionals.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = p.name + ' (' + p.role + ')';
+                    profSelect.appendChild(opt);
+                });
+
+                if (prefill) {
+                    patSelect.value = prefill.patient_id;
+                    profSelect.value = prefill.professional_id;
+                    const form = document.getElementById('appointment-form');
+                    if (prefill.date) form.querySelector('[name="date"]').value = prefill.date;
+                    if (prefill.time) form.querySelector('[name="time"]').value = prefill.time.substring(0, 5);
+                    if (prefill.status) form.querySelector('[name="status"]').value = prefill.status;
+                    if (prefill.observations) form.querySelector('[name="observations"]').value = prefill.observations;
+                    if (prefill.certificate_type) form.querySelector('[name="certificate_type"]').value = prefill.certificate_type;
+                }
+            } catch (e) {
+                console.error("Error populating selects:", e);
+            }
+        }
+
+        async function handleAppointmentSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            data.patient_id = parseInt(data.patient_id);
+            data.professional_id = parseInt(data.professional_id);
+            if (data.time && data.time.length === 5) data.time += ':00';
+
+            const appointmentId = document.getElementById('appointment-id-field').value;
+            const isEdit = appointmentId && appointmentId !== '';
+            const url = isEdit ? `/api/appointments/${appointmentId}` : '/api/appointments';
+            const method = isEdit ? 'PUT' : 'POST';
+            delete data.appointment_id;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('appointment-modal');
+                    form.reset();
+                    document.getElementById('appointment-id-field').value = '';
+                    fetchAppointments();
+                    fetchDashboardData();
+                } else {
+                    const err = await response.json();
+                    alert('Erro ao agendar: ' + (err.detail || JSON.stringify(err)));
+                }
+            } catch (e) {
+                console.error("Error saving appointment:", e);
+            }
+        }
+
+        async function deleteAppointment(id) {
+            if (!confirm('Cancelar este agendamento?')) return;
+            try {
+                const response = await fetch(`/api/appointments/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                    fetchAppointments();
+                    fetchDashboardData();
+                }
+            } catch (e) {
+                console.error("Error deleting appointment:", e);
+            }
+        }
+
+        // Professionals Logic
+        async function fetchProfessionals() {
+            try {
+                const response = await fetch('/api/professionals');
+                const professionals = await response.json();
+                const tbody = document.getElementById('professionals-table-body');
+                tbody.innerHTML = '';
+
+                professionals.forEach(p => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${p.name}</td>
+                        <td>${p.role}</td>
+                        <td>${p.professional_register || '-'}</td>
+                        <td>${p.phone || '-'}</td>
+                        <td><span class="status-badge status-${getStatusClass(p.status)}">${p.status === 'Active' ? 'Ativo' : 'Inativo'}</span></td>
+                        <td>
+                            <i class="fas fa-edit action-btn" style="color: var(--primary); cursor: pointer; margin-right: 8px;" onclick='editProfessional(${JSON.stringify(p)})'></i>
+                            <i class="fas fa-trash action-btn delete" onclick="deleteProfessional(${p.id})"></i>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Error fetching professionals:", e);
+            }
+        }
+
+        function editProfessional(professional) {
+            openProfessionalModal(professional);
+        }
+
+        function openProfessionalModal(prefill = null) {
+            document.getElementById('professional-modal-title').innerText = prefill ? 'Editar Funcionário' : 'Novo Funcionário';
+            document.getElementById('professional-id-field').value = prefill ? prefill.id : '';
+            openModal('professional-modal');
+
+            if (prefill) {
+                const form = document.getElementById('professional-form');
+                form.querySelector('[name="name"]').value = prefill.name || '';
+                form.querySelector('[name="role"]').value = prefill.role || '';
+                form.querySelector('[name="status"]').value = prefill.status || 'Active';
+                form.querySelector('[name="email"]').value = prefill.email || '';
+                form.querySelector('[name="phone"]').value = prefill.phone || '';
+                form.querySelector('[name="professional_register"]').value = prefill.professional_register || '';
+                form.querySelector('[name="specialty"]').value = prefill.specialty || '';
+                updateRegisterLabel();
+            }
+        }
+
+        function updateRegisterLabel() {
+            const role = document.getElementById('prof-role-select').value;
+            const label = document.getElementById('prof-register-label');
+
+            if (role === 'Psicólogo') label.innerText = 'CRP';
+            else if (role === 'Dentista') label.innerText = 'CRO';
+            else if (role === 'Nutricionista') label.innerText = 'CRN';
+            else label.innerText = 'Registro Profissional';
+        }
+
+        async function handleProfessionalSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            const professionalId = document.getElementById('professional-id-field').value;
+            const isEdit = professionalId && professionalId !== '';
+            const url = isEdit ? `/api/professionals/${professionalId}` : '/api/professionals';
+            const method = isEdit ? 'PUT' : 'POST';
+            delete data.professional_id;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('professional-modal');
+                    form.reset();
+                    document.getElementById('professional-id-field').value = '';
+                    fetchProfessionals();
+                } else {
+                    const err = await response.json();
+                    alert('Erro ao salvar funcionário: ' + (err.detail || JSON.stringify(err)));
+                }
+            } catch (e) {
+                console.error("Error saving professional:", e);
+            }
+        }
+
+        async function deleteProfessional(id) {
+            if (!confirm('Tem certeza que deseja remover este funcionário?')) return;
+            try {
+                const response = await fetch(`/api/professionals/${id}`, { method: 'DELETE' });
+                if (response.ok) fetchProfessionals();
+            } catch (e) {
+                console.error("Error deleting professional:", e);
+            }
+        }
+
+        // Certificates Logic
+        async function fetchCertificates() {
+            try {
+                const response = await fetch('/api/certificates');
+                const certificates = await response.json();
+                const tbody = document.getElementById('certificates-table-body');
+                tbody.innerHTML = '';
+
+                certificates.forEach(c => {
+                    const tr = document.createElement('tr');
+                    const dateObj = new Date(c.date);
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+
+                    tr.innerHTML = `
+                        <td>${dateStr}</td>
+                        <td><span class="clickable-patient" onclick="openPatientProfileByName('${c.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:500;">${c.patient_name}</span></td>
+                        <td>${c.professional_name}</td>
+                        <td>${c.type}</td>
+                        <td>${c.duration_days || '-'}</td>
+                        <td>
+                            <i class="fas fa-edit action-btn" style="color: var(--primary); cursor: pointer; margin-right: 8px;" onclick='editCertificate(${JSON.stringify(c)})'></i>
+                            <i class="fas fa-trash action-btn delete" onclick="deleteCertificate(${c.id})"></i>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Error fetching certificates:", e);
+            }
+        }
+
+        async function openCertificateModal(prefill = null) {
+            document.getElementById('certificate-modal-title').innerText = prefill ? 'Editar Atestado' : 'Novo Atestado';
+            document.getElementById('certificate-id-field').value = prefill ? prefill.id : '';
+            openModal('certificate-modal');
+
+            try {
+                const resPat = await fetch('/api/patients');
+                const patients = await resPat.json();
+                const patSelect = document.getElementById('cert-patient-select');
+                patSelect.innerHTML = '<option value="">Selecione...</option>';
+                patients.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = p.name;
+                    patSelect.appendChild(opt);
+                });
+
+                const resProf = await fetch('/api/professionals');
+                const professionals = await resProf.json();
+                const profSelect = document.getElementById('cert-professional-select');
+                profSelect.innerHTML = '<option value="">Selecione...</option>';
+                professionals.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = p.name + ' (' + p.role + ')';
+                    profSelect.appendChild(opt);
+                });
+
+                if (prefill) {
+                    patSelect.value = prefill.patient_id;
+                    profSelect.value = prefill.professional_id;
+                    document.querySelector('#certificate-form [name="type"]').value = prefill.type || 'Médico';
+                    document.querySelector('#certificate-form [name="duration_days"]').value = prefill.duration_days || '';
+                    document.querySelector('#certificate-form [name="date"]').value = prefill.date || '';
+                    document.querySelector('#certificate-form [name="description"]').value = prefill.description || '';
+                }
+            } catch (e) {
+                console.error("Error populating select for certificates:", e);
+            }
+        }
+
+        function editCertificate(cert) {
+            openCertificateModal(cert);
+        }
+
+        async function handleCertificateSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            if (!data.patient_id || !data.professional_id) {
+                alert("Erro: Selecione Paciente e Profissional!");
+                return;
+            }
+
+            data.patient_id = parseInt(data.patient_id);
+            data.professional_id = parseInt(data.professional_id);
+            if (data.duration_days) data.duration_days = parseInt(data.duration_days);
+
+            const certId = document.getElementById('certificate-id-field').value;
+            const isEdit = certId && certId !== '';
+            const url = isEdit ? `/api/certificates/${certId}` : '/api/certificates';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            delete data.certificate_id;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('certificate-modal');
+                    form.reset();
+                    fetchCertificates();
+                } else {
+                    const err = await response.json();
+                    alert('Erro ao salvar atestado: ' + (err.detail || JSON.stringify(err)));
+                }
+            } catch (e) {
+                console.error("Error saving certificate:", e);
+            }
+        }
+
+        async function deleteCertificate(id) {
+            if (!confirm('Tem certeza que deseja remover este atestado?')) return;
+            try {
+                const response = await fetch(`/api/certificates/${id}`, { method: 'DELETE' });
+                if (response.ok) fetchCertificates();
+            } catch (e) {
+                console.error("Error deleting certificate:", e);
+            }
+        }
+
+        // Prescriptions Logic
+        async function fetchPrescriptions() {
+            try {
+                const response = await fetch('/api/prescriptions');
+                const prescriptions = await response.json();
+                const tbody = document.getElementById('prescriptions-table-body');
+                tbody.innerHTML = '';
+
+                prescriptions.forEach(p => {
+                    const tr = document.createElement('tr');
+                    // Format date
+                    const dateObj = new Date(p.date);
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+
+                    tr.innerHTML = `
+                        <td>${dateStr}</td>
+                        <td><span class="clickable-patient" onclick="openPatientProfileByName('${p.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:500;">${p.patient_name}</span></td>
+                        <td>${p.professional_name}</td>
+                        <td>${p.medication_name}</td>
+                        <td>${p.certificate_type || '-'}</td>
+                        <td>
+                            <i class="fas fa-edit action-btn" style="color: var(--primary); cursor: pointer; margin-right: 8px;" onclick='editPrescription(${JSON.stringify(p)})'></i>
+                            <i class="fas fa-trash action-btn delete" onclick="deletePrescription(${p.id})"></i>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Error fetching prescriptions:", e);
+            }
+        }
+
+        async function openPrescriptionModal(prefill = null) {
+            document.getElementById('prescription-modal-title').innerText = prefill ? 'Editar Receita' : 'Nova Receita';
+            document.getElementById('prescription-id-field').value = prefill ? prefill.id : '';
+            openModal('prescription-modal');
+
+            // Populate selects
+            try {
+                const resPat = await fetch('/api/patients');
+                const patients = await resPat.json();
+                const patSelect = document.getElementById('presc-patient-select');
+                patSelect.innerHTML = '<option value="">Selecione...</option>';
+                patients.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = p.name;
+                    patSelect.appendChild(opt);
+                });
+
+                const resProf = await fetch('/api/professionals');
+                const professionals = await resProf.json();
+                const profSelect = document.getElementById('presc-professional-select');
+                profSelect.innerHTML = '<option value="">Selecione...</option>';
+                professionals.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.innerText = p.name + ' (' + p.role + ')';
+                    profSelect.appendChild(opt);
+                });
+
+                // Pre-fill form if editing
+                if (prefill) {
+                    patSelect.value = prefill.patient_id;
+                    profSelect.value = prefill.professional_id;
+                    document.querySelector('#prescription-form [name="medication_name"]').value = prefill.medication_name || '';
+                    document.querySelector('#prescription-form [name="dosage"]').value = prefill.dosage || '';
+                    document.querySelector('#prescription-form [name="certificate_type"]').value = prefill.certificate_type || 'Sem Atestado';
+                    document.querySelector('#prescription-form [name="date"]').value = prefill.date || '';
+                }
+            } catch (e) {
+                console.error("Error populating select for prescription:", e);
+            }
+        }
+
+        function editPrescription(prescription) {
+            openPrescriptionModal(prescription);
+        }
+
+        async function handlePrescriptionSubmit(event) {
+            console.log("handlePrescriptionSubmit called");
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Validate IDs
+            if (!data.patient_id || !data.professional_id) {
+                alert("Erro: Selecione Paciente e Profissional!");
+                return;
+            }
+
+            data.patient_id = parseInt(data.patient_id);
+            data.professional_id = parseInt(data.professional_id);
+
+            // Fix empty date string issue
+            if (!data.date) {
+                delete data.date;
+            }
+
+            console.log("Sending Prescription Data:", JSON.stringify(data));
+
+            const prescriptionId = document.getElementById('prescription-id-field').value;
+            const isEdit = prescriptionId && prescriptionId !== '';
+            const url = isEdit ? `/api/prescriptions/${prescriptionId}` : '/api/prescriptions';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            // Remove prescription_id from payload (it's not a model field)
+            delete data.prescription_id;
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    closeModal('prescription-modal');
+                    form.reset();
+                    document.getElementById('prescription-id-field').value = '';
+                    fetchPrescriptions();
+                } else {
+                    const err = await response.json();
+                    alert('Erro ao salvar receita: ' + (err.detail || JSON.stringify(err)));
+                }
+            } catch (e) {
+                console.error("Error saving prescription:", e);
+            }
+        }
+
+        async function deletePrescription(id) {
+            if (!confirm('Tem certeza que deseja remover esta receita?')) return;
+            try {
+                const response = await fetch(`/api/prescriptions/${id}`, { method: 'DELETE' });
+                if (response.ok) fetchPrescriptions();
+            } catch (e) {
+                console.error("Error deleting prescription:", e);
+            }
+        }
+
+        // Messages Logic
+        async function fetchMessages() {
+            try {
+                let url = '/api/patient-messages';
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    const user = JSON.parse(userStr);
+                    if (user.role !== 'admin') {
+                        url += `?professional_id=${user.id}`;
+                    }
+                }
+                const response = await fetch(url);
+                const messages = await response.json();
+                const tbody = document.getElementById('messages-table-body');
+                if (!tbody) return;
+                tbody.innerHTML = '';
+
+                if (messages.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 2rem; color: var(--text-muted);">Nenhuma mensagem encontrada.</td></tr>';
+                    return;
+                }
+
+                messages.forEach(msg => {
+                    const tr = document.createElement('tr');
+                    const dateObj = new Date(msg.created_at);
+                    const dateStr = dateObj.toLocaleDateString('pt-BR', { timeZone: 'UTC' }) + ' ' + dateObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                    const isReadHTML = msg.is_read ? '<span class="status-badge status-confirmed">Lida</span>' : '<span class="status-badge status-pending">Nova</span>';
+
+                    tr.innerHTML = `
+                        <td>${dateStr}</td>
+                        <td><span class="clickable-patient" onclick="openPatientProfileByName('${msg.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:500;">${msg.patient_name}</span></td>
+                        <td>${msg.message.length > 60 ? msg.message.substring(0, 60) + '...' : msg.message}</td>
+                        <td id="msg-status-${msg.id}">${isReadHTML}</td>
+                        <td>
+                            ${!msg.is_read ? `<i class="fas fa-check action-btn" style="color: var(--primary); cursor: pointer;" title="Marcar como lida" onclick="markMessageRead(${msg.id})"></i>` : '<i class="fas fa-check-double action-btn" style="color: var(--text-muted); cursor: not-allowed;" title="Já lida"></i>'}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Error fetching patient messages:", e);
+            }
+        }
+
+        async function markMessageRead(id) {
+            try {
+                const response = await fetch(`/api/patient-messages/${id}/read`, { method: 'PUT' });
+                if (response.ok) {
+                    fetchMessages(); // refresh the list
+                }
+            } catch (e) {
+                console.error("Error marking message as read:", e);
+            }
+        }
+
+        // Sidebar Toggle Logic
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const icon = document.getElementById('toggle-icon');
+            sidebar.classList.toggle('collapsed');
+
+            if (sidebar.classList.contains('collapsed')) {
+                icon.classList.remove('fa-chevron-left');
+                icon.classList.add('fa-chevron-right');
+            } else {
+                icon.classList.remove('fa-chevron-right');
+                icon.classList.add('fa-chevron-left');
+            }
+        }
+
+        // Auth Logic
+        function checkAuth() {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) {
+                // Not logged in -> Redirect to Login Page
+                window.location.href = '/login';
+                return;
+            }
+
+            const user = JSON.parse(userStr);
+            // Update Sidebar
+            const userNameEl = document.querySelector('.user-name');
+            const userRoleEl = document.querySelector('.user-role');
+            const userAvatarEl = document.querySelector('.user-avatar');
+
+            if (userNameEl) userNameEl.innerText = user.full_name;
+            if (userRoleEl) userRoleEl.innerText = user.role === 'admin' ? 'Administrador' : 'Usuário';
+            if (userAvatarEl) {
+                const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+                if (profile.photo) {
+                    userAvatarEl.innerText = '';
+                    userAvatarEl.style.backgroundImage = `url(${profile.photo})`;
+                    userAvatarEl.style.backgroundSize = 'cover';
+                    userAvatarEl.style.backgroundPosition = 'center';
+                } else {
+                    userAvatarEl.innerText = user.full_name.substring(0, 2).toUpperCase();
+                }
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+
+        // Profile Functions
+        function loadProfile() {
+            const userStr = localStorage.getItem('user');
+            if (!userStr) return;
+            const user = JSON.parse(userStr);
+            const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+
+            const nameEl = document.getElementById('profile-name');
+            const emailEl = document.getElementById('profile-email');
+            const phoneEl = document.getElementById('profile-phone');
+            const roleTitleEl = document.getElementById('profile-role-title');
+            const crpEl = document.getElementById('profile-crp');
+            const photoEl = document.getElementById('profile-photo');
+
+            if (nameEl) nameEl.value = user.full_name || '';
+            if (emailEl) emailEl.value = user.email || '';
+            if (phoneEl) phoneEl.value = profile.phone || '';
+            if (roleTitleEl) roleTitleEl.value = profile.role_title || '';
+            if (crpEl) crpEl.value = profile.crp || '';
+            if (photoEl) {
+                if (profile.photo) {
+                    photoEl.innerHTML = '';
+                    photoEl.style.backgroundImage = `url(${profile.photo})`;
+                    photoEl.style.backgroundSize = 'cover';
+                    photoEl.style.backgroundPosition = 'center';
+                } else {
+                    photoEl.innerText = user.full_name ? user.full_name.substring(0, 2).toUpperCase() : 'AD';
+                }
+            }
+        }
+
+        function saveProfile(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+
+            profile.phone = formData.get('phone') || '';
+            profile.role_title = formData.get('role_title') || '';
+            profile.crp = formData.get('crp') || '';
+            localStorage.setItem('profile', JSON.stringify(profile));
+
+            // Update user name in localStorage
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const newName = formData.get('full_name');
+            if (newName) {
+                user.full_name = newName;
+                localStorage.setItem('user', JSON.stringify(user));
+                checkAuth(); // Refresh sidebar
+            }
+
+            alert('Perfil salvo com sucesso!');
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Arquivo muito grande. Máximo 2MB.');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const photoEl = document.getElementById('profile-photo');
+                const avatarEl = document.querySelector('.user-avatar');
+                const dataUrl = e.target.result;
+
+                // Update profile photo display
+                photoEl.innerHTML = '';
+                photoEl.style.backgroundImage = `url(${dataUrl})`;
+                photoEl.style.backgroundSize = 'cover';
+                photoEl.style.backgroundPosition = 'center';
+
+                // Update sidebar avatar
+                if (avatarEl) {
+                    avatarEl.innerHTML = '';
+                    avatarEl.style.backgroundImage = `url(${dataUrl})`;
+                    avatarEl.style.backgroundSize = 'cover';
+                    avatarEl.style.backgroundPosition = 'center';
+                }
+
+                // Save to localStorage
+                const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+                profile.photo = dataUrl;
+                localStorage.setItem('profile', JSON.stringify(profile));
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ===== GRIDSTACK INIT =====
+        let dashboardGrid = null;
+
+        function initGridStack() {
+            const gridEl = document.getElementById('dashboard-grid');
+            if (!gridEl || !window.GridStack) return;
+
+            // Load saved layout
+            const savedLayout = localStorage.getItem('dashboard-layout');
+
+            dashboardGrid = GridStack.init({
+                column: 12,
+                cellHeight: 80,
+                margin: 0,
+                animate: true,
+                float: true,
+                resizable: { handles: 'n,e,s,w,ne,se,sw,nw' },
+                draggable: { handle: '.grid-stack-item-content' }
+            }, '#dashboard-grid');
+
+            // Restore saved layout if exists
+            if (savedLayout) {
+                try {
+                    const items = JSON.parse(savedLayout);
+                    dashboardGrid.batchUpdate();
+                    items.forEach(item => {
+                        const el = gridEl.querySelector(`[gs - id= "${item.id}"]`);
+                        if (el) {
+                            dashboardGrid.update(el, { x: item.x, y: item.y, w: item.w, h: item.h });
+                        }
+                    });
+                    dashboardGrid.batchUpdate(false);
+                } catch (e) {
+                    console.warn('Failed to restore dashboard layout:', e);
+                }
+            }
+
+            // Save layout on change
+            dashboardGrid.on('change', function (event, items) {
+                saveDashboardLayout();
+            });
+
+            // Restore saved card colors
+            loadSavedColors();
+
+            // Load chart
+            loadChartData('daily');
+
+            // Load calendar
+            loadCalendar();
+        }
+
+        function saveDashboardLayout() {
+            if (!dashboardGrid) return;
+            const items = dashboardGrid.getGridItems().map(el => ({
+                id: el.getAttribute('gs-id'),
+                x: parseInt(el.getAttribute('gs-x')),
+                y: parseInt(el.getAttribute('gs-y')),
+                w: parseInt(el.getAttribute('gs-w')),
+                h: parseInt(el.getAttribute('gs-h'))
+            }));
+            localStorage.setItem('dashboard-layout', JSON.stringify(items));
+        }
+
+        const DEFAULT_LAYOUT = [
+            { id: 'kpi-patients', x: 0, y: 0, w: 3, h: 3 },
+            { id: 'kpi-today', x: 3, y: 0, w: 3, h: 3 },
+            { id: 'kpi-next', x: 6, y: 0, w: 3, h: 3 },
+            { id: 'kpi-week', x: 9, y: 0, w: 3, h: 3 },
+            { id: 'agenda-today', x: 0, y: 3, w: 7, h: 8 },
+            { id: 'upcoming', x: 7, y: 3, w: 5, h: 5 },
+            { id: 'chart-appointments', x: 0, y: 11, w: 12, h: 5 },
+            { id: 'calendar-widget', x: 0, y: 16, w: 6, h: 6 }
+        ];
+
+        function resetDashboardLayout() {
+            if (!dashboardGrid) return;
+            dashboardGrid.batchUpdate();
+            const gridEl = document.getElementById('dashboard-grid');
+            DEFAULT_LAYOUT.forEach(item => {
+                const el = gridEl.querySelector(`[gs - id= "${item.id}"]`);
+                if (el) {
+                    dashboardGrid.update(el, { x: item.x, y: item.y, w: item.w, h: item.h });
+                }
+            });
+            dashboardGrid.batchUpdate(false);
+            localStorage.removeItem('dashboard-layout');
+        }
+
+        // ===== COLOR PICKER =====
+        function openColorPicker(btn) {
+            const colorInput = btn.nextElementSibling;
+            if (colorInput) colorInput.click();
+        }
+
+        function applyCardColor(input) {
+            const color = input.value;
+            const gridItem = input.closest('.grid-stack-item');
+            const card = gridItem.querySelector('.kpi-card, .card.widget-card');
+            const widgetId = gridItem.getAttribute('gs-id');
+
+            if (card) {
+                card.style.backgroundColor = color;
+                // Auto-adjust text color for contrast
+                const r = parseInt(color.slice(1, 3), 16);
+                const g = parseInt(color.slice(3, 5), 16);
+                const b = parseInt(color.slice(5, 7), 16);
+                const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                card.style.color = luminance > 0.5 ? '#1e293b' : '#f8fafc';
+            }
+
+            // Save to localStorage
+            const colors = JSON.parse(localStorage.getItem('widget-colors') || '{}');
+            colors[widgetId] = color;
+            localStorage.setItem('widget-colors', JSON.stringify(colors));
+        }
+
+        function resetCardColors() {
+            localStorage.removeItem('widget-colors');
+            document.querySelectorAll('#dashboard-grid .grid-stack-item').forEach(item => {
+                const card = item.querySelector('.kpi-card, .card.widget-card');
+                if (card) {
+                    card.style.backgroundColor = '';
+                    card.style.color = '';
+                }
+            });
+        }
+
+        function loadSavedColors() {
+            const colors = JSON.parse(localStorage.getItem('widget-colors') || '{}');
+            Object.entries(colors).forEach(([widgetId, color]) => {
+                const gridItem = document.querySelector(`[gs - id= "${widgetId}"]`);
+                if (!gridItem) return;
+                const card = gridItem.querySelector('.kpi-card, .card.widget-card');
+                if (card) {
+                    card.style.backgroundColor = color;
+                    const r = parseInt(color.slice(1, 3), 16);
+                    const g = parseInt(color.slice(3, 5), 16);
+                    const b = parseInt(color.slice(5, 7), 16);
+                    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                    card.style.color = luminance > 0.5 ? '#1e293b' : '#f8fafc';
+                }
+            });
+        }
+
+        // ===== APPOINTMENTS CHART =====
+        let appointmentsChart = null;
+        let currentChartPeriod = 'daily';
+
+        async function loadChartData(period) {
+            currentChartPeriod = period;
+            try {
+                const token = localStorage.getItem('token');
+                const resp = await fetch(`/ api / dashboard / chart - data ? period = ${period}`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (!resp.ok) throw new Error('Fetch failed');
+                const data = await resp.json();
+                renderChart(data.labels, data.data);
+            } catch (e) {
+                console.warn('Failed to load chart data:', e);
+                // Render with empty data
+                renderChart([], []);
+            }
+        }
+
+        function renderChart(labels, data) {
+            const ctx = document.getElementById('appointments-chart');
+            if (!ctx) return;
+
+            // Theme-aware colors
+            const style = getComputedStyle(document.documentElement);
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark' ||
+                (style.getPropertyValue('--bg-main') || '').trim().startsWith('#1');
+            const textColor = isDark ? '#94a3b8' : '#475569';
+            const gridColor = isDark ? 'rgba(148, 163, 184, 0.12)' : 'rgba(100, 116, 139, 0.15)';
+            const labelColor = isDark ? '#cbd5e1' : '#1e293b';
+
+            if (appointmentsChart) {
+                appointmentsChart.destroy();
+            }
+
+            // Register datalabels plugin
+            Chart.register(ChartDataLabels);
+
+            appointmentsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Agendamentos',
+                        data: data,
+                        backgroundColor: '#00bfa5',
+                        hoverBackgroundColor: '#00e5c3',
+                        borderRadius: { topLeft: 6, topRight: 6, bottomLeft: 0, bottomRight: 0 },
+                        borderSkipped: false,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: { top: 30, right: 16, bottom: 8, left: 8 }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            color: labelColor,
+                            font: {
+                                size: 13,
+                                weight: '600',
+                                family: "'Inter', sans-serif"
+                            },
+                            formatter: (value) => value > 0 ? value : ''
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                            titleColor: isDark ? '#f1f5f9' : '#1e293b',
+                            bodyColor: isDark ? '#cbd5e1' : '#475569',
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            padding: 12,
+                            displayColors: true,
+                            boxWidth: 12,
+                            boxHeight: 12,
+                            boxPadding: 4,
+                            usePointStyle: true,
+                            callbacks: {
+                                label: (ctx) => ` ${ctx.parsed.y} agendamento${ctx.parsed.y !== 1 ? 's' : ''}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: textColor,
+                                font: { size: 12, weight: '500', family: "'Inter', sans-serif" },
+                                padding: 8
+                            },
+                            border: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: gridColor,
+                                drawTicks: false
+                            },
+                            ticks: {
+                                color: textColor,
+                                font: { size: 12, family: "'Inter', sans-serif" },
+                                stepSize: 1,
+                                precision: 0,
+                                padding: 8
+                            },
+                            border: { display: false }
+                        }
+                    },
+                    animation: {
+                        duration: 700,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+
+        function setChartPeriod(el) {
+            const period = el.getAttribute('data-period');
+            el.closest('.widget-period-menu').querySelectorAll('.period-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            el.classList.add('active');
+            el.closest('.widget-period-menu').classList.remove('open');
+            const btn = el.closest('.widget-period-toggle').querySelector('.widget-period-btn');
+            if (btn) btn.classList.remove('active');
+            loadChartData(period);
+        }
+
+        // ===== CALENDAR WIDGET =====
+        let calendarMonth = new Date().getMonth() + 1;
+        let calendarYear = new Date().getFullYear();
+        let calendarMode = 'month'; // 'month' or 'week'
+        let calendarWeekStart = null; // Date object for start of week
+        let calendarData = {};
+
+        // Initialize week start to current week's monday
+        const today = new Date();
+        const day = today.getDay();
+        const diff = today.getDate() - day + (day == 0 ? -6 : 1);
+        calendarWeekStart = new Date(today.setDate(diff));
+
+        function toggleCalendarMode() {
+            const btn = document.getElementById('cal-mode-toggle');
+            if (calendarMode === 'month') {
+                calendarMode = 'week';
+                btn.textContent = 'Mês';
+                btn.title = 'Visualização Mensal';
+            } else {
+                calendarMode = 'month';
+                btn.textContent = 'Semana';
+                btn.title = 'Visualização Semanal';
+            }
+            loadCalendar();
+        }
+
+        function changeCalendarOffset(offset) {
+            if (calendarMode === 'month') {
+                changeCalendarMonth(offset);
+            } else {
+                changeCalendarWeek(offset);
+            }
+        }
+
+        function changeCalendarWeek(offset) {
+            calendarWeekStart.setDate(calendarWeekStart.getDate() + (offset * 7));
+            // Update month/year based on week start for API fetching (approximate)
+            calendarMonth = calendarWeekStart.getMonth() + 1;
+            calendarYear = calendarWeekStart.getFullYear();
+            loadCalendar();
+        }
+
+        function changeCalendarMonth(offset) {
+            calendarMonth += offset;
+            if (calendarMonth > 12) {
+                calendarMonth = 1;
+                calendarYear++;
+            } else if (calendarMonth < 1) {
+                calendarMonth = 12;
+                calendarYear--;
+            }
+            loadCalendar();
+        }
+
+        async function loadCalendar() {
+            try {
+                // For week view, we might need data from adjacent months, so fetch current month
+                // Optimization: Fetch wider range if needed, but for now fetch current month focus
+                const token = localStorage.getItem('token');
+                const resp = await fetch(`/ api / dashboard / calendar ? month = ${calendarMonth} & year=${calendarYear}`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (!resp.ok) throw new Error('Fetch failed');
+                const data = await resp.json();
+                calendarData = data.appointments || {};
+
+                if (calendarMode === 'month') {
+                    buildCalendarGrid(data);
+                } else {
+                    buildCalendarWeek(data);
+                }
+            } catch (e) {
+                console.warn('Failed to load calendar:', e);
+            }
+        }
+
+        function buildCalendarWeek(data) {
+            const container = document.getElementById('calendar-grid');
+            if (!container) return;
+
+            const label = document.getElementById('calendar-month-label');
+            const endOfWeek = new Date(calendarWeekStart);
+            endOfWeek.setDate(calendarWeekStart.getDate() + 6);
+
+            const startStr = calendarWeekStart.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+            const endStr = endOfWeek.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' });
+            if (label) label.textContent = `${startStr} - ${endStr}`;
+
+            let html = '<div class="calendar-week-view" style="display:grid;grid-template-columns:50px repeat(7, 1fr);gap:1px;background:var(--border-subtle);border:1px solid var(--border-subtle);border-radius:8px;overflow:hidden;">';
+
+            // Header Row
+            html += '<div class="cal-week-header" style="background:var(--bg-surface);padding:10px;"></div>'; // Spacer
+            const weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(calendarWeekStart);
+                d.setDate(calendarWeekStart.getDate() + i);
+                const isToday = d.toDateString() === new Date().toDateString();
+                const dayName = weekDays[i];
+                const dayNum = d.getDate();
+
+                html += `< div class= "cal-week-header ${isToday ? 'today' : ''}" style = "background:var(--bg-surface);padding:10px;text-align:center;border-bottom:1px solid var(--border-subtle);" >
+                    <div style="font-size:0.75rem;color:var(--text-tertiary);uppercase">${dayName}</div>
+                    <div style="font-size:1.1rem;font-weight:700;color:${isToday ? 'var(--primary)' : 'var(--text-main)'}">${dayNum}</div>
+                </div > `;
+            }
+
+            // Time Slots (8am to 18pm)
+            for (let hour = 8; hour <= 18; hour++) {
+                const timeLabel = `${String(hour).padStart(2, '0')}:00`;
+                html += `< div class="cal-time-slot" style = "background:var(--bg-surface);padding:5px;font-size:0.75rem;color:var(--text-tertiary);text-align:right;border-right:1px solid var(--border-subtle);" > ${timeLabel}</div > `;
+
+                for (let i = 0; i < 7; i++) {
+                    const d = new Date(calendarWeekStart);
+                    d.setDate(calendarWeekStart.getDate() + i);
+                    const dateStr = d.toISOString().split('T')[0];
+                    const appts = calendarData[dateStr] || [];
+
+                    // Filter appointments for this hour (approximate)
+                    const hourAppts = appts.filter(a => {
+                        const h = parseInt(a.time.split(':')[0]);
+                        return h === hour;
+                    });
+
+                    html += `< div class="cal-week-cell" style = "background:var(--bg-surface);border-bottom:1px solid var(--border-subtle);position:relative;min-height:50px;padding:2px;" > `;
+
+                    hourAppts.forEach(a => {
+                        let statusColor = 'var(--text-main)';
+                        let bgColor = 'var(--bg-body)';
+                        const st = (a.status || '').toLowerCase();
+                        if (st.includes('confirm')) { bgColor = '#dcfce7'; statusColor = '#166534'; }
+                        else if (st.includes('aguard')) { bgColor = '#fef9c3'; statusColor = '#854d0e'; }
+
+                        html += `< div class="cal-week-appt clickable" onclick = "openPatientProfileByName('${a.patient}')"
+                style = "background:${bgColor};color:${statusColor};font-size:0.7rem;padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" >
+                    ${a.time.substr(3, 2)} ${a.patient}
+                        </div > `;
+                    });
+
+                    html += `</div > `;
+                }
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+
+            // Hide detail panel used in month view
+            const detail = document.getElementById('calendar-day-detail');
+            if (detail) detail.style.display = 'none';
+        }
+
+        function buildCalendarGrid(data) {
+            const container = document.getElementById('calendar-grid');
+            if (!container) return;
+
+            const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            const label = document.getElementById('calendar-month-label');
+            if (label) label.textContent = `${monthNames[data.month - 1]} ${data.year} `;
+
+            const today = new Date();
+            const isCurrentMonth = today.getMonth() + 1 === data.month && today.getFullYear() === data.year;
+            const todayDay = today.getDate();
+
+            let html = '<div class="calendar-weekdays" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;margin-bottom:4px;">';
+            ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].forEach(d => {
+                html += `< div class="calendar-weekday" style = "text-align:center;font-size:0.8rem;color:var(--text-tertiary);padding:4px;" > ${d}</div > `;
+            });
+            html += '</div><div class="calendar-days" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;">';
+
+            // Empty cells before first day
+            for (let i = 0; i < data.first_weekday; i++) {
+                html += '<div class="calendar-day empty" style="aspect-ratio:1;background:transparent;"></div>';
+            }
+
+            // Day cells
+            for (let day = 1; day <= data.days_in_month; day++) {
+                const dateStr = `${data.year} -${String(data.month).padStart(2, '0')} -${String(day).padStart(2, '0')} `;
+                const appts = data.appointments[dateStr] || [];
+                const isToday = isCurrentMonth && day === todayDay;
+                const hasAppts = appts.length > 0;
+
+                let classes = 'calendar-day';
+                if (isToday) classes += ' today';
+                if (hasAppts) classes += ' has-appointments';
+
+                html += `< div class="${classes}" onclick = "showDayDetail('${dateStr}', ${day})"
+                style = "aspect-ratio:1;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border-subtle);padding:4px;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;" > `;
+
+                if (isToday) html += `< span class="calendar-day-number" style = "font-weight:700;color:var(--primary);" > ${day}</span > `;
+                else html += `< span class="calendar-day-number" style = "color:var(--text-secondary);" > ${day}</span > `;
+
+                if (hasAppts) {
+                    html += '<div class="calendar-day-dots" style="display:flex;gap:2px;margin-top:2px;">';
+                    appts.slice(0, 4).forEach(a => {
+                        let color = '#cbd5e1';
+                        const st = (a.status || '').toLowerCase();
+                        if (st.includes('confirm')) color = '#22c55e';
+                        else if (st.includes('aguard')) color = '#eab308';
+                        else if (st.includes('cancel')) color = '#ef4444';
+                        else if (st.includes('conclu')) color = '#3b82f6';
+                        html += `< span style = "width:4px;height:4px;border-radius:50%;background:${color};" ></span > `;
+                    });
+                    if (appts.length > 4) html += `< span style = "font-size:0.55rem;color:var(--text-tertiary)" > +</span > `;
+                    html += '</div>';
+                }
+                html += '</div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+
+            // Hide detail panel
+            const detail = document.getElementById('calendar-day-detail');
+            if (detail) detail.style.display = 'none';
+        }
+
+        function showDayDetail(dateStr, day) {
+            const appts = calendarData[dateStr] || [];
+            const detail = document.getElementById('calendar-day-detail');
+            const dateLabel = document.getElementById('calendar-detail-date');
+            const list = document.getElementById('calendar-detail-list');
+            if (!detail || !list) return;
+
+            if (appts.length === 0) {
+                detail.style.display = 'none';
+                return;
+            }
+
+            const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+            // Format header
+            const headerHtml = `
+                    < div style = "display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;" >
+                    <span style="font-weight:600;color:var(--text-main);">${day} de ${monthNames[calendarMonth - 1]}</span>
+                    <button onclick="document.getElementById('calendar-day-detail').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);">&times;</button>
+                </div >
+                    `;
+
+            let itemsHtml = '';
+            appts.forEach(a => {
+                let statusClass = '';
+                const st = (a.status || '').toLowerCase();
+                if (st.includes('confirm')) statusClass = 'status-confirmed';
+                else if (st.includes('aguard')) statusClass = 'status-pending';
+                else if (st.includes('cancel')) statusClass = 'status-cancelled';
+
+                // Clickable patient name
+                itemsHtml += `
+                    < div class="calendar-appt-item" style = "display:flex;align-items:center;gap:0.5rem;padding:0.5rem;border-bottom:1px solid var(--border-subtle);" >
+                    <span style="font-weight:600;font-size:0.9rem;min-width:45px;">${a.time}</span>
+                    <span class="clickable-patient" onclick="openPatientProfileByName('${a.patient}')" style="flex:1;cursor:pointer;color:var(--primary);font-weight:500;">${a.patient}</span>
+                    <span class="status-badge ${statusClass}" style="font-size:0.7rem;">${a.status}</span>
+                </div > `;
+            });
+
+            detail.innerHTML = headerHtml + '<div style="max-height:200px;overflow-y:auto;">' + itemsHtml + '</div>';
+            detail.style.display = 'block';
+        }
+
+        // ===== PATIENT PROFILE & NOTES =====
+        async function openPatientProfileByName(name) {
+            // Find patient ID by name (inefficient but works for small datasets, ideally backend search)
+            try {
+                const response = await fetch('/api/patients'); // In production use search endpoint
+                const patients = await response.json();
+                const patient = patients.find(p => p.name === name);
+                if (patient) {
+                    openPatientProfile(patient.id);
+                } else {
+                    alert('Paciente não encontrado no cadastro.');
+                }
+            } catch (e) {
+                console.error("Error finding patient:", e);
+            }
+        }
+
+        async function openPatientProfile(id) {
+            try {
+                const response = await fetch(`/ api / patients / ${id} `);
+                const patient = await response.json();
+
+                // Populate Modal
+                document.getElementById('profile-patient-id').value = patient.id;
+                document.getElementById('profile-name-display').textContent = patient.name;
+                document.getElementById('profile-age-display').textContent = patient.age ? `${patient.age} anos` : '-- anos';
+                document.getElementById('profile-initials').textContent = patient.name.substring(0, 2).toUpperCase();
+                document.getElementById('profile-status-display').textContent = patient.status || 'Ativo';
+                document.getElementById('profile-modality-display').textContent = patient.care_modality || 'Presencial';
+                document.getElementById('profile-insurance-display').textContent = patient.insurance_plan || 'Particular';
+                document.getElementById('profile-contact-display').textContent = patient.phone || '--';
+
+                // Load Notes
+                document.getElementById('profile-notes').value = patient.observations || '';
+
+                // Fetch and filter messages for this patient
+                try {
+                    let msgUrl = '/api/patient-messages';
+                    const userStr = localStorage.getItem('user');
+                    if (userStr) {
+                        const user = JSON.parse(userStr);
+                        if (user.role !== 'admin') {
+                            msgUrl += `?professional_id=${user.id}`;
+                        }
+                    }
+                    const msgResp = await fetch(msgUrl);
+                    const allMsgs = await msgResp.json();
+                    const patMsgs = allMsgs.filter(m => m.patient_id === id);
+                    const listEl = document.getElementById('profile-messages-list');
+                    if (patMsgs.length === 0) {
+                        listEl.innerHTML = '<p class="text-muted text-sm" style="padding:1rem;">Nenhuma mensagem recebida deste paciente.</p>';
+                    } else {
+                        listEl.innerHTML = patMsgs.map(m => {
+                            const d = new Date(m.created_at);
+                            const dStr = d.toLocaleDateString('pt-BR') + ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            return `
+                            <div style="background:var(--bg-body); border:1px solid var(--border-subtle); padding:1rem; border-radius:8px; margin-bottom:1rem;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                                    <strong style="color:var(--primary); font-size:0.9rem;">${dStr}</strong>
+                                    ${m.is_read ? '<span class="text-xs text-muted"><i class="fas fa-check-double"></i> Lida</span>' : '<span class="text-xs text-primary" style="font-weight:bold"><i class="fas fa-circle"></i> Nova</span>'}
+                                </div>
+                                <p style="font-size:0.95rem; white-space:pre-wrap; line-height:1.5; color:var(--text-main); margin:0;">${m.message}</p>
+                            </div>
+                            `;
+                        }).join('');
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar mensagens para card:", e);
+                }
+
+                openModal('patient-profile-modal');
+            } catch (e) {
+                console.error("Error loading patient profile:", e);
+                alert("Erro ao carregar perfil do paciente.");
+            }
+        }
+
+        async function savePatientNotes(event) {
+            event.preventDefault();
+            const id = document.getElementById('profile-patient-id').value;
+            const notes = document.getElementById('profile-notes').value;
+
+            try {
+                // First get current data to not overwrite other fields
+                const getResp = await fetch(`/ api / patients / ${id} `);
+                const patient = await getResp.json();
+
+                // Update only observations
+                const updateResp = await fetch(`/ api / patients / ${id} `, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: patient.name, // required field
+                        observations: notes
+                    })
+                });
+
+                if (updateResp.ok) {
+                    alert('Anotações salvas com sucesso!');
+                    // close modal? keep open?
+                } else {
+                    alert('Erro ao salvar anotações.');
+                }
+            } catch (e) {
+                console.error("Error saving notes:", e);
+                alert("Erro ao salvar.");
+            }
+        }
+
+        function changeCalendarMonth(delta) {
+            calendarMonth += delta;
+            if (calendarMonth > 12) { calendarMonth = 1; calendarYear++; }
+            if (calendarMonth < 1) { calendarMonth = 12; calendarYear--; }
+            loadCalendar(calendarMonth, calendarYear);
+        }
+
+
+
+
+
+
+
+        // ===== PERIOD SELECTOR =====
+        function togglePeriodMenu(btn) {
+            const menu = btn.nextElementSibling;
+            // Close all other menus
+            document.querySelectorAll('.widget-period-menu.open').forEach(m => {
+                if (m !== menu) m.classList.remove('open');
+            });
+            document.querySelectorAll('.widget-period-btn.active').forEach(b => {
+                if (b !== btn) b.classList.remove('active');
+            });
+            menu.classList.toggle('open');
+            btn.classList.toggle('active');
+        }
+
+        function setPeriod(optionEl) {
+            const menu = optionEl.closest('.widget-period-menu');
+            const btn = menu.previousElementSibling;
+            const period = optionEl.dataset.period;
+
+            // Update active state
+            menu.querySelectorAll('.period-option').forEach(o => o.classList.remove('active'));
+            optionEl.classList.add('active');
+
+            // Close menu
+            menu.classList.remove('open');
+            btn.classList.remove('active');
+
+            // Find widget ID
+            const gridItem = optionEl.closest('.grid-stack-item');
+            const widgetId = gridItem ? gridItem.getAttribute('gs-id') : 'unknown';
+            console.log(`Widget "${widgetId}" period set to: ${period}`);
+
+            // Save period preferences
+            const prefs = JSON.parse(localStorage.getItem('widget-periods') || '{}');
+            prefs[widgetId] = period;
+            localStorage.setItem('widget-periods', JSON.stringify(prefs));
+        }
+
+        // Close period menus on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.widget-period-toggle')) {
+                document.querySelectorAll('.widget-period-menu.open').forEach(m => m.classList.remove('open'));
+                document.querySelectorAll('.widget-period-btn.active').forEach(b => b.classList.remove('active'));
+            }
+        });
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Loaded - App Started");
+            checkAuth(); // Check if user is logged in
+            initGridStack(); // Initialize drag-and-drop grid
+            fetchDashboardData();
+        });
+
+        // Global Input Masks and Formatter
+        document.addEventListener('input', function (e) {
+            const name = e.target.name;
+            if (!name) return;
+
+            // CPF Mask (Ex: 123.456.789-01)
+            if (name === 'cpf') {
+                let v = e.target.value.replace(/\D/g, "");
+                if (v.length > 11) v = v.slice(0, 11);
+                v = v.replace(/(\d{3})(\d)/, "$1.$2");
+                v = v.replace(/(\d{3})(\d)/, "$1.$2");
+                v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+                e.target.value = v;
+            }
+
+            // Phone Mask (Ex: (11) 91234-5678 or (11) 1234-5678)
+            if (name === 'phone' || name === 'emergency_contact_phone') {
+                let v = e.target.value.replace(/\D/g, "");
+                if (v.length > 11) v = v.slice(0, 11);
+                v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+                v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+                e.target.value = v;
+            }
+
+            // CEP Mask (Ex: 01234-567)
+            if (name === 'address_cep') {
+                let v = e.target.value.replace(/\D/g, "");
+                if (v.length > 8) v = v.slice(0, 8);
+                v = v.replace(/(\d{5})(\d)/, "$1-$2");
+                e.target.value = v;
+            }
+
+            // Number Only Fields
+            const numberFields = ['address_number', 'insurance_number', 'age', 'duration_days'];
+            if (numberFields.includes(name)) {
+                e.target.value = e.target.value.replace(/\D/g, "");
+            }
+        });
+    </script>
+</body>
+
+</html>

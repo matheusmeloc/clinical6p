@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Instituto de Psicologia</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/styles.css?v=5">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f4f8 0%, #e1e9f1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #333;
+        }
+
+        .login-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 440px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .login-logo {
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .login-subtitle {
+            color: #64748b;
+            font-size: 0.95rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .tab-group {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 2rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #64748b;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: #fff;
+            color: #2563eb;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            box-sizing: border-box;
+            background: #f8fafc;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea.form-input {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .error-msg {
+            color: #ef4444;
+            background: #fef2f2;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+            display: none;
+            text-align: center;
+            border: 1px solid #fecaca;
+        }
+
+        .success-msg {
+            color: #059669;
+            background: #ecfdf5;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+            display: none;
+            text-align: center;
+            border: 1px solid #a7f3d0;
+        }
+
+        .form-view {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .form-view.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-wrapper">
+        <div class="login-logo"><i class="fa-solid fa-leaf"></i> Instituto de Psicologia</div>
+        <div class="login-subtitle" id="subtitle">Acesso Restrito</div>
+
+        <div class="tab-group">
+            <button type="button" class="tab-btn active" onclick="switchTab('pro')">Sou Psicólogo</button>
+            <button type="button" class="tab-btn" onclick="switchTab('patient')">Sou Paciente</button>
+        </div>
+
+        <!-- Professional Form -->
+        <form id="form-pro" class="form-view active" onsubmit="handleProLogin(event)">
+            <div class="form-group">
+                <label class="form-label">E-mail Profissional</label>
+                <input type="email" name="email" class="form-input" required placeholder="seu@email.com" autofocus>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Senha</label>
+                <input type="password" name="password" class="form-input" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn"><i class="fa-solid fa-right-to-bracket"></i> Entrar no Painel</button>
+            <p class="error-msg" id="error-pro"></p>
+        </form>
+
+        <!-- Patient Form -->
+        <form id="form-patient" class="form-view" onsubmit="handlePatientContact(event)">
+            <div class="form-group">
+                <label class="form-label">CPF (Apenas números ou formatado)</label>
+                <input type="text" name="cpf" class="form-input" required placeholder="000.000.000-00">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Senha de Acesso</label>
+                <input type="password" name="password" class="form-input" required placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Como foi seu dia? O que aconteceu de importante?</label>
+                <textarea name="message" class="form-input" required
+                    placeholder="Escreva aqui anotações importantes para conversar com seu psicólogo..."></textarea>
+            </div>
+            <button type="submit" class="btn"><i class="fa-solid fa-paper-plane"></i> Enviar</button>
+            <p class="error-msg" id="error-patient"></p>
+            <p class="success-msg" id="success-patient"></p>
+        </form>
+
+    </div>
+
+    <script>
+        if (localStorage.getItem('user')) {
+            window.location.href = '/';
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.form-view').forEach(f => f.classList.remove('active'));
+
+            if (tab === 'pro') {
+                document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('form-pro').classList.add('active');
+                document.getElementById('subtitle').innerText = 'Acesso Restrito';
+            } else {
+                document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('form-patient').classList.add('active');
+                document.getElementById('subtitle').innerText = 'Fale com seu Psicólogo';
+            }
+        }
+
+        async function handleProLogin(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = Object.fromEntries(new FormData(form).entries());
+            const errorEl = document.getElementById('error-pro');
+            const btn = form.querySelector('button');
+
+            try {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
+                btn.disabled = true;
+                errorEl.style.display = 'none';
+
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    localStorage.setItem('user', JSON.stringify(user));
+                    window.location.href = '/';
+                } else {
+                    const err = await response.json();
+                    errorEl.innerText = err.detail || 'Falha no login';
+                    errorEl.style.display = 'block';
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar no Painel';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                errorEl.innerText = 'Erro de conexão';
+                errorEl.style.display = 'block';
+                btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar no Painel';
+                btn.disabled = false;
+            }
+        }
+
+        async function handlePatientContact(event) {
+            event.preventDefault();
+            const form = event.target;
+            const data = Object.fromEntries(new FormData(form).entries());
+            const errorEl = document.getElementById('error-patient');
+            const successEl = document.getElementById('success-patient');
+            const btn = form.querySelector('button');
+
+            try {
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+                btn.disabled = true;
+                errorEl.style.display = 'none';
+                successEl.style.display = 'none';
+
+                const response = await fetch('/api/patient-contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    successEl.innerText = 'Mensagem enviada com sucesso! Seu psicólogo foi notificado e vai acessar essas informações na sua ficha.';
+                    successEl.style.display = 'block';
+                    form.reset();
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar';
+                    btn.disabled = false;
+                } else {
+                    const err = await response.json();
+                    errorEl.innerText = err.detail || 'Falha ao enviar mensagem';
+                    errorEl.style.display = 'block';
+                    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                errorEl.innerText = 'Erro de conexão';
+                errorEl.style.display = 'block';
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
