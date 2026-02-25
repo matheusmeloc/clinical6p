@@ -58,17 +58,6 @@ class Patient(Base):
 
     # Aba 3: Convênio / Pagamento
     attendance_type = Column(String, nullable=True, default="Particular")
-
-class SystemSettings(Base):
-    __tablename__ = "system_settings"
-
-    id = Column(Integer, primary_key=True, index=True)
-    smtp_server = Column(String, nullable=True)
-    smtp_port = Column(Integer, nullable=True, default=587)
-    smtp_username = Column(String, nullable=True)
-    smtp_password = Column(String, nullable=True)
-    smtp_from_email = Column(String, nullable=True)
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     insurance_plan = Column(String, nullable=True)
     insurance_number = Column(String, nullable=True)
     insurance_expiration_date = Column(Date, nullable=True)
@@ -165,3 +154,14 @@ class PatientMessage(Base):
 
     patient = relationship("Patient", back_populates="messages")
     professional = relationship("Professional", back_populates="patient_messages")
+
+class SystemSettings(Base):
+    __tablename__ = "system_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    smtp_server = Column(String, nullable=True)
+    smtp_port = Column(Integer, nullable=True, default=587)
+    smtp_username = Column(String, nullable=True)
+    smtp_password = Column(String, nullable=True)
+    smtp_from_email = Column(String, nullable=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
