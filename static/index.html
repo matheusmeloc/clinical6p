@@ -1905,12 +1905,13 @@
         }
 
         function openProfessionalModal(prefill = null) {
+            const form = document.getElementById('professional-form');
             document.getElementById('professional-modal-title').innerText = prefill ? 'Editar Funcionário' : 'Novo Funcionário';
             document.getElementById('professional-id-field').value = prefill ? prefill.id : '';
             openModal('professional-modal');
 
             if (prefill) {
-                const form = document.getElementById('professional-form');
+                form.setAttribute('data-old-email', prefill.email || '');
                 form.querySelector('[name="name"]').value = prefill.name || '';
                 form.querySelector('[name="role"]').value = prefill.role || '';
                 form.querySelector('[name="status"]').value = prefill.status || 'Active';
@@ -1919,6 +1920,8 @@
                 form.querySelector('[name="professional_register"]').value = prefill.professional_register || '';
                 form.querySelector('[name="specialty"]').value = prefill.specialty || '';
                 updateRegisterLabel();
+            } else {
+                form.removeAttribute('data-old-email');
             }
         }
 
@@ -1952,8 +1955,23 @@
                 });
 
                 if (response.ok) {
+                    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                    const oldEmail = form.getAttribute('data-old-email');
+
+                    if (isEdit && oldEmail && currentUser.email === oldEmail && data.email !== oldEmail) {
+                        currentUser.email = data.email;
+                        localStorage.setItem('user', JSON.stringify(currentUser));
+
+                        const profile = localStorage.getItem('profile_' + oldEmail);
+                        if (profile) {
+                            localStorage.setItem('profile_' + data.email, profile);
+                            localStorage.removeItem('profile_' + oldEmail);
+                        }
+                    }
+
                     closeModal('professional-modal');
                     form.reset();
+                    form.removeAttribute('data-old-email');
                     document.getElementById('professional-id-field').value = '';
                     fetchProfessionals();
                 } else {

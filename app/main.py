@@ -503,7 +503,23 @@ async def update_professional(professional_id: int, professional_update: Profess
     if not db_professional:
         raise HTTPException(status_code=404, detail="Professional not found")
     
+    old_email = db_professional.email
     update_data = professional_update.dict(exclude_unset=True)
+    
+    # Check if email is being updated
+    new_email = update_data.get("email")
+    if new_email and old_email and new_email != old_email:
+        # Check if the new email is already used by another User
+        existing_user_result = await db.execute(select(User).where(User.email == new_email))
+        if existing_user_result.scalars().first():
+            raise HTTPException(status_code=400, detail="This email is already in use by another user.")
+            
+        # Find the corresponding User and update their email
+        result_user = await db.execute(select(User).where(User.email == old_email))
+        db_user = result_user.scalars().first()
+        if db_user:
+            db_user.email = new_email
+
     for key, value in update_data.items():
         setattr(db_professional, key, value)
     
