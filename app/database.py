@@ -4,9 +4,14 @@ from app.config import settings
 
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
+connect_args = {}
+if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
+    connect_args["statement_cache_size"] = 0
+
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
-    echo=True,  # Set to False in production
+    echo=False,  # Set to False in production
+    connect_args=connect_args
 )
 
 SessionLocal = sessionmaker(
