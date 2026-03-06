@@ -1,278 +1,265 @@
+"""
+Utilitários de E-mail
+- Função genérica de envio (elimina duplicação)
+- Templates específicos para cada tipo de e-mail:
+  · Alarme de consulta (lembrete para profissional)
+  · Notificação de mensagem de paciente
+  · Boas-vindas para paciente (com credenciais)
+  · Boas-vindas para profissional (com credenciais)
+  · Recuperação de senha (senha provisória)
+"""
+
 import smtplib
-from email.message import EmailMessage
-import logging
-from app.config import settings
-from app.database import SessionLocal, AsyncSession
-from app.models import SystemSettings
-from sqlalchemy import select
 import asyncio
+import logging
+from email.message import EmailMessage
+from sqlalchemy import select
+from app.config import settings
+from app.database import AsyncSession
+from app.models import SystemSettings
 
 logger = logging.getLogger(__name__)
 
-async def get_smtp_settings(db: AsyncSession):
-    """Fetches SMTP settings safely using the existing route session before entering a thread."""
+
+async def get_smtp_settings(db: AsyncSession) -> tuple[str, int, str, str, str | None]:
+    """
+    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
+    O que é esta 'função' (async def)? Ela é o "Mensageiro" que busca as chaves do correio.
+    Antes de mandarmos qualquer e-mail no nosso site, essa função entra no banco de dados, procura onde guardamos o e-mail oficial da clínica e a senha desse e-mail, e nos entrega as chaves (tuple).
+    Assim, o resto do código sabe como se logar no Gmail/SMTP para despachar a mensagem!
+    """
     try:
         result = await db.execute(select(SystemSettings).order_by(SystemSettings.id))
-        db_settings = result.scalars().first()
-        
-        server = db_settings.smtp_server if db_settings and db_settings.smtp_server else settings.SMTP_SERVER
-        port = db_settings.smtp_port if db_settings and db_settings.smtp_port else settings.SMTP_PORT
-        username = db_settings.smtp_username if db_settings and db_settings.smtp_username else settings.SMTP_USERNAME
-        password = db_settings.smtp_password if db_settings and db_settings.smtp_password else settings.SMTP_PASSWORD
-        from_email = db_settings.smtp_from_email if db_settings and db_settings.smtp_from_email else (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)
-        
-        return server, port, username, password, from_email
+        s = result.scalars().first()
+        return (
+            (s.smtp_server if s and s.smtp_server else settings.SMTP_SERVER),
+            (s.smtp_port if s and s.smtp_port else settings.SMTP_PORT),
+            (s.smtp_username if s and s.smtp_username else settings.SMTP_USERNAME),
+            (s.smtp_password if s and s.smtp_password else settings.SMTP_PASSWORD),
+            (s.smtp_from_email if s and s.smtp_from_email else (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)),
+        )
     except Exception as e:
-        logger.error(f"Error fetching SMTP settings from DB: {e}")
-        return settings.SMTP_SERVER, settings.SMTP_PORT, settings.SMTP_USERNAME, settings.SMTP_PASSWORD, (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)
+        logger.error(f"Erro ao buscar SMTP do banco: {e}")
+        return (
+            settings.SMTP_SERVER,
+            settings.SMTP_PORT,
+            settings.SMTP_USERNAME,
+            settings.SMTP_PASSWORD,
+            (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)
+        )
 
 
-async def send_appointment_alarm(db: AsyncSession, professional_email: str, professional_name: str, patient_name: str, date_str: str, time_str: str):
+async def _enviar_email(db: AsyncSession, destinatario: str, assunto: str, html: str, texto_plano: str = "") -> bool:
+    """
+    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
+    O que faz esta 'função' (async def)? Ela é o nosso "Carteiro Eletrônico".
+    O processo dela é:
+    1. Pede as chaves do correio para a função 'get_smtp_settings' acima.
+    2. Escreve a cartinha (quem é o remetente, qual é o assunto, a mensagem HTML colorida).
+    3. Faz o login seguro (TLS) no provedor de e-mail e aperta "Enviar".
+    Por que o nome começa com underline (_enviar_email)? O '_' indica para os outros programadores que ela é "secreta/interna", não devendo ser chamada diretamente por botões do site.
+    """
     server, port, username, password, from_email = await get_smtp_settings(db)
-    
-    if not server or not username or not professional_email:
-        logger.warning(f"SMTP not configured or missing professional email. Skipping alarm for {professional_name}")
+
+    if not server or not username or not destinatario:
+        logger.warning(f"SMTP não configurado ou sem destinatário. Pulando envio para {destinatario}")
         return False
-        
-    def _send_email():
-        
+
+    def _send() -> bool:
         msg = EmailMessage()
-        msg['Subject'] = f"Lembrete de Consulta: {patient_name} às {time_str}"
-        msg['From'] = from_email
-        msg['To'] = professional_email
-        
-        html_content = f"""
-        <html>
-            <body>
-                <h2>Olá, {professional_name}!</h2>
-                <p>Este é um lembrete automático de que você possui uma consulta em breve.</p>
-                <ul>
-                    <li><strong>Paciente:</strong> {patient_name}</li>
-                    <li><strong>Data:</strong> {date_str}</li>
-                    <li><strong>Horário:</strong> {time_str}</li>
-                </ul>
-                <p>Atenciosamente,<br>Equipe do Instituto de Psicologia</p>
-            </body>
-        </html>
-        """
-        msg.set_content("Lembrete de Consulta", subtype="plain")
-        msg.add_alternative(html_content, subtype="html")
-        
-        try:
-            with smtplib.SMTP(server, port) as server_obj:
-                server_obj.ehlo()
-                if settings.SMTP_TLS:
-                    server_obj.starttls()
-                server_obj.login(username, password)
-                server_obj.send_message(msg)
-            logger.info(f"Alarm email sent to {professional_email} for patient {patient_name}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send email to {professional_email}: {e}")
-            return False
-
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, _send_email)
-    return result
-
-async def send_patient_message_notification(db: AsyncSession, professional_email: str, professional_name: str, patient_name: str):
-    server, port, username, password, from_email = await get_smtp_settings(db)
-    
-    if not server or not username or not professional_email:
-        logger.warning(f"SMTP not configured or missing professional email. Skipping message notification for {professional_name}")
-        return False
-        
-    def _send_email():
-            
-        msg = EmailMessage()
-        msg['Subject'] = f"Nova Mensagem de Paciente: {patient_name}"
-        msg['From'] = from_email
-        msg['To'] = professional_email
-        
-        html_content = f"""
-        <html>
-            <body>
-                <h2>Olá, {professional_name}!</h2>
-                <p>Você recebeu uma nova mensagem do paciente <strong>{patient_name}</strong>.</p>
-                <p>Acesse o painel do sistema para ler o que seu paciente escreveu sobre o dia dele.</p>
-                <br>
-                <p>Atenciosamente,<br>Equipe do Instituto de Psicologia</p>
-            </body>
-        </html>
-        """
-        msg.set_content("Nova Mensagem de Paciente", subtype="plain")
-        msg.add_alternative(html_content, subtype="html")
-        
-        try:
-            with smtplib.SMTP(server, port) as smtp:
-                smtp.ehlo()
-                if settings.SMTP_TLS:
-                    smtp.starttls()
-                smtp.login(username, password)
-                smtp.send_message(msg)
-            logger.info(f"Message notification email sent to {professional_email} for patient {patient_name}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send email to {professional_email}: {e}")
-            return False
-
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, _send_email)
-    return result
-
-async def send_patient_welcome_email(db: AsyncSession, patient_email: str, patient_name: str, patient_cpf: str, patient_password: str):
-    server, port, username, password, from_email = await get_smtp_settings(db)
-    
-    if not server or not username or not patient_email:
-        logger.warning(f"SMTP not configured or missing patient email. Skipping welcome email for {patient_name}")
-        return False
-        
-    def _send_email():
-            
-        msg = EmailMessage()
-        msg['Subject'] = f"Bem-vindo ao Sistema do Instituto de Psicologia"
-        msg['From'] = from_email
-        msg['To'] = patient_email
-        
-        html_content = f"""
-        <html>
-            <body>
-                <h2>Olá, {patient_name}!</h2>
-                <p>Seu cadastro no sistema da clínica foi realizado com sucesso.</p>
-                <p>Agora você pode acessar o portal para enviar mensagens sobre o seu dia a dia para o seu psicólogo.</p>
-                <br>
-                <p><strong>Seus dados de acesso:</strong></p>
-                <ul>
-                    <li><strong>CPF (Login):</strong> {patient_cpf}</li>
-                    <li><strong>Senha Provisória:</strong> {patient_password}</li>
-                </ul>
-                <p>Recomendamos que guarde esta senha com segurança.</p>
-                <br>
-                <p>Atenciosamente,<br>Equipe do Instituto de Psicologia</p>
-            </body>
-        </html>
-        """
-        msg.set_content("Bem-vindo ao Sistema da Clínica", subtype="plain")
-        msg.add_alternative(html_content, subtype="html")
-        
-        try:
-            with smtplib.SMTP(server, port) as smtp:
-                smtp.ehlo()
-                if settings.SMTP_TLS:
-                    smtp.starttls()
-                smtp.login(username, password)
-                smtp.send_message(msg)
-            logger.info(f"Welcome email sent to {patient_email}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send welcome email to {patient_email}: {e}")
-            return False
-
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, _send_email)
-    return result
-
-async def send_professional_welcome_email(db: AsyncSession, email: str, name: str, str_password: str):
-    server, port, username, smtp_password, from_email = await get_smtp_settings(db)
-    
-    if not server or not username or not email:
-        logger.warning(f"SMTP not configured or missing email. Skipping welcome email for {name}")
-        return False
-        
-    def _send_email():
-            
-        msg = EmailMessage()
-        msg['Subject'] = f"Bem-vindo ao Sistema do Instituto de Psicologia"
-        msg['From'] = from_email
-        msg['To'] = email
-        
-        html_content = f"""
-        <html>
-            <body>
-                <h2>Olá, {name}!</h2>
-                <p>Seu cadastro como profissional no sistema da clínica foi realizado com sucesso.</p>
-                <p>Agora você pode acessar o portal para gerenciar seus pacientes, consultas e painel.</p>
-                <br>
-                <p><strong>Seus dados de acesso:</strong></p>
-                <ul>
-                    <li><strong>E-mail (Login):</strong> {email}</li>
-                    <li><strong>Senha Provisória:</strong> {str_password}</li>
-                </ul>
-                <p>Recomendamos que troque esta senha ou guarde-a com segurança.</p>
-                <br>
-                <p>Atenciosamente,<br>Equipe do Instituto de Psicologia</p>
-            </body>
-        </html>
-        """
-        msg.set_content("Bem-vindo ao Sistema da Clínica", subtype="plain")
-        msg.add_alternative(html_content, subtype="html")
-        
-        try:
-            with smtplib.SMTP(server, port) as smtp:
-                smtp.ehlo()
-                if settings.SMTP_TLS:
-                    smtp.starttls()
-                smtp.login(username, smtp_password)
-                smtp.send_message(msg)
-            logger.info(f"Welcome email sent to {email}")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to send welcome email to {email}: {e}")
-            return False
-
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, _send_email)
-    return result
-
-async def send_forgot_password_email(db: AsyncSession, email: str, is_patient: bool, login_id: str, temp_password: str):
-    server, port, username, smtp_password, from_email = await get_smtp_settings(db)
-    
-    if not server or not username or not email:
-        logger.warning(f"SMTP not configured or missing email. Skipping forgot password email for {email}")
-        return False
-        
-    def _send_email():
-            
-        msg = EmailMessage()
-        msg['Subject'] = f"Recuperação de Senha - Instituto de Psicologia"
-        msg['From'] = from_email
-        msg['To'] = email
-        
-        login_type = "CPF" if is_patient else "E-mail"
-        html_content = f"""
-        <html>
-            <body>
-                <h2>Olá!</h2>
-                <p>Recebemos uma solicitação de recuperação de senha para a sua conta.</p>
-                <p>Por questões de segurança, geramos uma nova senha provisória para você acessar o sistema.</p>
-                <br>
-                <p><strong>Seus dados de acesso:</strong></p>
-                <ul>
-                    <li><strong>{login_type} (Login):</strong> {login_id}</li>
-                    <li><strong>Nova Senha Provisória:</strong> {temp_password}</li>
-                </ul>
-                <p>Recomendamos que altere esta senha no painel de configurações do sistema.</p>
-                <br>
-                <p>Atenciosamente,<br>Equipe do Instituto de Psicologia</p>
-            </body>
-        </html>
-        """
-        msg.set_content("Recuperação de Senha", subtype="plain")
-        msg.add_alternative(html_content, subtype="html")
-        
+        msg["Subject"], msg["From"], msg["To"] = assunto, from_email, destinatario
+        msg.set_content(texto_plano or assunto, subtype="plain")
+        msg.add_alternative(html, subtype="html")
         try:
             with smtplib.SMTP(server, port, timeout=10) as smtp:
                 smtp.ehlo()
                 if settings.SMTP_TLS:
                     smtp.starttls()
-                smtp.login(username, smtp_password)
+                smtp.login(username, password)
                 smtp.send_message(msg)
-            logger.info(f"Forgot password email sent to {email}")
+            logger.info(f"E-mail enviado para {destinatario}: {assunto}")
             return True
         except Exception as e:
-            logger.error(f"Failed to send forgot password email to {email}: {e}")
+            logger.error(f"Falha ao enviar e-mail para {destinatario}: {e}")
             return False
 
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(None, _send_email)
-    return result
+    # Executa _send() em um thread independente para não bloquear o loop assíncrono
+    return await asyncio.get_running_loop().run_in_executor(None, _send)
+
+
+def _template(titulo: str, corpo: str) -> str:
+    """
+    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
+    O que é esta 'função' (def)? É como um "Carimbador de Papel Timbrado"!
+    Em vez de escrevermos 40 linhas de código do visual colorido do e-mail (HTML) sempre que formos mandar uma notificação, nós usamos essa máquina.
+    Ela recebe as variáveis 'titulo' e 'corpo', e simplesmente "gruda" essas mensagens dentro de um papel timbrado com rodapé da clínica ("Atenciosamente, Equipe...").
+    Aí ela nos devolve o texto juntado (return), pronto para ser entregue ao Carteiro (função acima).
+    """
+    return f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <h2 style="color: #4A90E2;">{titulo}</h2>
+            <div>{corpo}</div>
+            <br>
+            <p>Atenciosamente,<br><strong>Equipe do Instituto de Psicologia</strong></p>
+        </body>
+    </html>
+    """
+
+
+# ═════════════════════════════════════════════════════════════════════
+# FUNÇÕES DE E-MAIL ESPECÍFICAS
+# ═════════════════════════════════════════════════════════════════════
+
+
+async def send_appointment_alarm(
+    db: AsyncSession,
+    professional_email: str,
+    professional_name: str,
+    patient_name: str,
+    date_str: str,
+    time_str: str
+) -> bool:
+    """
+    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
+    Esta 'função' (async def) é uma montadora específica para "Alarmes de Consulta".
+    Tudo que ela faz é: escrever o texto (usando a fábrica de Papel Timbrado '_template') com os dados do paciente, data e hora. 
+    E no final, ela diz: "Ô Carteiro (_enviar_email), leva essa carta pra mim!".
+    """
+    html = _template(
+        f"Olá, {professional_name}!",
+        f"<p>Este é um lembrete automático de que você possui uma consulta em breve.</p>"
+        f"<ul>"
+        f"  <li><strong>Paciente:</strong> {patient_name}</li>"
+        f"  <li><strong>Data:</strong> {date_str}</li>"
+        f"  <li><strong>Horário:</strong> {time_str}</li>"
+        f"</ul>"
+    )
+    return await _enviar_email(
+        db,
+        professional_email,
+        f"Lembrete de Consulta: {patient_name} às {time_str}",
+        html,
+        "Lembrete de Consulta"
+    )
+
+
+async def send_patient_message_notification(
+    db: AsyncSession,
+    professional_email: str,
+    professional_name: str,
+    patient_name: str
+) -> bool:
+    """
+    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
+    Esta 'função' monta o aviso de "Nova Mensagem" que o Psicólogo recebe no e-mail dele.
+    Escreve a carta e repassa para a função carteiro (_enviar_email).
+    """
+    html = _template(
+        f"Olá, {professional_name}!",
+        f"<p>Você recebeu uma nova mensagem do paciente <strong>{patient_name}</strong>.</p>"
+        f"<p>Acesse o painel do sistema para ler o que seu paciente escreveu sobre o dia dele.</p>"
+    )
+    return await _enviar_email(
+        db,
+        professional_email,
+        f"Nova Mensagem de Paciente: {patient_name}",
+        html,
+        "Nova Mensagem de Paciente"
+    )
+
+
+async def send_patient_welcome_email(
+    db: AsyncSession,
+    patient_email: str,
+    patient_name: str,
+    patient_cpf: str,
+    patient_password: str
+) -> bool:
+    """
+    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
+    Esta 'função' monta o e-mail oficial de "Boas-Vindas" do Paciente.
+    Recebe os dados como ingrediente (CPF, senha, nome) e monta a cartinha explicando como acessar o site, com a mesma lógica de chamar o carteiro no final.
+    """
+    html = _template(
+        f"Olá, {patient_name}!",
+        f"<p>Seu cadastro no sistema da clínica foi realizado com sucesso.</p>"
+        f"<p>Agora você pode acessar o portal para enviar mensagens sobre o seu dia a dia para o seu psicólogo.</p><br>"
+        f"<p><strong>Seus dados de acesso:</strong></p>"
+        f"<ul>"
+        f"  <li><strong>CPF (Login):</strong> {patient_cpf}</li>"
+        f"  <li><strong>Senha Provisória:</strong> {patient_password}</li>"
+        f"</ul>"
+        f"<p>Recomendamos que guarde esta senha com segurança.</p>"
+    )
+    return await _enviar_email(
+        db,
+        patient_email,
+        "Bem-vindo ao Sistema do Instituto de Psicologia",
+        html,
+        "Bem-vindo ao Sistema da Clínica"
+    )
+
+
+async def send_professional_welcome_email(
+    db: AsyncSession,
+    email: str,
+    name: str,
+    str_password: str
+) -> bool:
+    """
+    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
+    Esta 'função' monta o e-mail de "Boas-Vindas" focado no Profissional.
+    Escreve as instruções para a conta dele e envia para o carteiro.
+    """
+    html = _template(
+        f"Olá, {name}!",
+        f"<p>Seu cadastro como profissional no sistema da clínica foi realizado com sucesso.</p>"
+        f"<p>Agora você pode acessar o portal para gerenciar seus pacientes, consultas e painel.</p><br>"
+        f"<p><strong>Seus dados de acesso:</strong></p>"
+        f"<ul>"
+        f"  <li><strong>E-mail (Login):</strong> {email}</li>"
+        f"  <li><strong>Senha Provisória:</strong> {str_password}</li>"
+        f"</ul>"
+        f"<p>Recomendamos que troque esta senha ou guarde-a com segurança.</p>"
+    )
+    return await _enviar_email(
+        db,
+        email,
+        "Bem-vindo ao Sistema do Instituto de Psicologia",
+        html,
+        "Bem-vindo ao Sistema da Clínica"
+    )
+
+
+async def send_forgot_password_email(
+    db: AsyncSession,
+    email: str,
+    is_patient: bool,
+    login_id: str,
+    temp_password: str
+) -> bool:
+    """
+    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
+    Esta 'função' é disparada quando o usuário clica em "Esqueci minha senha!".
+    Ela monta um e-mail especial contendo a nova senha temporária para resgatar a conta.
+    """
+    tipo_login = "CPF" if is_patient else "E-mail"
+    html = _template(
+        "Olá!",
+        f"<p>Recebemos uma solicitação de recuperação de senha para a sua conta.</p>"
+        f"<p>Por questões de segurança, geramos uma nova senha provisória para você acessar o sistema.</p><br>"
+        f"<p><strong>Seus dados de acesso:</strong></p>"
+        f"<ul>"
+        f"  <li><strong>{tipo_login} (Login):</strong> {login_id}</li>"
+        f"  <li><strong>Nova Senha Provisória:</strong> {temp_password}</li>"
+        f"</ul>"
+        f"<p>Recomendamos que altere esta senha no painel de configurações do sistema.</p>"
+    )
+    return await _enviar_email(
+        db,
+        email,
+        "Recuperação de Senha - Instituto de Psicologia",
+        html,
+        "Recuperação de Senha"
+    )

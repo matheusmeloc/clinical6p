@@ -5,30 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instituto de Psicologia - Gestão</title>
-    <!-- Fonts -->
+    <!-- Fontes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
-    <!-- Icons -->
+    <!-- Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Gridstack -->
+    <!-- Biblioteca Gridstack -->
     <link href="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack-all.js"></script>
-    <!-- Chart.js -->
+    <!-- Biblioteca Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script
         src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <!-- Styles -->
+    <!-- Estilos -->
     <link rel="stylesheet" href="/static/css/styles.css?v=5">
 </head>
 
 <body>
     <div class="app-container">
-        <!-- Login Modal Removed (Using /login page) -->
+        <!-- Modal de Login Removido (usando tela /login independente) -->
 
-        <!-- Sidebar -->
+        <!-- Barra Lateral -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div>
@@ -82,12 +82,12 @@
             </div>
         </aside>
 
-        <!-- Sidebar Toggle (on the border) -->
+        <!-- Botão de Minimizar/Expandir Menu -->
         <div class="sidebar-toggle" onclick="toggleSidebar()">
             <i class="fas fa-chevron-left" id="toggle-icon"></i>
         </div>
 
-        <!-- Main Content -->
+        <!-- Conteúdo Principal -->
         <main class="main-content">
             <header class="top-bar">
                 <div style="display:flex;align-items:center;gap:1rem;">
@@ -125,10 +125,13 @@
             </header>
 
             <div class="content-area" id="content-area">
-                <!-- Dashboard View (Default) -->
+                <!-- ========================================================= -->
+                <!-- AQUI INICIA A TELA PRINCIPAL DO DASHBOARD                 -->
+                <!-- ========================================================= -->
                 <div id="view-dashboard" class="view-section">
                     <div class="grid-stack" id="dashboard-grid">
-                        <!-- KPI: Total Pacientes -->
+                        
+                        <!-- // AQUI ESTÁ O QUADRO (KPI): TOTAL DE PACIENTES -->
                         <div class="grid-stack-item" gs-x="0" gs-y="0" gs-w="3" gs-h="3" gs-id="kpi-patients">
                             <div class="grid-stack-item-content">
                                 <div class="kpi-card card-mint skeleton skeleton-card" id="kpi-card-patients">
@@ -162,7 +165,7 @@
                             </div>
                         </div>
 
-                        <!-- KPI: Agendamentos Hoje -->
+                        <!-- // AQUI ESTÁ O QUADRO (KPI): AGENDAMENTOS DE HOJE -->
                         <div class="grid-stack-item" gs-x="3" gs-y="0" gs-w="3" gs-h="3" gs-id="kpi-today">
                             <div class="grid-stack-item-content">
                                 <div class="kpi-card card-yellow skeleton skeleton-card" id="kpi-card-today">
@@ -196,7 +199,7 @@
                             </div>
                         </div>
 
-                        <!-- KPI: Próximo Atendimento -->
+                        <!-- // AQUI ESTÁ O QUADRO (KPI): PRÓXIMO ATENDIMENTO -->
                         <div class="grid-stack-item" gs-x="6" gs-y="0" gs-w="3" gs-h="3" gs-id="kpi-next">
                             <div class="grid-stack-item-content">
                                 <div class="kpi-card card-purple skeleton skeleton-card" id="kpi-card-next">
@@ -230,7 +233,7 @@
                             </div>
                         </div>
 
-                        <!-- KPI: Atendimentos (Sem) -->
+                        <!-- // AQUI ESTÁ O QUADRO (KPI): ATENDIMENTOS DA SEMANA -->
                         <div class="grid-stack-item" gs-x="9" gs-y="0" gs-w="3" gs-h="3" gs-id="kpi-week">
                             <div class="grid-stack-item-content">
                                 <div class="kpi-card card-dark skeleton skeleton-card" id="kpi-card-week">
@@ -264,7 +267,7 @@
                             </div>
                         </div>
 
-                        <!-- Agenda de Hoje -->
+                        <!-- // AQUI ESTÁ O QUADRO GRANDE DA AGENDA DE HOJE -->
                         <div class="grid-stack-item" gs-x="0" gs-y="3" gs-w="7" gs-h="8" gs-id="agenda-today">
                             <div class="grid-stack-item-content">
                                 <div class="card widget-card">
@@ -314,7 +317,7 @@
                             </div>
                         </div>
 
-                        <!-- Próximos Atendimentos -->
+                        <!-- // AQUI ESTÁ O QUADRO TIPO LISTA DE PRÓXIMOS ATENDIMENTOS -->
                         <div class="grid-stack-item" gs-x="7" gs-y="3" gs-w="5" gs-h="5" gs-id="upcoming">
                             <div class="grid-stack-item-content">
                                 <div class="card widget-card">
@@ -357,7 +360,7 @@
                             </div>
                         </div>
 
-                        <!-- Gráfico de Agendamentos -->
+                        <!-- // AQUI ESTÁ O GRÁFICO DE AGENDAMENTOS (CHART.JS) -->
                         <div class="grid-stack-item" gs-x="0" gs-y="11" gs-w="12" gs-h="5" gs-id="chart-appointments">
                             <div class="grid-stack-item-content">
                                 <div class="card widget-card" id="chart-card-appointments">
@@ -389,7 +392,7 @@
                             </div>
                         </div>
 
-                        <!-- Calendário de Agendamentos -->
+                        <!-- // AQUI ESTÁ O QUADRO CALENDÁRIO CRIADO NO DASHBOARD (O QUE FOI PEDIDO!) -->
                         <div class="grid-stack-item" gs-x="0" gs-y="16" gs-w="6" gs-h="6" gs-id="calendar-widget">
                             <div class="grid-stack-item-content">
                                 <div class="card widget-card" id="calendar-card">
@@ -432,11 +435,11 @@
                             </div>
                         </div>
 
-                        <!-- Notas removed -->
+                        <!-- Sistema de notas removido -->
                     </div>
                 </div>
 
-                <!-- Professionals View -->
+                <!-- Tela de Profissionais -->
                 <div id="view-funcionarios" class="view-section" style="display: none;">
                     <div class="card-header">
                         <h2 class="card-title">Gerenciamento de Funcionários</h2>
@@ -459,7 +462,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="professionals-table-body">
-                                    <!-- Populated by JS -->
+                                    <!-- Preenchido via JavaScript -->
                                 </tbody>
                             </table>
                         </div>
@@ -468,7 +471,7 @@
 
 
 
-                <!-- Prescriptions View -->
+                <!-- Tela de Receitas -->
                 <div id="view-receitas" class="view-section" style="display: none;">
                     <div class="card-header">
                         <h2 class="card-title">Gerenciamento de Receitas</h2>
@@ -491,14 +494,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="prescriptions-table-body">
-                                    <!-- Populated by JS -->
+                                    <!-- Preenchido via JavaScript -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Patients View -->
+                <!-- Tela de Pacientes -->
                 <div id="view-pacientes" class="view-section" style="display: none;">
                     <div class="card-header">
                         <h2 class="card-title">Gerenciamento de Pacientes</h2>
@@ -522,14 +525,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="patients-table-body">
-                                    <!-- Populated by JS -->
+                                    <!-- Preenchido via JavaScript -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Appointments View -->
+                <!-- Tela de Agendamentos -->
                 <div id="view-agendamentos" class="view-section" style="display: none;">
                     <div class="card-header">
                         <h2 class="card-title">Gerenciamento de Agendamentos</h2>
@@ -552,14 +555,14 @@
                                     </tr>
                                 </thead>
                                 <tbody id="appointments-table-body">
-                                    <!-- Populated by JS -->
+                                    <!-- Preenchido via JavaScript -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Patient Modal -->
+                <!-- Modal de Paciente -->
                 <div id="patient-modal" class="modal" onclick="if(event.target === this) closeModal('patient-modal')">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -581,20 +584,7 @@
                                     style="background:none; border:none; padding: 5px 10px; cursor:pointer; color: var(--text-muted);">Segurança</button>
                             </div>
 
-                            <style>
-                                .tab-btn {
-                                    transition: all 0.3s ease;
-                                    white-space: nowrap;
-                                }
-
-                                .patient-tab-content {
-                                    display: none;
-                                }
-
-                                .patient-tab-content.active {
-                                    display: block;
-                                }
-                            </style>
+                            <link rel="stylesheet" href="/static/css/index.css?v=2">
 
                             <!-- Aba 1: Identificação -->
                             <div id="tab-identificacao" class="patient-tab-content active">
@@ -793,7 +783,7 @@
                     </div>
                 </div>
 
-                <!-- Appointment Modal -->
+                <!-- Modal de Agendamento -->
                 <div id="appointment-modal" class="modal"
                     onclick="if(event.target === this) closeModal('appointment-modal')">
                     <div class="modal-content">
@@ -858,7 +848,7 @@
                     </div>
                 </div>
 
-                <!-- Professional Modal -->
+                <!-- Modal do Profissional -->
                 <div id="professional-modal" class="modal"
                     onclick="if(event.target === this) closeModal('professional-modal')">
                     <div class="modal-content">
@@ -921,7 +911,7 @@
                     </div>
                 </div>
 
-                <!-- Prescription Modal -->
+                <!-- Modal de Receita -->
                 <div id="prescription-modal" class="modal"
                     onclick="if(event.target === this) closeModal('prescription-modal')">
                     <div class="modal-content">
@@ -979,7 +969,7 @@
                     </div>
                 </div>
 
-                <!-- Atestados View -->
+                <!-- Tela de Atestados -->
                 <div id="view-atestados" class="view-section" style="display: none;">
                     <div class="view-header" style="margin-bottom: 2rem;">
                         <h2 style="margin:0;">Gerenciar Atestados</h2>
@@ -1001,13 +991,13 @@
                                 </tr>
                             </thead>
                             <tbody id="certificates-table-body">
-                                <!-- Populated by JS -->
+                                <!-- Preenchido via JavaScript -->
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Certificate Modal -->
+                <!-- Modal de Atestado -->
                 <div id="certificate-modal" class="modal"
                     onclick="if(event.target === this) closeModal('certificate-modal')">
                     <div class="modal-content">
@@ -1069,7 +1059,7 @@
                     </div>
                 </div>
 
-                <!-- Mensagens View -->
+                <!-- Tela de Mensagens -->
                 <div id="view-mensagens" class="view-section" style="display: none;">
                     <div class="view-header" style="margin-bottom: 2rem;">
                         <h2 style="margin:0;">Mensagens de Pacientes</h2>
@@ -1087,20 +1077,20 @@
                                 </tr>
                             </thead>
                             <tbody id="messages-table-body">
-                                <!-- Populated by JS -->
+                                <!-- Preenchido via JavaScript -->
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Configurações View -->
+                <!-- Tela de Configurações -->
                 <div id="view-configuracoes" class="view-section" style="display:none;">
                     <div class="card" style="max-width: 700px;">
                         <div class="card-header">
                             <h2 class="card-title" id="profile-main-title">Perfil do Administrador</h2>
                         </div>
                         <div style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem;">
-                            <!-- Profile Photo -->
+                            <!-- Foto de Perfil -->
                             <div style="display: flex; align-items: center; gap: 1.5rem;">
                                 <div id="profile-photo"
                                     style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; flex-shrink: 0;">
@@ -1116,7 +1106,7 @@
                                 </div>
                             </div>
 
-                            <!-- Personal Data Form -->
+                            <!-- Formulário de Dados Pessoais -->
                             <form id="profile-form" onsubmit="saveProfile(event)">
                                 <div class="form-group">
                                     <label class="form-label">Nome Completo</label>
@@ -1156,7 +1146,7 @@
                                 </div>
                             </form>
 
-                            <!-- Logout -->
+                            <!-- Sair / Logout -->
                             <div
                                 style="border-top: 1px solid var(--border-subtle); padding-top: 1rem; margin-top: 0.5rem;">
                                 <button class="btn btn-secondary"
@@ -1168,7 +1158,7 @@
                         </div>
                     </div>
 
-                    <!-- Email Configuration Card (Admin Only) -->
+                    <!-- Cartão de Configuração de E-mail (Apenas Admin) -->
                     <div class="card" id="email-config-card" style="max-width: 700px; margin-top: 2rem; display: none;">
                         <div class="card-header">
                             <h2 class="card-title"><i class="fas fa-envelope"></i> Infraestrutura de E-mail (SMTP)</h2>
@@ -1216,7 +1206,7 @@
                     </div>
                 </div>
 
-                <!-- Patient Profile Modal -->
+                <!-- Modal de Perfil do Paciente -->
                 <div id="patient-profile-modal" class="modal"
                     onclick="if(event.target === this) closeModal('patient-profile-modal')">
                     <div class="modal-content" style="max-width: 800px;">
@@ -1226,7 +1216,7 @@
                         </div>
                         <div class="profile-layout"
                             style="display:grid;grid-template-columns: 250px 1fr; gap: 2rem; padding-top: 1rem;">
-                            <!-- Sidebar Info -->
+                            <!-- Informações da Barra Lateral -->
                             <div class="profile-sidebar"
                                 style="border-right:1px solid var(--border-subtle); padding-right:1rem;">
                                 <div class="profile-avatar"
@@ -1257,7 +1247,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Main Content & Notes -->
+                            <!-- Conteúdo Principal e Anotações -->
                             <div class="profile-main">
                                 <ul class="tabs"
                                     style="display:flex;gap:1.5rem;border-bottom:1px solid var(--border-subtle);margin-bottom:1rem;padding-bottom:0.5rem;">
@@ -1318,12 +1308,12 @@
                     </div>
                 </div>
 
-                <!-- ... other placeholders ... -->
+                <!-- ... outros componentes ... -->
             </div>
         </main>
     </div>
 
-    <!-- JavaScript to handle navigation and data loading -->
+    <!-- JavaScript para navegação e carregamento dos dados -->
     <script>
         // ===== ADJUSTABLE THEME =====
         const themeSlider = document.getElementById('theme-slider');
@@ -1538,7 +1528,7 @@
                         item.innerHTML = `
                             <div class="timeline-time">${appt.time}</div>
                             <div class="timeline-content">
-                                <div class="timeline-patient clickable-patient" onclick="openPatientProfileByName('${appt.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:600;">${appt.patient_name}</div>
+                                <div class="timeline-patient clickable-patient" onclick="openPatientInfo(${appt.patient_id})" style="cursor:pointer;color:var(--primary);font-weight:600;">${appt.patient_name}</div>
                                 <div class="timeline-professional">${appt.professional_name}</div>
                             </div>
                             <div class="timeline-status">
@@ -1564,7 +1554,7 @@
                         item.innerHTML = `
                            <div style="width: 80px; font-size: 0.85rem; color: var(--text-muted);">${appt.date}</div>
                            <div style="flex: 1;">
-                               <div class="clickable-patient" onclick="openPatientProfileByName('${appt.patient_name}')" style="font-size: 0.95rem; font-weight: 500; cursor:pointer; color:var(--primary);">${appt.patient_name}</div>
+                               <div class="clickable-patient" onclick="openPatientInfo(${appt.patient_id})" style="font-size: 0.95rem; font-weight: 500; cursor:pointer; color:var(--primary);">${appt.patient_name}</div>
                                <div class="text-sm text-muted">${appt.professional_name}</div>
                            </div>
                         `;
@@ -1592,7 +1582,7 @@
                 patients.forEach(patient => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td>${patient.name}</td>
+                        <td class="clickable-patient" onclick="openPatientInfo(${patient.id})" style="cursor:pointer;color:var(--primary);font-weight:500;">${patient.name}</td>
                         <td>${patient.birth_date ? new Date(patient.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : '-'}</td>
                         <td>${patient.cpf || '-'}</td>
                         <td>${patient.phone || '-'}</td>
@@ -1767,7 +1757,7 @@
                     tr.innerHTML = `
                         <td>${dateStr}</td>
                         <td>${appt.time.substring(0, 5)}</td>
-                        <td><span class="clickable-patient" onclick="openPatientProfileByName('${appt.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:500;">${appt.patient_name}</span></td>
+                        <td><span class="clickable-patient" onclick="openPatientInfo(${appt.patient_id})" style="cursor:pointer;color:var(--primary);font-weight:500;">${appt.patient_name}</span></td>
                         <td>${appt.professional_name}</td>
                         <td><span class="status-badge status-${getStatusClass(appt.status)}">${appt.status}</span></td>
                         <td>
@@ -2016,7 +2006,7 @@
 
                     tr.innerHTML = `
                         <td>${dateStr}</td>
-                        <td><span class="clickable-patient" onclick="openPatientProfileByName('${c.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:500;">${c.patient_name}</span></td>
+                        <td><span class="clickable-patient" onclick="openPatientInfo(${c.patient_id})" style="cursor:pointer;color:var(--primary);font-weight:500;">${c.patient_name}</span></td>
                         <td>${c.professional_name}</td>
                         <td>${c.type}</td>
                         <td>${c.duration_days || '-'}</td>
@@ -2145,7 +2135,7 @@
 
                     tr.innerHTML = `
                         <td>${dateStr}</td>
-                        <td><span class="clickable-patient" onclick="openPatientProfileByName('${p.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:500;">${p.patient_name}</span></td>
+                        <td><span class="clickable-patient" onclick="openPatientInfo(${p.patient_id})" style="cursor:pointer;color:var(--primary);font-weight:500;">${p.patient_name}</span></td>
                         <td>${p.professional_name}</td>
                         <td>${p.medication_name}</td>
                         <td>${p.certificate_type || '-'}</td>
@@ -2301,7 +2291,7 @@
 
                     tr.innerHTML = `
                         <td>${dateStr}</td>
-                        <td><span class="clickable-patient" onclick="openPatientProfileByName('${msg.patient_name}')" style="cursor:pointer;color:var(--primary);font-weight:500;">${msg.patient_name}</span></td>
+                        <td><span class="clickable-patient" onclick="openPatientInfo(${msg.patient_id})" style="cursor:pointer;color:var(--primary);font-weight:500;">${msg.patient_name}</span></td>
                         <td>${msg.message.length > 60 ? msg.message.substring(0, 60) + '...' : msg.message}</td>
                         <td id="msg-status-${msg.id}">${isReadHTML}</td>
                         <td>
@@ -2323,6 +2313,94 @@
                 }
             } catch (e) {
                 console.error("Error marking message as read:", e);
+            }
+        }
+
+        // ===== LÓGICA DO CARD DE INFORMAÇÕES DO PACIENTE (CARD FLUTUANTE) =====
+        // Esta seção gerencia a exibição do card rápido de informações que aparece ao clicar no nome do paciente.
+
+        let currentInfoPatientId = null; // Armazena o ID do paciente atualmente exibido no card
+
+        /**
+         * Abre o card de informações rápidas do paciente.
+         * @param {number} patientId - O ID do paciente a ser carregado.
+         */
+        async function openPatientInfo(patientId) {
+            currentInfoPatientId = patientId;
+            const modal = document.getElementById('patient-info-modal');
+            
+            // Define os campos para o estado de "Carregando" antes de buscar os dados
+            document.getElementById('infocard-name').innerText = 'Carregando...';
+            document.getElementById('infocard-phone').innerText = '--';
+            document.getElementById('infocard-birth').innerText = '--';
+            document.getElementById('infocard-cpf').innerText = '--';
+            document.getElementById('infocard-observations').innerText = 'Carregando...';
+            document.getElementById('infocard-avatar').innerHTML = '--';
+
+            modal.classList.add('active'); // Exibe o modal (card flutuante)
+
+            try {
+                // Busca os detalhes do paciente na API
+                const response = await fetch(`/api/patients/${patientId}`);
+                if (!response.ok) throw new Error('Falha ao carregar paciente');
+                
+                const patient = await response.json();
+                
+                // Preenche os campos do card com os dados retornados
+                document.getElementById('infocard-name').innerText = patient.name;
+                document.getElementById('infocard-phone').innerText = patient.phone || 'Sem telefone';
+                
+                // Formata a data de nascimento para o padrão brasileiro
+                const birthStr = patient.birth_date ? new Date(patient.birth_date).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'Não informada';
+                document.getElementById('infocard-birth').innerText = birthStr;
+                document.getElementById('infocard-cpf').innerText = patient.cpf || 'Sem CPF';
+                document.getElementById('infocard-observations').innerText = patient.observations || 'Nenhuma observação registrada.';
+                
+                // Configuração do indicador de Status (Ativo/Inativo)
+                const statusPill = document.getElementById('infocard-status-pill');
+                const statusText = document.getElementById('infocard-status-text');
+                const isAtivo = patient.status === 'Active' || patient.status === 'Ativo';
+                
+                statusText.innerText = isAtivo ? 'Ativo' : 'Inativo';
+                statusPill.style.background = isAtivo ? 'var(--color-success-bg)' : 'var(--color-danger-bg)';
+                statusPill.style.color = isAtivo ? 'var(--color-success)' : 'var(--color-danger)';
+
+                // Lógica da Foto/Avatar
+                const avatar = document.getElementById('infocard-avatar');
+                if (patient.photo) {
+                    // Se o paciente tiver foto (URL ou Base64), exibe a imagem
+                    avatar.innerHTML = `<img src="${patient.photo}" alt="${patient.name}">`;
+                    avatar.style.background = 'transparent';
+                    avatar.style.border = 'none';
+                } else {
+                    // Caso contrário, exibe as iniciais do nome
+                    avatar.innerText = patient.name.substring(0, 2).toUpperCase();
+                    avatar.style.background = 'var(--bg-surface)';
+                    avatar.style.border = '4px solid var(--bg-surface)';
+                }
+
+            } catch (e) {
+                console.error("Erro ao abrir card de informações:", e);
+                document.getElementById('infocard-name').innerText = 'Erro ao carregar';
+            }
+        }
+
+        /**
+         * Fecha o card de informações rápidas.
+         */
+        function closePatientInfo() {
+            document.getElementById('patient-info-modal').classList.remove('active');
+            currentInfoPatientId = null;
+        }
+
+        /**
+         * Navega do card flutuante para o perfil completo (prontuário) do paciente.
+         */
+        function viewFullProfileFromInfo() {
+            if (currentInfoPatientId) {
+                const id = currentInfoPatientId;
+                closePatientInfo(); // Fecha o card flutuante
+                openPatientProfile(id); // Abre o modal de perfil detalhado
             }
         }
 
@@ -2407,9 +2485,9 @@
 
             if (nameEl) nameEl.value = user.full_name || '';
             if (emailEl) emailEl.value = user.email || '';
-            if (phoneEl) phoneEl.value = profile.phone || '';
-            if (roleTitleEl) roleTitleEl.value = profile.role_title || '';
-            if (crpEl) crpEl.value = profile.crp || '';
+            if (phoneEl) phoneEl.value = user.phone || profile.phone || '';
+            if (roleTitleEl) roleTitleEl.value = user.role_title || profile.role_title || '';
+            if (crpEl) crpEl.value = user.crp || profile.crp || '';
             if (photoEl) {
                 if (profile.photo) {
                     photoEl.innerHTML = '';
@@ -2502,6 +2580,10 @@
             const newPassword = formData.get('password');
             if (newPassword) updatePayload.password = newPassword;
 
+            updatePayload.phone = formData.get('phone') || '';
+            updatePayload.role_title = formData.get('role_title') || '';
+            updatePayload.crp = formData.get('crp') || '';
+
             if (Object.keys(updatePayload).length > 0 && user.id) {
                 const submitBtn = form.querySelector('button[type="submit"]');
                 const originalText = submitBtn.innerHTML;
@@ -2518,6 +2600,9 @@
                         const resData = await response.json();
                         if (resData.full_name) {
                             user.full_name = resData.full_name;
+                            user.phone = resData.phone;
+                            user.role_title = resData.role_title;
+                            user.crp = resData.crp;
                             localStorage.setItem('user', JSON.stringify(user));
                             checkAuth();
                         }
@@ -2607,7 +2692,7 @@
                     const items = JSON.parse(savedLayout);
                     dashboardGrid.batchUpdate();
                     items.forEach(item => {
-                        const el = gridEl.querySelector(`[gs - id= "${item.id}"]`);
+                        const el = gridEl.querySelector(`[gs-id="${item.id}"]`);
                         if (el) {
                             dashboardGrid.update(el, { x: item.x, y: item.y, w: item.w, h: item.h });
                         }
@@ -2724,7 +2809,7 @@
         function loadSavedColors() {
             const colors = JSON.parse(localStorage.getItem('widget-colors') || '{}');
             Object.entries(colors).forEach(([widgetId, color]) => {
-                const gridItem = document.querySelector(`[gs - id= "${widgetId}"]`);
+                const gridItem = document.querySelector(`[gs-id="${widgetId}"]`);
                 if (!gridItem) return;
                 const card = gridItem.querySelector('.kpi-card, .card.widget-card');
                 if (card) {
@@ -2746,9 +2831,7 @@
             currentChartPeriod = period;
             try {
                 const token = localStorage.getItem('token');
-                const resp = await fetch(`/ api / dashboard / chart - data ? period = ${period}`, {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
+                const resp = await fetch(`/api/dashboard/chart-data?period=${period}`);
                 if (!resp.ok) throw new Error('Fetch failed');
                 const data = await resp.json();
                 renderChart(data.labels, data.data);
@@ -2936,7 +3019,7 @@
                 // For week view, we might need data from adjacent months, so fetch current month
                 // Optimization: Fetch wider range if needed, but for now fetch current month focus
                 const token = localStorage.getItem('token');
-                const resp = await fetch(`/ api / dashboard / calendar ? month = ${calendarMonth} & year=${calendarYear}`, {
+                const resp = await fetch(`/api/dashboard/calendar?month=${calendarMonth}&year=${calendarYear}`, {
                     headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                 });
                 if (!resp.ok) throw new Error('Fetch failed');
@@ -2978,16 +3061,16 @@
                 const dayName = weekDays[i];
                 const dayNum = d.getDate();
 
-                html += `< div class= "cal-week-header ${isToday ? 'today' : ''}" style = "background:var(--bg-surface);padding:10px;text-align:center;border-bottom:1px solid var(--border-subtle);" >
+                html += `<div class="cal-week-header ${isToday ? 'today' : ''}" style="background:var(--bg-surface);padding:10px;text-align:center;border-bottom:1px solid var(--border-subtle);">
                     <div style="font-size:0.75rem;color:var(--text-tertiary);uppercase">${dayName}</div>
                     <div style="font-size:1.1rem;font-weight:700;color:${isToday ? 'var(--primary)' : 'var(--text-main)'}">${dayNum}</div>
-                </div > `;
+                </div>`;
             }
 
             // Time Slots (8am to 18pm)
             for (let hour = 8; hour <= 18; hour++) {
                 const timeLabel = `${String(hour).padStart(2, '0')}:00`;
-                html += `< div class="cal-time-slot" style = "background:var(--bg-surface);padding:5px;font-size:0.75rem;color:var(--text-tertiary);text-align:right;border-right:1px solid var(--border-subtle);" > ${timeLabel}</div > `;
+                html += `<div class="cal-time-slot" style="background:var(--bg-surface);padding:5px;font-size:0.75rem;color:var(--text-tertiary);text-align:right;border-right:1px solid var(--border-subtle);">${timeLabel}</div>`;
 
                 for (let i = 0; i < 7; i++) {
                     const d = new Date(calendarWeekStart);
@@ -3001,7 +3084,7 @@
                         return h === hour;
                     });
 
-                    html += `< div class="cal-week-cell" style = "background:var(--bg-surface);border-bottom:1px solid var(--border-subtle);position:relative;min-height:50px;padding:2px;" > `;
+                    html += `<div class="cal-week-cell" style="background:var(--bg-surface);border-bottom:1px solid var(--border-subtle);position:relative;min-height:50px;padding:2px;">`;
 
                     hourAppts.forEach(a => {
                         let statusColor = 'var(--text-main)';
@@ -3010,13 +3093,13 @@
                         if (st.includes('confirm')) { bgColor = '#dcfce7'; statusColor = '#166534'; }
                         else if (st.includes('aguard')) { bgColor = '#fef9c3'; statusColor = '#854d0e'; }
 
-                        html += `< div class="cal-week-appt clickable" onclick = "openPatientProfileByName('${a.patient}')"
-                style = "background:${bgColor};color:${statusColor};font-size:0.7rem;padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" >
+                        html += `<div class="cal-week-appt clickable" onclick="openPatientInfo(${a.patient_id})"
+                style="background:${bgColor};color:${statusColor};font-size:0.7rem;padding:2px 4px;border-radius:4px;margin-bottom:2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                     ${a.time.substr(3, 2)} ${a.patient}
-                        </div > `;
+                        </div>`;
                     });
 
-                    html += `</div > `;
+                    html += `</div>`;
                 }
             }
 
@@ -3043,7 +3126,7 @@
 
             let html = '<div class="calendar-weekdays" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;margin-bottom:4px;">';
             ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].forEach(d => {
-                html += `< div class="calendar-weekday" style = "text-align:center;font-size:0.8rem;color:var(--text-tertiary);padding:4px;" > ${d}</div > `;
+                html += `<div class="calendar-weekday" style="text-align:center;font-size:0.8rem;color:var(--text-tertiary);padding:4px;">${d}</div>`;
             });
             html += '</div><div class="calendar-days" style="display:grid;grid-template-columns:repeat(7, 1fr);gap:4px;">';
 
@@ -3054,7 +3137,7 @@
 
             // Day cells
             for (let day = 1; day <= data.days_in_month; day++) {
-                const dateStr = `${data.year} -${String(data.month).padStart(2, '0')} -${String(day).padStart(2, '0')} `;
+                const dateStr = `${data.year}-${String(data.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const appts = data.appointments[dateStr] || [];
                 const isToday = isCurrentMonth && day === todayDay;
                 const hasAppts = appts.length > 0;
@@ -3063,11 +3146,11 @@
                 if (isToday) classes += ' today';
                 if (hasAppts) classes += ' has-appointments';
 
-                html += `< div class="${classes}" onclick = "showDayDetail('${dateStr}', ${day})"
-                style = "aspect-ratio:1;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border-subtle);padding:4px;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;" > `;
+                html += `<div class="${classes}" onclick="showDayDetail('${dateStr}', ${day})"
+                style="aspect-ratio:1;border-radius:8px;background:var(--bg-surface);border:1px solid var(--border-subtle);padding:4px;cursor:pointer;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;">`;
 
-                if (isToday) html += `< span class="calendar-day-number" style = "font-weight:700;color:var(--primary);" > ${day}</span > `;
-                else html += `< span class="calendar-day-number" style = "color:var(--text-secondary);" > ${day}</span > `;
+                if (isToday) html += `<span class="calendar-day-number" style="font-weight:700;color:var(--primary);">${day}</span>`;
+                else html += `<span class="calendar-day-number" style="color:var(--text-secondary);">${day}</span>`;
 
                 if (hasAppts) {
                     html += '<div class="calendar-day-dots" style="display:flex;gap:2px;margin-top:2px;">';
@@ -3078,9 +3161,9 @@
                         else if (st.includes('aguard')) color = '#eab308';
                         else if (st.includes('cancel')) color = '#ef4444';
                         else if (st.includes('conclu')) color = '#3b82f6';
-                        html += `< span style = "width:4px;height:4px;border-radius:50%;background:${color};" ></span > `;
+                        html += `<span style="width:4px;height:4px;border-radius:50%;background:${color};"></span>`;
                     });
-                    if (appts.length > 4) html += `< span style = "font-size:0.55rem;color:var(--text-tertiary)" > +</span > `;
+                    if (appts.length > 4) html += `<span style="font-size:0.55rem;color:var(--text-tertiary)">+</span>`;
                     html += '</div>';
                 }
                 html += '</div>';
@@ -3110,10 +3193,10 @@
 
             // Format header
             const headerHtml = `
-                    < div style = "display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;" >
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
                     <span style="font-weight:600;color:var(--text-main);">${day} de ${monthNames[calendarMonth - 1]}</span>
                     <button onclick="document.getElementById('calendar-day-detail').style.display='none'" style="background:none;border:none;cursor:pointer;color:var(--text-tertiary);">&times;</button>
-                </div >
+                </div>
                     `;
 
             let itemsHtml = '';
@@ -3126,11 +3209,11 @@
 
                 // Clickable patient name
                 itemsHtml += `
-                    < div class="calendar-appt-item" style = "display:flex;align-items:center;gap:0.5rem;padding:0.5rem;border-bottom:1px solid var(--border-subtle);" >
+                    <div class="calendar-appt-item" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem;border-bottom:1px solid var(--border-subtle);">
                     <span style="font-weight:600;font-size:0.9rem;min-width:45px;">${a.time}</span>
-                    <span class="clickable-patient" onclick="openPatientProfileByName('${a.patient}')" style="flex:1;cursor:pointer;color:var(--primary);font-weight:500;">${a.patient}</span>
+                    <span class="clickable-patient" onclick="openPatientInfo(${a.patient_id})" style="flex:1;cursor:pointer;color:var(--primary);font-weight:500;">${a.patient}</span>
                     <span class="status-badge ${statusClass}" style="font-size:0.7rem;">${a.status}</span>
-                </div > `;
+                </div>`;
             });
 
             detail.innerHTML = headerHtml + '<div style="max-height:200px;overflow-y:auto;">' + itemsHtml + '</div>';
@@ -3156,7 +3239,7 @@
 
         async function openPatientProfile(id) {
             try {
-                const response = await fetch(`/ api / patients / ${id} `);
+                const response = await fetch(`/api/patients/${id}`);
                 const patient = await response.json();
 
                 // Populate Modal
@@ -3220,12 +3303,11 @@
             const notes = document.getElementById('profile-notes').value;
 
             try {
-                // First get current data to not overwrite other fields
-                const getResp = await fetch(`/ api / patients / ${id} `);
+                const getResp = await fetch(`/api/patients/${id}`);
                 const patient = await getResp.json();
 
                 // Update only observations
-                const updateResp = await fetch(`/ api / patients / ${id} `, {
+                const updateResp = await fetch(`/api/patients/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

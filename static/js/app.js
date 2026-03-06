@@ -1,4 +1,4 @@
-// App Logic & Routing
+// Lógica do App e Roteamento
 
 const routes = {
     '/': renderDashboard,
@@ -15,7 +15,7 @@ const routes = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('App initialized');
 
-    // Intercept clicks for SPA navigation
+    // Intercepta os cliques para a navegação SPA
     document.body.addEventListener('click', e => {
         const link = e.target.closest('a[data-page]');
         if (link) {
@@ -24,10 +24,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Handle initial load
+    // Gerencia o carregamento inicial
     handleRoute(window.location.pathname);
 
-    // Handle browser back/forward
+    // Gerencia os botões de voltar/avançar do navegador
     window.addEventListener('popstate', () => {
         handleRoute(window.location.pathname);
     });
@@ -39,15 +39,15 @@ function navigateTo(path) {
 }
 
 function handleRoute(path) {
-    const renderFunction = routes[path] || routes['/dashboard']; // Default to dashboard
+    const renderFunction = routes[path] || routes['/dashboard']; // O padrão é o dashboard
 
-    // Update Active State in Sidebar
+    // Atualiza o estado ativo no menu lateral
     document.querySelectorAll('.nav-link').forEach(link => {
         const linkPath = link.getAttribute('href');
         const isActive = linkPath === path || (path === '/' && linkPath === '/dashboard');
 
         if (isActive) {
-            link.classList.add('text-text-main', 'bg-surface'); // Active styling for minimalist sidebar
+            link.classList.add('text-text-main', 'bg-surface'); // Estilização do item ativo na barra lateral minimalista
             link.classList.remove('text-text-muted');
         } else {
             link.classList.remove('text-text-main', 'bg-surface');
@@ -55,7 +55,7 @@ function handleRoute(path) {
         }
     });
 
-    // Update Breadcrumb
+    // Atualiza o caminho (Breadcrumb)
     const breadcrumb = document.getElementById('page-breadcrumb');
     if (breadcrumb) {
         const pageTitles = {
@@ -72,13 +72,13 @@ function handleRoute(path) {
         breadcrumb.textContent = pageTitles[path] || 'Dashboard';
     }
 
-    // Render Content
+    // Renderiza o conteúdo da página
     const contentArea = document.getElementById('content-area');
     contentArea.innerHTML = renderFunction();
     feather.replace();
 }
 
-// --- View Renderers ---
+// --- Renderizadores de Tela ---
 
 
 function renderDashboard() {
