@@ -8,6 +8,7 @@ Configuração do banco de dados (SQLAlchemy Async)
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import NullPool
 from app.config import settings
 
 # URL de conexão com o banco de dados
@@ -19,12 +20,13 @@ if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
     connect_args["statement_cache_size"] = 0
     connect_args["ssl"] = True
 
-# Engine assíncrona — gerencia a conexão com o banco
+# NullPool: cria uma conexão nova por requisição e fecha imediatamente.
+# Evita o ConnectionDoesNotExistError causado por conexões obsoletas no pool.
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
     echo=False,
     connect_args=connect_args,
-    pool_pre_ping=True,
+    poolclass=NullPool,
 )
 
 # Fábrica de sessões — cada requisição cria uma sessão isolada
@@ -41,13 +43,5 @@ Base = declarative_base()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    O que é esta 'função' (async def)? Pense nela como um "Porteiro" do banco de dados.
-    Ela tem o prefixo "async", o que significa que é assíncrona. Ou seja, ela é inteligente: consegue abrir a porta do banco de dados e, se o banco demorar para responder, a máquina vai fazer outras coisas em vez de travar o site inteiro (como pedir uma pizza e ir assistir TV enquanto ela não chega).
-    
-    Sempre que uma parte do site (uma Rota) precisa buscar um paciente ou criar um usuário, ela chama o porteiro 'get_db()'.
-    O porteiro empresta a "chave" (yield session) para que o sistema leia ou grave coisas. Depois que termina, a chave é devolvida com segurança.
-    """
     async with SessionLocal() as session:
         yield session
