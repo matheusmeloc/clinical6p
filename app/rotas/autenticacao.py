@@ -5,6 +5,7 @@ Rotas de Autenticação
 """
 
 import secrets
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from pydantic import BaseModel
@@ -17,6 +18,7 @@ from app.email_utils import send_forgot_password_email
 
 
 router = APIRouter(prefix="/api", tags=["Autenticação"])
+logger = logging.getLogger(__name__)
 
 
 # ═════════════════════════════════════════════════════════════════════
@@ -37,61 +39,57 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    O que esta 'função' (async def) faz? Pense nela como o "Segurança" na porta da clínica digital.
-    Nós (a interface de login) entregamos a ele o bilhete da pessoa (o request) contendo o "e-mail/CPF" e a "Senha secreta".
-    1. O segurança primeiro pega a prancheta de 'Funcionários' (Users) e tenta achar aquele e-mail. Se achar, testa a senha na roleta.
-    2. Se não achar nos funcionários, ele pega a prancheta de 'Pacientes' e procura aquele CPF. Se achar, testa a senha na roleta.
-    3. Se tudo bater e a pessoa estiver 'Ativa', ele permite a entrada e devolve o crachá de identificação virtual da pessoa (um dict com o nome, email, id e role). Se não, expulsa a pessoa avisando: erro 401 (Proibido a Entrada).
-    """
-    email_or_cpf = body.email.strip()
-    password = body.password.strip()
+    try:
+        email_or_cpf = body.email.strip()
+        password = body.password.strip()
 
-    # --- Tenta login como funcionário (tabela Users) ---
-    stmt_user = select(User).where(User.email == email_or_cpf)
-    result_user = await db.execute(stmt_user)
-    user = result_user.scalars().first()
+        # --- Tenta login como funcionário (tabela Users) ---
+        stmt_user = select(User).where(User.email == email_or_cpf)
+        result_user = await db.execute(stmt_user)
+        user = result_user.scalars().first()
 
-    if user:
-        if not verify_password(password, user.hashed_password):
-            raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
-        if not user.is_active:
-            raise HTTPException(status_code=403, detail="Usuário inativo")
-        
-        token = create_access_token({"sub": str(user.id), "email": user.email, "role": user.role})
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "id": user.id,
-            "email": user.email,
-            "full_name": user.full_name,
-            "role": user.role,
-        }
+        if user:
+            if not user.is_active:
+                raise HTTPException(status_code=403, detail="Usuário inativo. Contate o administrador.")
+            if not verify_password(password, user.hashed_password):
+                raise HTTPException(status_code=401, detail="Senha incorreta.")
+            token = create_access_token({"sub": str(user.id), "email": user.email, "role": user.role})
+            return {
+                "access_token": token,
+                "token_type": "bearer",
+                "id": user.id,
+                "email": user.email,
+                "full_name": user.full_name,
+                "role": user.role,
+            }
 
-    # --- Tenta login como paciente (tabela Patients) ---
-    stmt_patient = select(Patient).where(Patient.cpf == email_or_cpf)
-    result_patient = await db.execute(stmt_patient)
-    patient = result_patient.scalars().first()
+        # --- Tenta login como paciente (tabela Patients) ---
+        stmt_patient = select(Patient).where(Patient.cpf == email_or_cpf)
+        result_patient = await db.execute(stmt_patient)
+        patient = result_patient.scalars().first()
 
-    if patient and patient.hashed_password:
-        if not verify_password(password, patient.hashed_password):
-            raise HTTPException(status_code=401, detail="CPF ou senha incorretos")
-        if patient.status != "Ativo":
-            raise HTTPException(status_code=403, detail="Paciente inativo")
-        
-        token = create_access_token({"sub": str(patient.id), "email": patient.cpf, "role": "patient"})
-        return {
-            "access_token": token,
-            "token_type": "bearer",
-            "id": patient.id,
-            "email": patient.cpf,
-            "full_name": patient.name,
-            "role": "patient",
-        }
+        if patient and patient.hashed_password:
+            if patient.status != "Ativo":
+                raise HTTPException(status_code=403, detail="Paciente inativo. Contate a clínica.")
+            if not verify_password(password, patient.hashed_password):
+                raise HTTPException(status_code=401, detail="Senha incorreta.")
+            token = create_access_token({"sub": str(patient.id), "email": patient.cpf, "role": "patient"})
+            return {
+                "access_token": token,
+                "token_type": "bearer",
+                "id": patient.id,
+                "email": patient.cpf,
+                "full_name": patient.name,
+                "role": "patient",
+            }
 
-    # Se não encontrou em nenhuma das tabelas ou a senha do paciente está vazia
-    raise HTTPException(status_code=401, detail="Conta não encontrada ou senha incorreta")
+        raise HTTPException(status_code=404, detail="E-mail ou CPF não encontrado no sistema.")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Erro inesperado no login: {e}", exc_info=True)
+        raise HTTPException(status_code=503, detail=f"Erro de conexão com o banco de dados: {type(e).__name__}: {e}")
 
 
 @router.post("/forgot-password")
