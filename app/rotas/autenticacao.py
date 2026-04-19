@@ -38,7 +38,7 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 @limiter.limit("10/minute")
-async def login(http_request: Request, body: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
+async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     O que esta 'função' (async def) faz? Pense nela como o "Segurança" na porta da clínica digital.
