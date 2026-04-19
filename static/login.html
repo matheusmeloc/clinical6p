@@ -147,14 +147,18 @@
                     }));
                     window.location.href = '/';
                 } else {
-                    const err = await response.json();
-                    errorEl.innerText = err.detail || 'Falha no login';
+                    let msg = `Erro ${response.status}`;
+                    try {
+                        const err = await response.json();
+                        msg = err.detail || msg;
+                    } catch (_) {}
+                    errorEl.innerText = msg;
                     errorEl.style.display = 'block';
                     btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar no Painel';
                     btn.disabled = false;
                 }
             } catch (e) {
-                errorEl.innerText = 'Erro de conexão';
+                errorEl.innerText = 'Sem resposta do servidor. Aguarde 30s e tente novamente.';
                 errorEl.style.display = 'block';
                 btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Entrar no Painel';
                 btn.disabled = false;
