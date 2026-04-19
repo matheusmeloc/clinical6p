@@ -17,7 +17,6 @@ SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 connect_args: dict = {}
 if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
     connect_args["statement_cache_size"] = 0
-    connect_args["ssl"] = True
 
 # Engine assíncrona — gerencia a conexão com o banco
 engine = create_async_engine(
