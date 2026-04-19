@@ -12,11 +12,11 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy import select
@@ -150,9 +150,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Rate limiter — bloqueia IPs que excedem os limites definidos nos decoradores
+# Rate limiter — 200 req/min por IP em toda a API
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 
 # ═════════════════════════════════════════════════════════════════════
