@@ -5,7 +5,6 @@ Configuração do banco de dados (SQLAlchemy Async)
 - Base para definição de modelos (tabelas)
 """
 
-import ssl
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -14,17 +13,12 @@ from app.config import settings
 # URL de conexão com o banco de dados
 SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
-# Argumentos extras para PostgreSQL
+# Argumentos extras para PostgreSQL (desabilita cache de statements)
 connect_args: dict = {}
 if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
     connect_args["statement_cache_size"] = 0
-    # Render PostgreSQL exige SSL mas não tem CA confiável — desabilita verificação de cert
-    _ssl_ctx = ssl.create_default_context()
-    _ssl_ctx.check_hostname = False
-    _ssl_ctx.verify_mode = ssl.CERT_NONE
-    connect_args["ssl"] = _ssl_ctx
 
-# Engine assíncrona com pool_pre_ping para rejeitar conexões fechadas pelo servidor
+# Engine assíncrona — gerencia a conexão com o banco
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
     echo=False,
