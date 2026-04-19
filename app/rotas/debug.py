@@ -6,7 +6,7 @@ Rotas de Debug e Ferramentas Internas
 import smtplib
 import traceback
 from typing import Any
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.database import AsyncSession, get_db
 from app.email_utils import get_smtp_settings
@@ -15,12 +15,18 @@ from app.config import settings
 router = APIRouter(prefix="/api/debug", tags=["Debug"])
 
 
+def _require_debug() -> None:
+    """Bloqueia o endpoint se ENABLE_DEBUG não estiver ativo no .env."""
+    if not settings.ENABLE_DEBUG:
+        raise HTTPException(status_code=404, detail="Not found")
+
+
 # ═════════════════════════════════════════════════════════════════════
 # FERRAMENTAS
 # ═════════════════════════════════════════════════════════════════════
 
 @router.get("/test-email")
-async def test_smtp_connection(db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+async def test_smtp_connection(db: AsyncSession = Depends(get_db), _: None = Depends(_require_debug)) -> dict[str, Any]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' Bate-Papo com o Correio.

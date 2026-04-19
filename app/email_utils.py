@@ -12,6 +12,7 @@ Utilitários de E-mail
 import smtplib
 import asyncio
 import logging
+import time
 from email.message import EmailMessage
 from sqlalchemy import select
 from app.config import settings
@@ -20,24 +21,43 @@ from app.models import SystemSettings
 
 logger = logging.getLogger(__name__)
 
+# ─── Cache em memória das configurações SMTP ─────────────────────────
+# Evita query ao banco a cada envio de e-mail. TTL de 5 minutos.
+_smtp_cache: tuple[str, int, str, str, str | None] | None = None
+_smtp_cache_ts: float = 0.0
+_SMTP_CACHE_TTL: float = 300.0
+
+
+def invalidate_smtp_cache() -> None:
+    """Descarta o cache SMTP — deve ser chamado quando as configurações são salvas."""
+    global _smtp_cache, _smtp_cache_ts
+    _smtp_cache = None
+    _smtp_cache_ts = 0.0
+
 
 async def get_smtp_settings(db: AsyncSession) -> tuple[str, int, str, str, str | None]:
     """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    O que é esta 'função' (async def)? Ela é o "Mensageiro" que busca as chaves do correio.
-    Antes de mandarmos qualquer e-mail no nosso site, essa função entra no banco de dados, procura onde guardamos o e-mail oficial da clínica e a senha desse e-mail, e nos entrega as chaves (tuple).
-    Assim, o resto do código sabe como se logar no Gmail/SMTP para despachar a mensagem!
+    Retorna as configurações SMTP priorizando o banco de dados.
+    O resultado é cacheado por 5 minutos para evitar queries repetidas.
     """
+    global _smtp_cache, _smtp_cache_ts
+
+    if _smtp_cache is not None and (time.monotonic() - _smtp_cache_ts) < _SMTP_CACHE_TTL:
+        return _smtp_cache
+
     try:
         result = await db.execute(select(SystemSettings).order_by(SystemSettings.id))
         s = result.scalars().first()
-        return (
+        fetched: tuple[str, int, str, str, str | None] = (
             (s.smtp_server if s and s.smtp_server else settings.SMTP_SERVER),
             (s.smtp_port if s and s.smtp_port else settings.SMTP_PORT),
             (s.smtp_username if s and s.smtp_username else settings.SMTP_USERNAME),
             (s.smtp_password if s and s.smtp_password else settings.SMTP_PASSWORD),
             (s.smtp_from_email if s and s.smtp_from_email else (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)),
         )
+        _smtp_cache = fetched
+        _smtp_cache_ts = time.monotonic()
+        return fetched
     except Exception as e:
         logger.error(f"Erro ao buscar SMTP do banco: {e}")
         return (
@@ -45,7 +65,7 @@ async def get_smtp_settings(db: AsyncSession) -> tuple[str, int, str, str, str |
             settings.SMTP_PORT,
             settings.SMTP_USERNAME,
             settings.SMTP_PASSWORD,
-            (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME)
+            (settings.SMTP_FROM_EMAIL or settings.SMTP_USERNAME),
         )
 
 
@@ -263,3 +283,39 @@ async def send_forgot_password_email(
         html,
         "Recuperação de Senha"
     )
+
+
+# ═════════════════════════════════════════════════════════════════════
+# WRAPPERS PARA BACKGROUND TASKS (FastAPI BackgroundTasks)
+# Criam sua própria sessão de banco — seguros para uso após o response.
+# ═════════════════════════════════════════════════════════════════════
+
+async def bg_send_patient_welcome_email(
+    patient_email: str,
+    patient_name: str,
+    patient_cpf: str,
+    patient_password: str,
+) -> None:
+    from app.database import SessionLocal
+    async with SessionLocal() as db:
+        await send_patient_welcome_email(db, patient_email, patient_name, patient_cpf, patient_password)
+
+
+async def bg_send_professional_welcome_email(
+    email: str,
+    name: str,
+    str_password: str,
+) -> None:
+    from app.database import SessionLocal
+    async with SessionLocal() as db:
+        await send_professional_welcome_email(db, email, name, str_password)
+
+
+async def bg_send_patient_message_notification(
+    professional_email: str,
+    professional_name: str,
+    patient_name: str,
+) -> None:
+    from app.database import SessionLocal
+    async with SessionLocal() as db:
+        await send_patient_message_notification(db, professional_email, professional_name, patient_name)

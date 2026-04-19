@@ -6,8 +6,9 @@ Rotas do Dashboard
 """
 
 from typing import Any
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
+from sqlalchemy.orm import selectinload
 from datetime import date, datetime, timedelta
 
 from app.database import AsyncSession, get_db
@@ -94,66 +95,86 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)) -> dict[str, A
 @router.get("/chart-data")
 async def get_chart_data(period: str = "daily", db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta 'função' (async def) tem um trabalho muito específico: Fazer arte (o Gráfico).
-    O plugin do gráfico da página de administração só entende desenhos baseados em Listas.
-    Então, esta função prepara "Eixos x e y": Uma lista de Etiquetas ('labels', ex: Segunda, Terça), e uma lista de Valores ('data_points', ex: 5, 12 consultas).
-    Baseado no tipo (diário, semanal ou mensal), ela varre as consultas no banco de dados nesses períodos, soma e devolve as duas listas prontas pro site desenhar.
+    Retorna labels e data_points para o gráfico do dashboard.
+    Usa uma única query GROUP BY por período em vez de N queries seriais.
     """
     today = date.today()
     labels: list[str] = []
     data_points: list[int] = []
 
     if period == "daily":
-        # Processa os dias da semana atual
         start_date = today - timedelta(days=today.weekday())
-        
+        end_date = start_date + timedelta(days=6)
+
+        # 1 query: contagem por dia dentro da semana
+        rows = (await db.execute(
+            select(Appointment.date, func.count(Appointment.id))
+            .where(Appointment.date >= start_date, Appointment.date <= end_date)
+            .group_by(Appointment.date)
+        )).all()
+        counts: dict[date, int] = {row[0]: row[1] for row in rows}
+
         for i in range(7):
-            current_day = start_date + timedelta(days=i)
-            count_stmt = select(func.count(Appointment.id)).where(Appointment.date == current_day)
-            count = await db.scalar(count_stmt) or 0
-            
-            labels.append(current_day.strftime("%d/%m"))
-            data_points.append(count)
+            day = start_date + timedelta(days=i)
+            labels.append(day.strftime("%d/%m"))
+            data_points.append(counts.get(day, 0))
 
     elif period == "weekly":
-        # Processa as últimas 4 semanas
+        current_monday = today - timedelta(days=today.weekday())
+        start_date = current_monday - timedelta(weeks=3)
+        end_date = current_monday + timedelta(days=6)
+
+        # 1 query: contagem por dia nas últimas 4 semanas
+        rows = (await db.execute(
+            select(Appointment.date, func.count(Appointment.id))
+            .where(Appointment.date >= start_date, Appointment.date <= end_date)
+            .group_by(Appointment.date)
+        )).all()
+        counts = {row[0]: row[1] for row in rows}
+
         for i in range(3, -1, -1):
-            ws = today - timedelta(days=today.weekday() + 7 * i)
+            ws = current_monday - timedelta(weeks=i)
             we = ws + timedelta(days=6)
-            
-            count_stmt = select(func.count(Appointment.id)).where(
-                Appointment.date >= ws, 
-                Appointment.date <= we
-            )
-            count = await db.scalar(count_stmt) or 0
-            
+            week_total = sum(counts.get(ws + timedelta(days=d), 0) for d in range(7))
             labels.append(f"{ws.strftime('%d/%m')}-{we.strftime('%d/%m')}")
-            data_points.append(count)
+            data_points.append(week_total)
 
     elif period == "monthly":
-        # Processa os últimos 6 meses (calculando retrospectivamente)
+        # Calcula o intervalo completo dos 6 meses de uma vez
+        start_m, start_y = today.month - 5, today.year
+        while start_m <= 0:
+            start_m += 12
+            start_y -= 1
+        start_date = date(start_y, start_m, 1)
+        end_date = (
+            date(today.year + 1, 1, 1) - timedelta(days=1) if today.month == 12
+            else date(today.year, today.month + 1, 1) - timedelta(days=1)
+        )
+
+        # 1 query: contagem por dia nos últimos 6 meses
+        rows = (await db.execute(
+            select(Appointment.date, func.count(Appointment.id))
+            .where(Appointment.date >= start_date, Appointment.date <= end_date)
+            .group_by(Appointment.date)
+        )).all()
+        counts = {row[0]: row[1] for row in rows}
+
         for i in range(5, -1, -1):
             m, y = today.month - i, today.year
-            
             while m <= 0:
                 m += 12
                 y -= 1
-                
             first_day = date(y, m, 1)
             last_day = (
-                date(y + 1, 1, 1) - timedelta(days=1) if m == 12 
+                date(y + 1, 1, 1) - timedelta(days=1) if m == 12
                 else date(y, m + 1, 1) - timedelta(days=1)
             )
-            
-            count_stmt = select(func.count(Appointment.id)).where(
-                Appointment.date >= first_day, 
-                Appointment.date <= last_day
+            month_total = sum(
+                counts.get(first_day + timedelta(days=d), 0)
+                for d in range((last_day - first_day).days + 1)
             )
-            count = await db.scalar(count_stmt) or 0
-            
             labels.append(MONTHS_PT[m - 1])
-            data_points.append(count)
+            data_points.append(month_total)
 
     return {"labels": labels, "data": data_points}
 
@@ -175,41 +196,49 @@ async def get_calendar_data(
     target_month = month or today.month
     target_year = year or today.year
 
-    first_day = date(target_year, target_month, 1)
+    if not (1 <= target_month <= 12):
+        raise HTTPException(status_code=422, detail="O mês deve estar entre 1 e 12.")
+
+    try:
+        first_day = date(target_year, target_month, 1)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Ano ou mês inválido.")
+
     last_day = (
-        date(target_year + 1, 1, 1) - timedelta(days=1) if target_month == 12 
+        date(target_year + 1, 1, 1) - timedelta(days=1) if target_month == 12
         else date(target_year, target_month + 1, 1) - timedelta(days=1)
     )
 
-    # Busca as consultas do mês ordenadas cronologicamente
+    # Busca as consultas do mês com paciente carregado — evita N+1 queries
     appointments_stmt = (
         select(Appointment)
+        .options(selectinload(Appointment.patient))
         .where(Appointment.date >= first_day, Appointment.date <= last_day)
         .order_by(Appointment.date, Appointment.time)
     )
     result_appointments = await db.execute(appointments_stmt)
     appointments = result_appointments.scalars().all()
 
-    # Prepara o calendário e agrupa os dias iterando sobre as consultas encontradas
+    # Agrupa consultas por dia usando os relacionamentos já carregados
     calendar_dict: dict[str, list[dict[str, str]]] = {}
-    
+
     for appt in appointments:
         day_str = appt.date.strftime("%Y-%m-%d")
-        
+
         if day_str not in calendar_dict:
             calendar_dict[day_str] = []
-            
-        patient_name = await db.scalar(select(Patient.name).where(Patient.id == appt.patient_id))
-        
+
+        patient_name = appt.patient.name if appt.patient else "Paciente Removido"
+
         calendar_dict[day_str].append({
             "time": appt.time.strftime("%H:%M"),
-            "patient": patient_name or "Paciente Removido",
+            "patient": patient_name,
             "status": appt.status or "Aguardando",
             "type": appt.type or "",
         })
 
     return {
-        "month": target_month, 
+        "month": target_month,
         "year": target_year,
         "days_in_month": last_day.day,
         "first_weekday": first_day.weekday(),

@@ -7,15 +7,15 @@ Rotas de Mensagens de Pacientes
 """
 
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select, func, desc
 from sqlalchemy.orm import selectinload
 
 from app.database import AsyncSession, get_db
 from app.models import Patient, PatientMessage
 from app.schemas import PatientMessageCreate, PatientMessageResponse
-from app.auth import verify_password
-from app.email_utils import send_patient_message_notification
+from app.auth import verify_password, get_current_user
+from app.email_utils import bg_send_patient_message_notification
 
 router = APIRouter(prefix="/api", tags=["Mensagens de Pacientes"])
 
@@ -25,7 +25,11 @@ router = APIRouter(prefix="/api", tags=["Mensagens de Pacientes"])
 # ═════════════════════════════════════════════════════════════════════
 
 @router.post("/patient-contact")
-async def send_patient_message(message_data: PatientMessageCreate, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def send_patient_message(
+    message_data: PatientMessageCreate,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, str]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' (async def) de Caixa de Correio do Paciente.
@@ -51,13 +55,13 @@ async def send_patient_message(message_data: PatientMessageCreate, db: AsyncSess
     db.add(db_msg)
     await db.commit()
 
-    # --- Notifica o profissional por e-mail (em background) ---
+    # Notifica o profissional em background — response retorna imediatamente
     if patient.professional and patient.professional.email:
-        await send_patient_message_notification(
-            db=db, 
-            professional_email=patient.professional.email, 
-            professional_name=patient.professional.name, 
-            patient_name=patient.name
+        background_tasks.add_task(
+            bg_send_patient_message_notification,
+            patient.professional.email,
+            patient.professional.name,
+            patient.name,
         )
 
     return {"message": "Mensagem enviada com sucesso"}
@@ -68,7 +72,7 @@ async def send_patient_message(message_data: PatientMessageCreate, db: AsyncSess
 # ═════════════════════════════════════════════════════════════════════
 
 @router.get("/patient-messages", response_model=list[PatientMessageResponse])
-async def list_messages(professional_id: int | None = None, db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
+async def list_messages(professional_id: int | None = None, db: AsyncSession = Depends(get_db), _: dict = Depends(get_current_user)) -> list[dict[str, Any]]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' Carteiro Organizado (Para o Painel de Controle).
@@ -104,7 +108,7 @@ async def list_messages(professional_id: int | None = None, db: AsyncSession = D
 
 
 @router.get("/patient-messages/unread")
-async def count_unread_messages(professional_id: int | None = None, db: AsyncSession = Depends(get_db)) -> dict[str, int]:
+async def count_unread_messages(professional_id: int | None = None, db: AsyncSession = Depends(get_db), _: dict = Depends(get_current_user)) -> dict[str, int]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' Calculadora Rápida de Notificações.
@@ -121,7 +125,7 @@ async def count_unread_messages(professional_id: int | None = None, db: AsyncSes
 
 
 @router.put("/patient-messages/{message_id}/read")
-async def mark_message_as_read(message_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def mark_message_as_read(message_id: int, db: AsyncSession = Depends(get_db), _: dict = Depends(get_current_user)) -> dict[str, str]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' Marca-Texto.

@@ -99,7 +99,7 @@
     </div>
 
     <script>
-        if (localStorage.getItem('user')) {
+        if (localStorage.getItem('user') && localStorage.getItem('access_token')) {
             window.location.href = '/';
         }
 
@@ -138,7 +138,13 @@
 
                 if (response.ok) {
                     const user = await response.json();
-                    localStorage.setItem('user', JSON.stringify(user));
+                    localStorage.setItem('access_token', user.access_token);
+                    localStorage.setItem('user', JSON.stringify({
+                        id: user.id,
+                        email: user.email,
+                        full_name: user.full_name,
+                        role: user.role
+                    }));
                     window.location.href = '/';
                 } else {
                     const err = await response.json();

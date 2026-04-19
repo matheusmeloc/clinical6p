@@ -1316,6 +1316,20 @@
 
     <!-- JavaScript para navegação e carregamento dos dados -->
     <script>
+        // ===== AUTH HELPER =====
+        async function apiFetch(url, options = {}) {
+            const token = localStorage.getItem('access_token');
+            const headers = { 'Content-Type': 'application/json', ...options.headers };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const response = await apiFetch(url, { ...options, headers });
+            if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
+            return response;
+        }
+
         // ===== ADJUSTABLE THEME =====
         const themeSlider = document.getElementById('theme-slider');
 
@@ -1490,7 +1504,7 @@
         async function fetchDashboardData() {
             try {
                 // KPIs
-                const responseStats = await fetch('/api/dashboard/stats');
+                const responseStats = await apiFetch('/api/dashboard/stats');
                 const dataStats = await responseStats.json();
 
                 // Remove skeletons + populate
@@ -1515,7 +1529,7 @@
                 document.getElementById('current-date').innerText = new Date().toLocaleDateString('pt-BR', options);
 
                 // Agenda Today — timeline
-                const responseToday = await fetch('/api/appointments/today');
+                const responseToday = await apiFetch('/api/appointments/today');
                 const dataToday = await responseToday.json();
                 const agendaList = document.getElementById('today-agenda');
                 agendaList.innerHTML = '';
@@ -1541,7 +1555,7 @@
                 }
 
                 // Upcoming
-                const responseUpcoming = await fetch('/api/appointments/upcoming');
+                const responseUpcoming = await apiFetch('/api/appointments/upcoming');
                 const dataUpcoming = await responseUpcoming.json();
                 const upcomingList = document.getElementById('upcoming-list');
                 upcomingList.innerHTML = '';
@@ -1575,7 +1589,7 @@
         // Patients Logic
         async function fetchPatients() {
             try {
-                const response = await fetch('/api/patients');
+                const response = await apiFetch('/api/patients');
                 const patients = await response.json();
                 const tbody = document.getElementById('patients-table-body');
                 tbody.innerHTML = '';
@@ -1612,7 +1626,7 @@
 
             // Populate professional select
             try {
-                const res = await fetch('/api/professionals');
+                const res = await apiFetch('/api/professionals');
                 const professionals = await res.json();
                 const select = document.getElementById('patient-professional-select');
                 select.innerHTML = '<option value="">Nenhum (sem vínculo)</option>';
@@ -1690,7 +1704,7 @@
             delete data.patient_id;
 
             try {
-                const response = await fetch(url, {
+                const response = await apiFetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -1715,7 +1729,7 @@
             if (!confirm('Tem certeza que deseja desativar este paciente?')) return;
 
             try {
-                const response = await fetch(`/api/patients/${id}`, { method: 'DELETE' });
+                const response = await apiFetch(`/api/patients/${id}`, { method: 'DELETE' });
                 if (response.ok) fetchPatients();
             } catch (e) {
                 console.error("Error deleting patient:", e);
@@ -1724,7 +1738,7 @@
 
         async function openPatientProfileByName(name) {
             try {
-                const res = await fetch('/api/patients');
+                const res = await apiFetch('/api/patients');
                 const patients = await res.json();
                 const patient = patients.find(p => p.name === name);
                 if (patient) {
@@ -1745,7 +1759,7 @@
         // Appointments Logic
         async function fetchAppointments() {
             try {
-                const response = await fetch('/api/appointments');
+                const response = await apiFetch('/api/appointments');
                 const appointments = await response.json();
                 const tbody = document.getElementById('appointments-table-body');
                 tbody.innerHTML = '';
@@ -1783,7 +1797,7 @@
             openModal('appointment-modal');
 
             try {
-                const resPat = await fetch('/api/patients');
+                const resPat = await apiFetch('/api/patients');
                 const patients = await resPat.json();
                 const patSelect = document.getElementById('appt-patient-select');
                 patSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -1794,7 +1808,7 @@
                     patSelect.appendChild(opt);
                 });
 
-                const resProf = await fetch('/api/professionals');
+                const resProf = await apiFetch('/api/professionals');
                 const professionals = await resProf.json();
                 const profSelect = document.getElementById('appt-professional-select');
                 profSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -1837,7 +1851,7 @@
             delete data.appointment_id;
 
             try {
-                const response = await fetch(url, {
+                const response = await apiFetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -1861,7 +1875,7 @@
         async function deleteAppointment(id) {
             if (!confirm('Cancelar este agendamento?')) return;
             try {
-                const response = await fetch(`/api/appointments/${id}`, { method: 'DELETE' });
+                const response = await apiFetch(`/api/appointments/${id}`, { method: 'DELETE' });
                 if (response.ok) {
                     fetchAppointments();
                     fetchDashboardData();
@@ -1874,7 +1888,7 @@
         // Professionals Logic
         async function fetchProfessionals() {
             try {
-                const response = await fetch('/api/professionals');
+                const response = await apiFetch('/api/professionals');
                 const professionals = await response.json();
                 const tbody = document.getElementById('professionals-table-body');
                 tbody.innerHTML = '';
@@ -1947,7 +1961,7 @@
             delete data.professional_id;
 
             try {
-                const response = await fetch(url, {
+                const response = await apiFetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -1985,7 +1999,7 @@
         async function deleteProfessional(id) {
             if (!confirm('Tem certeza que deseja remover este funcionário?')) return;
             try {
-                const response = await fetch(`/api/professionals/${id}`, { method: 'DELETE' });
+                const response = await apiFetch(`/api/professionals/${id}`, { method: 'DELETE' });
                 if (response.ok) fetchProfessionals();
             } catch (e) {
                 console.error("Error deleting professional:", e);
@@ -1995,7 +2009,7 @@
         // Certificates Logic
         async function fetchCertificates() {
             try {
-                const response = await fetch('/api/certificates');
+                const response = await apiFetch('/api/certificates');
                 const certificates = await response.json();
                 const tbody = document.getElementById('certificates-table-body');
                 tbody.innerHTML = '';
@@ -2029,7 +2043,7 @@
             openModal('certificate-modal');
 
             try {
-                const resPat = await fetch('/api/patients');
+                const resPat = await apiFetch('/api/patients');
                 const patients = await resPat.json();
                 const patSelect = document.getElementById('cert-patient-select');
                 patSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -2040,7 +2054,7 @@
                     patSelect.appendChild(opt);
                 });
 
-                const resProf = await fetch('/api/professionals');
+                const resProf = await apiFetch('/api/professionals');
                 const professionals = await resProf.json();
                 const profSelect = document.getElementById('cert-professional-select');
                 profSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -2091,7 +2105,7 @@
             delete data.certificate_id;
 
             try {
-                const response = await fetch(url, {
+                const response = await apiFetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -2113,7 +2127,7 @@
         async function deleteCertificate(id) {
             if (!confirm('Tem certeza que deseja remover este atestado?')) return;
             try {
-                const response = await fetch(`/api/certificates/${id}`, { method: 'DELETE' });
+                const response = await apiFetch(`/api/certificates/${id}`, { method: 'DELETE' });
                 if (response.ok) fetchCertificates();
             } catch (e) {
                 console.error("Error deleting certificate:", e);
@@ -2123,7 +2137,7 @@
         // Prescriptions Logic
         async function fetchPrescriptions() {
             try {
-                const response = await fetch('/api/prescriptions');
+                const response = await apiFetch('/api/prescriptions');
                 const prescriptions = await response.json();
                 const tbody = document.getElementById('prescriptions-table-body');
                 tbody.innerHTML = '';
@@ -2159,7 +2173,7 @@
 
             // Populate selects
             try {
-                const resPat = await fetch('/api/patients');
+                const resPat = await apiFetch('/api/patients');
                 const patients = await resPat.json();
                 const patSelect = document.getElementById('presc-patient-select');
                 patSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -2170,7 +2184,7 @@
                     patSelect.appendChild(opt);
                 });
 
-                const resProf = await fetch('/api/professionals');
+                const resProf = await apiFetch('/api/professionals');
                 const professionals = await resProf.json();
                 const profSelect = document.getElementById('presc-professional-select');
                 profSelect.innerHTML = '<option value="">Selecione...</option>';
@@ -2231,7 +2245,7 @@
             delete data.prescription_id;
 
             try {
-                const response = await fetch(url, {
+                const response = await apiFetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -2254,7 +2268,7 @@
         async function deletePrescription(id) {
             if (!confirm('Tem certeza que deseja remover esta receita?')) return;
             try {
-                const response = await fetch(`/api/prescriptions/${id}`, { method: 'DELETE' });
+                const response = await apiFetch(`/api/prescriptions/${id}`, { method: 'DELETE' });
                 if (response.ok) fetchPrescriptions();
             } catch (e) {
                 console.error("Error deleting prescription:", e);
@@ -2272,7 +2286,7 @@
                         url += `?professional_id=${user.id}`;
                     }
                 }
-                const response = await fetch(url);
+                const response = await apiFetch(url);
                 const messages = await response.json();
                 const tbody = document.getElementById('messages-table-body');
                 if (!tbody) return;
@@ -2308,7 +2322,7 @@
 
         async function markMessageRead(id) {
             try {
-                const response = await fetch(`/api/patient-messages/${id}/read`, { method: 'PUT' });
+                const response = await apiFetch(`/api/patient-messages/${id}/read`, { method: 'PUT' });
                 if (response.ok) {
                     fetchMessages(); // refresh the list
                 }
@@ -2342,7 +2356,7 @@
 
             try {
                 // Busca os detalhes do paciente na API
-                const response = await fetch(`/api/patients/${patientId}`);
+                const response = await apiFetch(`/api/patients/${patientId}`);
                 if (!response.ok) throw new Error('Falha ao carregar paciente');
                 
                 const patient = await response.json();
@@ -2423,8 +2437,8 @@
         // Auth Logic
         function checkAuth() {
             const userStr = localStorage.getItem('user');
-            if (!userStr) {
-                // Not logged in -> Redirect to Login Page
+            const token = localStorage.getItem('access_token');
+            if (!userStr || !token) {
                 window.location.href = '/login';
                 return;
             }
@@ -2464,6 +2478,7 @@
 
         function logout() {
             localStorage.removeItem('user');
+            localStorage.removeItem('access_token');
             window.location.href = '/login';
         }
 
@@ -2513,7 +2528,7 @@
 
         async function loadSystemSettings() {
             try {
-                const response = await fetch('/api/system/settings');
+                const response = await apiFetch('/api/system/settings');
                 const settings = await response.json();
 
                 document.getElementById('smtp-server').value = settings.smtp_server || '';
@@ -2540,7 +2555,7 @@
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch('/api/system/settings', {
+                const response = await apiFetch('/api/system/settings', {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -2592,7 +2607,7 @@
                 submitBtn.disabled = true;
 
                 try {
-                    const response = await fetch(`/api/users/${user.id}`, {
+                    const response = await apiFetch(`/api/users/${user.id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(updatePayload)
@@ -2831,8 +2846,7 @@
         async function loadChartData(period) {
             currentChartPeriod = period;
             try {
-                const token = localStorage.getItem('token');
-                const resp = await fetch(`/api/dashboard/chart-data?period=${period}`);
+                const resp = await apiFetch(`/api/dashboard/chart-data?period=${period}`);
                 if (!resp.ok) throw new Error('Fetch failed');
                 const data = await resp.json();
                 renderChart(data.labels, data.data);
@@ -3019,10 +3033,7 @@
             try {
                 // For week view, we might need data from adjacent months, so fetch current month
                 // Optimization: Fetch wider range if needed, but for now fetch current month focus
-                const token = localStorage.getItem('token');
-                const resp = await fetch(`/api/dashboard/calendar?month=${calendarMonth}&year=${calendarYear}`, {
-                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-                });
+                const resp = await apiFetch(`/api/dashboard/calendar?month=${calendarMonth}&year=${calendarYear}`);
                 if (!resp.ok) throw new Error('Fetch failed');
                 const data = await resp.json();
                 calendarData = data.appointments || {};
@@ -3225,7 +3236,7 @@
         async function openPatientProfileByName(name) {
             // Find patient ID by name (inefficient but works for small datasets, ideally backend search)
             try {
-                const response = await fetch('/api/patients'); // In production use search endpoint
+                const response = await apiFetch('/api/patients'); // In production use search endpoint
                 const patients = await response.json();
                 const patient = patients.find(p => p.name === name);
                 if (patient) {
@@ -3240,7 +3251,7 @@
 
         async function openPatientProfile(id) {
             try {
-                const response = await fetch(`/api/patients/${id}`);
+                const response = await apiFetch(`/api/patients/${id}`);
                 const patient = await response.json();
 
                 // Populate Modal
@@ -3266,7 +3277,7 @@
                             msgUrl += `?professional_id=${user.id}`;
                         }
                     }
-                    const msgResp = await fetch(msgUrl);
+                    const msgResp = await apiFetch(msgUrl);
                     const allMsgs = await msgResp.json();
                     const patMsgs = allMsgs.filter(m => m.patient_id === id);
                     const listEl = document.getElementById('profile-messages-list');
@@ -3304,11 +3315,11 @@
             const notes = document.getElementById('profile-notes').value;
 
             try {
-                const getResp = await fetch(`/api/patients/${id}`);
+                const getResp = await apiFetch(`/api/patients/${id}`);
                 const patient = await getResp.json();
 
                 // Update only observations
-                const updateResp = await fetch(`/api/patients/${id}`, {
+                const updateResp = await apiFetch(`/api/patients/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3397,12 +3408,12 @@
 
             try {
                 // Find professional ID by email
-                const res = await fetch('/api/professionals');
+                const res = await apiFetch('/api/professionals');
                 const professionals = await res.json();
                 const prof = professionals.find(p => p.email === user.email);
 
                 if (prof) {
-                    const badgeRes = await fetch(`/api/patient-messages/unread?professional_id=${prof.id}`);
+                    const badgeRes = await apiFetch(`/api/patient-messages/unread?professional_id=${prof.id}`);
                     const badgeData = await badgeRes.json();
 
                     const badgeEl = document.getElementById('unread-badge');

@@ -125,7 +125,12 @@ async def upcoming_appointments(db: AsyncSession = Depends(get_db)) -> list[dict
 # ═════════════════════════════════════════════════════════════════════
 
 @router.get("")
-async def list_appointments(date_filter: str | None = None, db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
+async def list_appointments(
+    date_filter: str | None = None,
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, Any]]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta 'função' é o Livro do Calendário completo dos agendamentos. Mostra tudo e qualquer coisa.
@@ -140,7 +145,7 @@ async def list_appointments(date_filter: str | None = None, db: AsyncSession = D
         except ValueError:
             pass # Ignora filtros mal formatados
             
-    result = await db.execute(query.order_by(Appointment.date, Appointment.time))
+    result = await db.execute(query.order_by(Appointment.date, Appointment.time).offset(skip).limit(limit))
     return [_appointment_to_dict(a) for a in result.scalars().all()]
 
 
@@ -214,9 +219,10 @@ async def update_appointment(
     stmt2 = _query_with_relations().where(Appointment.id == appointment_id)
     result2 = await db.execute(stmt2)
     updated_appt = result2.scalars().first()
-    
-    # updated_appt should not be None since we queried by ID
-    return _appointment_to_dict(updated_appt) if updated_appt else {}
+
+    if not updated_appt:
+        raise HTTPException(status_code=500, detail="Erro interno ao recarregar agendamento.")
+    return _appointment_to_dict(updated_appt)
 
 
 @router.delete("/{appointment_id}")

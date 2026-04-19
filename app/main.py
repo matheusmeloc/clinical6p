@@ -12,8 +12,11 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy import select
@@ -21,6 +24,9 @@ from sqlalchemy import select
 from app.database import engine, Base, SessionLocal
 from app.models import Appointment, Professional, Patient
 from app.email_utils import send_appointment_alarm
+from app.auth import get_current_user
+from app.limiter import limiter
+from app.config import settings
 
 # ═════════════════════════════════════════════════════════════════════
 # ROTAS (ENDPOINTS)
@@ -45,6 +51,7 @@ logger = logging.getLogger(__name__)
 # Constantes de configuração da tarefa de alarme
 ALARM_INTERVAL_SECONDS = 60
 ALARM_LOOKAHEAD_MINUTES = 30
+ALARM_BATCH_LIMIT = 200  # Máximo de consultas carregadas por ciclo — evita uso excessivo de memória
 
 
 async def appointment_alarm_task() -> None:
@@ -66,11 +73,17 @@ async def appointment_alarm_task() -> None:
             limit_time = now + timedelta(minutes=ALARM_LOOKAHEAD_MINUTES)
             
             async with SessionLocal() as db:
-                # Busca consultas hoje que ainda não enviaram alarme e o status seja 'Confirmado'
-                stmt = select(Appointment).join(Professional).join(Patient).where(
-                    Appointment.date == now.date(),
-                    Appointment.alarm_sent == False,
-                    Appointment.status == "Confirmado"
+                # Busca consultas de hoje que ainda não enviaram alarme — com LIMIT para controlar memória
+                stmt = (
+                    select(Appointment)
+                    .join(Professional)
+                    .join(Patient)
+                    .where(
+                        Appointment.date == now.date(),
+                        Appointment.alarm_sent == False,
+                        Appointment.status == "Confirmado",
+                    )
+                    .limit(ALARM_BATCH_LIMIT)
                 )
                 result = await db.execute(stmt)
                 appointments_today = result.scalars().all()
@@ -137,14 +150,20 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# Rate limiter — bloqueia IPs que excedem os limites definidos nos decoradores
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 
 # ═════════════════════════════════════════════════════════════════════
 # MIDDLEWARES
 # ═════════════════════════════════════════════════════════════════════
 
+_allowed_origins = [o.strip() for o in settings.ALLOWED_ORIGINS.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Em produção, restringe para o domínio real (ex: https://meusite.com)
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -155,16 +174,20 @@ app.add_middleware(
 # REGISTRO DE ROTAS
 # ═════════════════════════════════════════════════════════════════════
 
+# Rotas públicas — sem autenticação
 app.include_router(auth_router)
-app.include_router(dashboard_router)
-app.include_router(patients_router)
-app.include_router(professionals_router)
-app.include_router(appointments_router)
-app.include_router(prescriptions_router)
-app.include_router(certificates_router)
-app.include_router(messages_router)
-app.include_router(settings_router)
-app.include_router(debug_router)
+app.include_router(messages_router)  # /api/patient-contact é público; staff routes protegidas individualmente
+
+# Rotas protegidas — exigem Bearer token válido
+_jwt = [Depends(get_current_user)]
+app.include_router(dashboard_router, dependencies=_jwt)
+app.include_router(patients_router, dependencies=_jwt)
+app.include_router(professionals_router, dependencies=_jwt)
+app.include_router(appointments_router, dependencies=_jwt)
+app.include_router(prescriptions_router, dependencies=_jwt)
+app.include_router(certificates_router, dependencies=_jwt)
+app.include_router(settings_router, dependencies=_jwt)
+app.include_router(debug_router, dependencies=_jwt)
 
 
 # ═════════════════════════════════════════════════════════════════════

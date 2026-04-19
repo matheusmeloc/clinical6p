@@ -11,3 +11,4 @@ passlib[bcrypt]
 email-validator
 aiosqlite
 argon2-cffi
+slowapi

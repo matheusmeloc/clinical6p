@@ -53,7 +53,11 @@ def _prescription_to_dict(
 # ═════════════════════════════════════════════════════════════════════
 
 @router.get("")
-async def list_prescriptions(db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
+async def list_prescriptions(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, Any]]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     O que é esta 'função'? É o Arquivo de Documentos.
@@ -64,10 +68,12 @@ async def list_prescriptions(db: AsyncSession = Depends(get_db)) -> list[dict[st
         stmt = (
             select(Prescription)
             .options(
-                selectinload(Prescription.patient), 
-                selectinload(Prescription.professional)
+                selectinload(Prescription.patient),
+                selectinload(Prescription.professional),
             )
             .order_by(Prescription.date.desc())
+            .offset(skip)
+            .limit(limit)
         )
         result = await db.execute(stmt)
         

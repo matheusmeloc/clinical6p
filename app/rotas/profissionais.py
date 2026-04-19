@@ -5,7 +5,8 @@ Rotas de Profissionais
 """
 
 import logging
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Optional
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
@@ -13,6 +14,7 @@ from app.database import AsyncSession, get_db
 from app.models import Professional, User
 from app.schemas import ProfessionalCreate, ProfessionalUpdate, ProfessionalResponse
 from app.auth import get_password_hash
+from app.email_utils import bg_send_professional_welcome_email
 
 router = APIRouter(prefix="/api/professionals", tags=["Profissionais"])
 logger = logging.getLogger(__name__)
@@ -35,7 +37,11 @@ async def list_professionals(db: AsyncSession = Depends(get_db)) -> list[Profess
 
 
 @router.post("", response_model=ProfessionalResponse)
-async def create_professional(professional: ProfessionalCreate, db: AsyncSession = Depends(get_db)) -> Professional:
+async def create_professional(
+    professional: ProfessionalCreate,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+) -> Professional:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta 'função' atua como o "RH da Clínica" contratando alguém novo.
@@ -63,14 +69,13 @@ async def create_professional(professional: ProfessionalCreate, db: AsyncSession
         await db.commit()
         await db.refresh(db_prof)
 
-        # --- Envia e-mail de boas-vindas com a senha informada (em background) ---
+        # Dispara e-mail de boas-vindas em background — response retorna imediatamente
         if prof_data.get("email") and raw_password:
-            from app.email_utils import send_professional_welcome_email
-            await send_professional_welcome_email(
-                db=db, 
-                email=prof_data["email"], 
-                name=prof_data["name"], 
-                str_password=raw_password
+            background_tasks.add_task(
+                bg_send_professional_welcome_email,
+                prof_data["email"],
+                prof_data["name"],
+                raw_password,
             )
 
         return db_prof
@@ -110,33 +115,35 @@ async def update_professional(
 
     old_email = db_prof.email
     update_data = professional_update.model_dump(exclude_unset=True)
-    
+
     raw_password = update_data.pop("password", None)
     new_email = update_data.get("email")
 
-    # --- Se o email mudou, tenta atualizar na tabela User ---
-    if new_email and old_email and new_email != old_email:
-        # Primeiro, checa se o novo email já não pertence a outro usuário
-        stmt_check_exist = select(User).where(User.email == new_email)
-        exist_result = await db.execute(stmt_check_exist)
-        if exist_result.scalars().first():
+    # Carrega o User associado uma única vez para evitar lookups duplicados
+    db_user: Optional[User] = None
+    email_changing = bool(new_email and old_email and new_email != old_email)
+
+    if email_changing:
+        # Verifica se o novo e-mail já pertence a outro usuário
+        stmt_check = select(User).where(User.email == new_email)
+        if (await db.execute(stmt_check)).scalars().first():
             raise HTTPException(status_code=400, detail="This email is already in use by another user.")
-            
-        stmt_find_user = select(User).where(User.email == old_email)
-        user_result = await db.execute(stmt_find_user)
-        db_user = user_result.scalars().first()
+
+        stmt_find = select(User).where(User.email == old_email)
+        db_user = (await db.execute(stmt_find)).scalars().first()
         if db_user:
             db_user.email = new_email
 
-    # --- Se uma nova senha foi preenchida, altera na tabela User ---
+    # --- Se uma nova senha foi enviada, atualiza na tabela User ---
     if raw_password:
-        email_to_search = new_email if (new_email and old_email and new_email != old_email) else old_email
-        if email_to_search:
-            stmt_find_user = select(User).where(User.email == email_to_search)
-            user_result = await db.execute(stmt_find_user)
-            db_user = user_result.scalars().first()
-            if db_user:
-                db_user.hashed_password = get_password_hash(raw_password)
+        if db_user is None:
+            # Ainda não buscamos o user — buscar agora usando o e-mail correto
+            email_to_search = new_email if email_changing else old_email
+            if email_to_search:
+                stmt_find = select(User).where(User.email == email_to_search)
+                db_user = (await db.execute(stmt_find)).scalars().first()
+        if db_user:
+            db_user.hashed_password = get_password_hash(raw_password)
 
     # --- Aplica as atualizações no lado Professional ---
     for key, value in update_data.items():
@@ -171,7 +178,14 @@ async def delete_professional(professional_id: int, db: AsyncSession = Depends(g
         await db.delete(prof)
         await db.commit()
         return {"message": "Professional deleted successfully"}
-        
+
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Não é possível remover este profissional pois ele possui registros associados (consultas, receitas ou atestados)."
+        )
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Erro inesperado ao deletar profissional {professional_id}: {e}")
+        raise HTTPException(status_code=500, detail="Erro interno ao tentar remover o profissional.")

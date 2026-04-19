@@ -5,9 +5,8 @@ Rotas de Pacientes
 """
 
 import secrets
-import string
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -15,6 +14,7 @@ from app.database import AsyncSession, get_db
 from app.models import Patient
 from app.schemas import PatientCreate, PatientUpdate
 from app.auth import get_password_hash
+from app.email_utils import bg_send_patient_welcome_email
 
 
 router = APIRouter(prefix="/api/patients", tags=["Pacientes"])
@@ -112,7 +112,11 @@ async def get_patient(patient_id: int, db: AsyncSession = Depends(get_db)) -> di
 
 
 @router.post("")
-async def create_patient(patient_schema: PatientCreate, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+async def create_patient(
+    patient_schema: PatientCreate,
+    background_tasks: BackgroundTasks,
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta 'função' atua como a "Recepcionista de Cadastro Inicial".
@@ -126,9 +130,9 @@ async def create_patient(patient_schema: PatientCreate, db: AsyncSession = Depen
     raw_password = patient_data.get("password")
 
     # --- Gera senha automática se o paciente tem email e CPF mas não informou senha ---
+    # token_urlsafe(16) gera ~128 bits de entropia — atende NIST SP 800-63B
     if not raw_password and patient_data.get("email") and patient_data.get("cpf"):
-        alphabet = string.ascii_letters + string.digits
-        raw_password = ''.join(secrets.choice(alphabet) for _ in range(8))
+        raw_password = secrets.token_urlsafe(16)
 
     # --- Se a senha final existir, aplica o Hash ---
     if raw_password:
@@ -143,15 +147,14 @@ async def create_patient(patient_schema: PatientCreate, db: AsyncSession = Depen
     await db.commit()
     await db.refresh(db_patient)
 
-    # --- Dispara e-mail de boas-vindas com a senha gerada (em background) ---
+    # Dispara e-mail de boas-vindas em background — response retorna imediatamente
     if raw_password and patient_data.get("email") and patient_data.get("cpf"):
-        from app.email_utils import send_patient_welcome_email
-        await send_patient_welcome_email(
-            db=db, 
-            patient_email=patient_data["email"], 
-            patient_name=patient_data["name"], 
-            patient_cpf=patient_data["cpf"], 
-            patient_password=raw_password
+        background_tasks.add_task(
+            bg_send_patient_welcome_email,
+            patient_data["email"],
+            patient_data["name"],
+            patient_data["cpf"],
+            raw_password,
         )
 
     # Retorna os dados completos do paciente recarregados para conter eventuais relacionamentos default

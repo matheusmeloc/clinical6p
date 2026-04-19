@@ -5,15 +5,16 @@ Rotas de Autenticação
 """
 
 import secrets
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from pydantic import BaseModel
 
 from app.database import AsyncSession, get_db
 from app.models import User, Patient
-from app.auth import verify_password, get_password_hash
+from app.auth import verify_password, get_password_hash, create_access_token
 from app.schemas import ForgotPasswordRequest
 from app.email_utils import send_forgot_password_email
+from app.limiter import limiter
 
 
 router = APIRouter(prefix="/api", tags=["Autenticação"])
@@ -36,7 +37,8 @@ class LoginRequest(BaseModel):
 # ═════════════════════════════════════════════════════════════════════
 
 @router.post("/login")
-async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
+@limiter.limit("10/minute")
+async def login(http_request: Request, body: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     O que esta 'função' (async def) faz? Pense nela como o "Segurança" na porta da clínica digital.
@@ -45,8 +47,8 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)) -> di
     2. Se não achar nos funcionários, ele pega a prancheta de 'Pacientes' e procura aquele CPF. Se achar, testa a senha na roleta.
     3. Se tudo bater e a pessoa estiver 'Ativa', ele permite a entrada e devolve o crachá de identificação virtual da pessoa (um dict com o nome, email, id e role). Se não, expulsa a pessoa avisando: erro 401 (Proibido a Entrada).
     """
-    email_or_cpf = request.email.strip()
-    password = request.password.strip()
+    email_or_cpf = body.email.strip()
+    password = body.password.strip()
 
     # --- Tenta login como funcionário (tabela Users) ---
     stmt_user = select(User).where(User.email == email_or_cpf)
@@ -59,11 +61,14 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)) -> di
         if not user.is_active:
             raise HTTPException(status_code=403, detail="Usuário inativo")
         
+        token = create_access_token({"sub": str(user.id), "email": user.email, "role": user.role})
         return {
-            "id": user.id, 
-            "email": user.email, 
-            "full_name": user.full_name, 
-            "role": user.role
+            "access_token": token,
+            "token_type": "bearer",
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "role": user.role,
         }
 
     # --- Tenta login como paciente (tabela Patients) ---
@@ -77,11 +82,14 @@ async def login(request: LoginRequest, db: AsyncSession = Depends(get_db)) -> di
         if patient.status != "Ativo":
             raise HTTPException(status_code=403, detail="Paciente inativo")
         
+        token = create_access_token({"sub": str(patient.id), "email": patient.cpf, "role": "patient"})
         return {
-            "id": patient.id, 
-            "email": patient.cpf, 
-            "full_name": patient.name, 
-            "role": "patient"
+            "access_token": token,
+            "token_type": "bearer",
+            "id": patient.id,
+            "email": patient.cpf,
+            "full_name": patient.name,
+            "role": "patient",
         }
 
     # Se não encontrou em nenhuma das tabelas ou a senha do paciente está vazia
@@ -109,32 +117,45 @@ async def forgot_password(request: ForgotPasswordRequest, db: AsyncSession = Dep
     if user:
         temp_pwd = secrets.token_urlsafe(8)
         user.hashed_password = get_password_hash(temp_pwd)
-        await db.commit()
-        await send_forgot_password_email(
-            db=db, 
-            email=email, 
-            is_patient=False, 
-            login_id=email, 
+        # Envia o e-mail ANTES de commitar: se o envio falhar, o banco não é alterado
+        email_sent = await send_forgot_password_email(
+            db=db,
+            email=email,
+            is_patient=False,
+            login_id=email,
             temp_password=temp_pwd
         )
+        if not email_sent:
+            await db.rollback()
+            raise HTTPException(
+                status_code=502,
+                detail="Falha ao enviar e-mail. A senha não foi alterada. Tente novamente."
+            )
+        await db.commit()
         return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
 
     # --- Verifica se o e-mail pertence a um paciente ---
     stmt_patient = select(Patient).where(Patient.email == email)
     result_patient = await db.execute(stmt_patient)
     patient = result_patient.scalars().first()
-    
+
     if patient:
         temp_pwd = secrets.token_urlsafe(8)
         patient.hashed_password = get_password_hash(temp_pwd)
-        await db.commit()
-        await send_forgot_password_email(
-            db=db, 
-            email=email, 
-            is_patient=True, 
-            login_id=patient.cpf or "Não cadastrado", 
+        email_sent = await send_forgot_password_email(
+            db=db,
+            email=email,
+            is_patient=True,
+            login_id=patient.cpf or "Não cadastrado",
             temp_password=temp_pwd
         )
+        if not email_sent:
+            await db.rollback()
+            raise HTTPException(
+                status_code=502,
+                detail="Falha ao enviar e-mail. A senha não foi alterada. Tente novamente."
+            )
+        await db.commit()
         return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
 
     # Retorna erro genérico se o e-mail não foi achado para evitar vazamento de dados, 

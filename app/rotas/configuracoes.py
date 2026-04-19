@@ -12,6 +12,7 @@ from app.database import AsyncSession, get_db
 from app.models import SystemSettings, User
 from app.schemas import SystemSettingsUpdate, SystemSettingsResponse, UserUpdate
 from app.auth import get_password_hash
+from app.email_utils import invalidate_smtp_cache
 
 router = APIRouter(prefix="/api", tags=["Configurações"])
 
@@ -108,5 +109,5 @@ async def update_system_settings(settings_update: SystemSettingsUpdate, db: Asyn
 
     await db.commit()
     await db.refresh(settings)
-    
+    invalidate_smtp_cache()  # Força próxima leitura a buscar do banco
     return settings

@@ -14,13 +14,19 @@ from pydantic import ConfigDict
 
 
 class Settings(BaseSettings):
-    # Banco de dados (PostgreSQL async em produção)
-    DATABASE_URL: str = "postgresql+asyncpg://banco_site_psi_user:NZQA0tG6bM3aXlDccRAjXo16DVETKJ1l@dpg-d6fh1hsr85hc73e0n6e0-a.oregon-postgres.render.com/banco_site_psi"
+    # Banco de dados — obrigatório via .env ou variável de ambiente
+    DATABASE_URL: str
 
-    # JWT (autenticação por token)
-    SECRET_KEY: str = "your_secret_key_here_make_it_secure"
+    # JWT — obrigatório via .env ou variável de ambiente
+    SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
+
+    # CORS — domínios permitidos separados por vírgula
+    ALLOWED_ORIGINS: str = "http://localhost:8000"
+
+    # Debug — habilita /api/debug/* (false em produção)
+    ENABLE_DEBUG: bool = False
 
     # SMTP (configuração padrão, pode ser sobrescrita pelo banco)
     SMTP_SERVER: str = ""
