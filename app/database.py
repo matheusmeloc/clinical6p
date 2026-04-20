@@ -14,10 +14,10 @@ SQLALCHEMY_DATABASE_URL = settings.DATABASE_URL
 
 connect_args: dict = {}
 if SQLALCHEMY_DATABASE_URL.startswith("postgresql"):
-    # Troca asyncpg por psycopg (psycopg3) — melhor suporte a SSL no Render
+    # Troca asyncpg por psycopg (psycopg3)
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("+asyncpg", "+psycopg")
-    # sslmode=require funciona via libpq (padrão do psycopg3)
-    connect_args["sslmode"] = "require"
+    # sslmode=disable: conexão interna do Render não usa SSL
+    connect_args["sslmode"] = "disable"
 
 engine = create_async_engine(
     SQLALCHEMY_DATABASE_URL,
