@@ -19,9 +19,9 @@ from fastapi.responses import FileResponse
 from sqlalchemy import select
 
 from app.database import engine, Base, SessionLocal
-from app.models import Appointment, Professional, Patient
+from app.models import Appointment, Professional, Patient, User
 from app.email_utils import send_appointment_alarm
-from app.auth import get_current_user
+from app.auth import get_current_user, get_password_hash
 from app.config import settings
 
 # ═════════════════════════════════════════════════════════════════════
@@ -133,6 +133,19 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Tabelas criadas/verificadas no banco de dados.")
+
+    async with SessionLocal() as db:
+        result = await db.execute(select(User).where(User.email == "admin@example.com"))
+        if not result.scalars().first():
+            db.add(User(
+                email="admin@example.com",
+                hashed_password=get_password_hash("admin123"),
+                full_name="Administrador",
+                role="admin",
+                is_active=True,
+            ))
+            await db.commit()
+            logger.info("Usuário admin criado: admin@example.com / admin123")
 
     alarm_task = asyncio.create_task(appointment_alarm_task())
     logger.info("Tarefa de alarme de consultas iniciada.")
