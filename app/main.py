@@ -130,9 +130,13 @@ async def lifespan(app: FastAPI):
     - O 'yield' fala: "Pronto, a loja está aberta, podem entrar clientes (receber requisições)".
     - O trecho depois do 'yield' só será rodado se alguém desligar o servidor. Ou seja, ele avisa: "Cancelem o robô dos e-mails, fechem as portas em segurança."
     """
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Tabelas criadas/verificadas no banco de dados.")
+
     alarm_task = asyncio.create_task(appointment_alarm_task())
     logger.info("Tarefa de alarme de consultas iniciada.")
-    
+
     yield
     
     alarm_task.cancel()
