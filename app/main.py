@@ -10,13 +10,14 @@ Aqui configuramos:
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from sqlalchemy import select
+from sqlalchemy import select, update as sa_update
+from sqlalchemy.orm import joinedload
 
 from app.database import engine, Base, SessionLocal
 from app.models import Appointment, Professional, Patient, User
@@ -65,15 +66,17 @@ async def appointment_alarm_task() -> None:
     """
     while True:
         try:
-            now = datetime.now()
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
             limit_time = now + timedelta(minutes=ALARM_LOOKAHEAD_MINUTES)
-            
+
             async with SessionLocal() as db:
-                # Busca consultas de hoje que ainda não enviaram alarme — com LIMIT para controlar memória
+                # joinedload elimina N+1: carrega professional e patient no mesmo SELECT
                 stmt = (
                     select(Appointment)
-                    .join(Professional)
-                    .join(Patient)
+                    .options(
+                        joinedload(Appointment.professional),
+                        joinedload(Appointment.patient),
+                    )
                     .where(
                         Appointment.date == now.date(),
                         Appointment.alarm_sent == False,
@@ -82,41 +85,49 @@ async def appointment_alarm_task() -> None:
                     .limit(ALARM_BATCH_LIMIT)
                 )
                 result = await db.execute(stmt)
-                appointments_today = result.scalars().all()
+                appointments_today = result.scalars().unique().all()
+
+                sent_ids: list[int] = []
 
                 for appointment in appointments_today:
-                    # Combina data e hora para comparar com o momento atual
                     appointment_datetime = datetime.combine(appointment.date, appointment.time)
-                    
+
                     if now <= appointment_datetime <= limit_time:
-                        # Busca informações para o e-mail
-                        professional = await db.get(Professional, appointment.professional_id)
-                        patient = await db.get(Patient, appointment.patient_id)
+                        professional = appointment.professional
+                        patient = appointment.patient
 
                         if professional and patient and professional.email:
-                            # Formatações amigáveis
                             date_str = appointment.date.strftime("%d/%m/%Y")
                             time_str = appointment.time.strftime("%H:%M")
-                            
-                            # Envia e-mail
+
                             success = await send_appointment_alarm(
                                 db,
                                 professional.email,
                                 professional.name,
                                 patient.name,
                                 date_str,
-                                time_str
+                                time_str,
                             )
-                            
+
                             if success:
-                                appointment.alarm_sent = True
-                                db.add(appointment)
-                                await db.commit()
-                                logger.info(f"Alarme de consulta enviado: {patient.name} com {professional.name} às {time_str}")
-        
+                                sent_ids.append(appointment.id)
+                                logger.info(
+                                    f"Alarme enviado: patient_id={appointment.patient_id} "
+                                    f"professional_id={appointment.professional_id} às {time_str}"
+                                )
+
+                # batch UPDATE em vez de N commits individuais
+                if sent_ids:
+                    await db.execute(
+                        sa_update(Appointment)
+                        .where(Appointment.id.in_(sent_ids))
+                        .values(alarm_sent=True)
+                    )
+                    await db.commit()
+
         except Exception as e:
-            logger.error(f"Erro na tarefa abstrata de alarme: {e}")
-            
+            logger.error(f"Erro na tarefa de alarme: {e}", exc_info=True)
+
         await asyncio.sleep(ALARM_INTERVAL_SECONDS)
 
 
@@ -134,18 +145,23 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Tabelas criadas/verificadas no banco de dados.")
 
-    async with SessionLocal() as db:
-        result = await db.execute(select(User).where(User.email == "admin@example.com"))
-        if not result.scalars().first():
-            db.add(User(
-                email="admin@example.com",
-                hashed_password=get_password_hash("admin123"),
-                full_name="Administrador",
-                role="admin",
-                is_active=True,
-            ))
-            await db.commit()
-            logger.info("Usuário admin criado: admin@example.com / admin123")
+    admin_email = getattr(settings, "ADMIN_EMAIL", "") or ""
+    admin_password = getattr(settings, "ADMIN_PASSWORD", "") or ""
+    if admin_email and admin_password:
+        async with SessionLocal() as db:
+            result = await db.execute(select(User).where(User.email == admin_email))
+            if not result.scalars().first():
+                db.add(User(
+                    email=admin_email,
+                    hashed_password=get_password_hash(admin_password),
+                    full_name="Administrador",
+                    role="admin",
+                    is_active=True,
+                ))
+                await db.commit()
+                logger.info(f"Usuário admin criado: {admin_email}")
+    else:
+        logger.warning("ADMIN_EMAIL/ADMIN_PASSWORD não definidos — bootstrap de admin pulado.")
 
     alarm_task = asyncio.create_task(appointment_alarm_task())
     logger.info("Tarefa de alarme de consultas iniciada.")
@@ -205,6 +221,11 @@ app.include_router(debug_router, dependencies=_jwt)
 # ═════════════════════════════════════════════════════════════════════
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+@app.get("/health", tags=["infra"])
+async def health_check():
+    return {"status": "ok", "version": "1.0.0"}
 
 
 @app.get("/")

@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     # Debug — habilita /api/debug/* (false em produção)
     ENABLE_DEBUG: bool = False
 
+    # Bootstrap do admin — definir via variável de ambiente, nunca hardcoded
+    ADMIN_EMAIL: str = ""
+    ADMIN_PASSWORD: str = ""
+
     # SMTP (configuração padrão, pode ser sobrescrita pelo banco)
     SMTP_SERVER: str = ""
     SMTP_PORT: int = 587
