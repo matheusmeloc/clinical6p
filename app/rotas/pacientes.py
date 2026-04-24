@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy.exc import IntegrityError
 
 from app.database import AsyncSession, get_db
 from app.models import Patient
@@ -144,8 +145,12 @@ async def create_patient(
     # --- Salva no banco de dados ---
     db_patient = Patient(**patient_data)
     db.add(db_patient)
-    await db.commit()
-    await db.refresh(db_patient)
+    try:
+        await db.commit()
+        await db.refresh(db_patient)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="CPF ou e-mail já cadastrado.")
 
     # Dispara e-mail de boas-vindas em background — response retorna imediatamente
     if raw_password and patient_data.get("email") and patient_data.get("cpf"):

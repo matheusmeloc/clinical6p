@@ -4,7 +4,7 @@ test_patients.py — Testes de CRUD de pacientes.
 Cenários cobertos:
 - Criar paciente com dados mínimos → 200
 - Criar paciente com CPF duplicado → 409 ou 422 (IntegrityError)
-- Listar pacientes sem auth → 403
+- Listar pacientes sem auth → 401
 - Listar pacientes com auth → 200 + lista
 - Buscar paciente por ID → 200
 - Buscar paciente inexistente → 404
@@ -38,9 +38,9 @@ def _minimal_patient_payload(cpf: str = "99988877766", name: str = "Novo Pacient
 
 @pytest.mark.asyncio
 async def test_list_patients_no_auth(client: AsyncClient):
-    """Listagem sem Authorization header deve retornar 403."""
+    """Listagem sem Authorization header deve retornar 401."""
     response = await client.get(PATIENTS_URL)
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio

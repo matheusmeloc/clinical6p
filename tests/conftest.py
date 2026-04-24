@@ -62,18 +62,16 @@ from app.auth import get_password_hash
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
+# StaticPool força a reutilização da mesma conexão em todos os testes,
+# garantindo que o banco :memory: seja compartilhado e que o padrão de
+# savepoints funcione corretamente.
+from sqlalchemy.pool import StaticPool
+
 test_engine = create_async_engine(
     TEST_DATABASE_URL,
     echo=False,
     connect_args={"check_same_thread": False},
-)
-
-TestSessionFactory = async_sessionmaker(
-    bind=test_engine,
-    class_=AsyncSession,
-    autocommit=False,
-    autoflush=False,
-    expire_on_commit=False,
+    poolclass=StaticPool,
 )
 
 
@@ -89,35 +87,39 @@ async def _test_lifespan(app):
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Setup / Teardown do schema por sessão de teste
+# Setup / Teardown do schema por função de teste
 # ─────────────────────────────────────────────────────────────────────
 
-@pytest_asyncio.fixture(scope="session", autouse=True)
-async def create_tables():
-    """Cria todas as tabelas no banco SQLite :memory: uma única vez por sessão."""
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
+TestSessionFactory = async_sessionmaker(
+    bind=test_engine,
+    class_=AsyncSession,
+    autocommit=False,
+    autoflush=False,
+    expire_on_commit=False,
+)
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def reset_tables():
+    """Recria todas as tabelas antes de cada teste para isolamento total."""
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    # Remove o diretório static/ temporário se foi criado pelos testes
+        await conn.run_sync(Base.metadata.create_all)
+    yield
     if _STATIC_CREATED_BY_TEST and _STATIC_DIR.exists():
         try:
             _STATIC_DIR.rmdir()
         except OSError:
-            pass  # Não remove se não estiver vazio
+            pass
 
 
 # ─────────────────────────────────────────────────────────────────────
-# Sessão de banco por teste (rollback após cada teste)
+# Sessão de banco por teste
 # ─────────────────────────────────────────────────────────────────────
 
 @pytest_asyncio.fixture()
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Fornece uma AsyncSession com rollback automático ao fim do teste,
-    garantindo isolamento entre testes.
-    """
+    """Fornece uma AsyncSession com banco limpo (recriado pelo reset_tables)."""
     async with TestSessionFactory() as session:
         yield session
         await session.rollback()
@@ -137,7 +139,6 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """
     from app.main import app
 
-    # Substitui o lifespan para não tocar no banco de produção
     original_router_lifespan = app.router.lifespan_context
     app.router.lifespan_context = _test_lifespan
 
@@ -152,7 +153,6 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     ) as ac:
         yield ac
 
-    # Restaura o estado original
     app.dependency_overrides.clear()
     app.router.lifespan_context = original_router_lifespan
 

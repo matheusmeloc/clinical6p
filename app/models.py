@@ -141,6 +141,11 @@ class Patient(Base):
     # --- Relacionamentos ---
     professional = relationship("Professional", backref="patients")
     appointments = relationship("Appointment", back_populates="patient")
+
+    @property
+    def professional_name(self) -> str | None:
+        p = self.__dict__.get("professional")
+        return p.name if p else None
     prescriptions = relationship("Prescription", back_populates="patient")
     certificates = relationship("Certificate", back_populates="patient")
     messages = relationship("PatientMessage", back_populates="patient")
@@ -173,6 +178,16 @@ class Appointment(Base):
     patient = relationship("Patient", back_populates="appointments")
     professional = relationship("Professional", back_populates="appointments")
 
+    @property
+    def patient_name(self) -> str | None:
+        p = self.__dict__.get("patient")
+        return p.name if p else None
+
+    @property
+    def professional_name(self) -> str | None:
+        p = self.__dict__.get("professional")
+        return p.name if p else None
+
 
 class Prescription(Base):
     """
@@ -196,6 +211,16 @@ class Prescription(Base):
     patient = relationship("Patient", back_populates="prescriptions")
     professional = relationship("Professional", back_populates="prescriptions")
 
+    @property
+    def patient_name(self) -> str | None:
+        p = self.__dict__.get("patient")
+        return p.name if p else None
+
+    @property
+    def professional_name(self) -> str | None:
+        p = self.__dict__.get("professional")
+        return p.name if p else None
+
 
 class Certificate(Base):
     """
@@ -218,6 +243,16 @@ class Certificate(Base):
     patient = relationship("Patient", back_populates="certificates")
     professional = relationship("Professional", back_populates="certificates")
 
+    @property
+    def patient_name(self) -> str | None:
+        p = self.__dict__.get("patient")
+        return p.name if p else None
+
+    @property
+    def professional_name(self) -> str | None:
+        p = self.__dict__.get("professional")
+        return p.name if p else None
+
 
 class PatientMessage(Base):
     """
@@ -238,6 +273,16 @@ class PatientMessage(Base):
     # --- Relacionamentos ---
     patient = relationship("Patient", back_populates="messages")
     professional = relationship("Professional", back_populates="patient_messages")
+
+    @property
+    def patient_name(self) -> str | None:
+        p = self.__dict__.get("patient")
+        return p.name if p else None
+
+    @property
+    def professional_name(self) -> str | None:
+        p = self.__dict__.get("professional")
+        return p.name if p else None
 
 
 # ═════════════════════════════════════════════════════════════════════

@@ -6,7 +6,7 @@ Cenários cobertos:
 - Login com senha errada → 401
 - Login com e-mail inexistente → 404
 - Login com usuário inativo → 403
-- Acesso a rota protegida sem token → 403
+- Acesso a rota protegida sem token → 401
 - Acesso a rota protegida com token expirado → 401
 - Acesso a rota protegida com token inválido → 401
 """
@@ -81,10 +81,9 @@ async def test_login_inactive_user(client: AsyncClient, inactive_user: User):
 
 @pytest.mark.asyncio
 async def test_protected_route_no_token(client: AsyncClient):
-    """Acesso a rota protegida sem token deve retornar 403 (HTTPBearer rejeita)."""
+    """Acesso a rota protegida sem token deve retornar 401 (OAuth2PasswordBearer)."""
     response = await client.get(PROTECTED_URL)
-    # FastAPI HTTPBearer retorna 403 quando o header Authorization está ausente
-    assert response.status_code == 403
+    assert response.status_code == 401
 
 
 @pytest.mark.asyncio
