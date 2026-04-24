@@ -252,36 +252,32 @@ async def send_professional_welcome_email(
     )
 
 
-async def send_forgot_password_email(
+async def send_reset_password_link_email(
     db: AsyncSession,
     email: str,
-    is_patient: bool,
-    login_id: str,
-    temp_password: str
+    reset_link: str,
 ) -> bool:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta 'função' é disparada quando o usuário clica em "Esqueci minha senha!".
-    Ela monta um e-mail especial contendo a nova senha temporária para resgatar a conta.
-    """
-    tipo_login = "CPF" if is_patient else "E-mail"
+    """Envia e-mail com link de redefinição de senha (token de uso único, expira em 1h)."""
     html = _template(
-        "Olá!",
-        f"<p>Recebemos uma solicitação de recuperação de senha para a sua conta.</p>"
-        f"<p>Por questões de segurança, geramos uma nova senha provisória para você acessar o sistema.</p><br>"
-        f"<p><strong>Seus dados de acesso:</strong></p>"
-        f"<ul>"
-        f"  <li><strong>{tipo_login} (Login):</strong> {login_id}</li>"
-        f"  <li><strong>Nova Senha Provisória:</strong> {temp_password}</li>"
-        f"</ul>"
-        f"<p>Recomendamos que altere esta senha no painel de configurações do sistema.</p>"
+        "Redefinição de Senha",
+        f"<p>Recebemos uma solicitação de redefinição de senha para a sua conta.</p>"
+        f"<p>Clique no botão abaixo para criar uma nova senha. O link é válido por <strong>1 hora</strong> e só pode ser usado uma vez.</p>"
+        f"<br>"
+        f'<p><a href="{reset_link}" '
+        f'style="display:inline-block;padding:12px 28px;background:#2563eb;color:white;'
+        f'text-decoration:none;border-radius:8px;font-weight:600;font-size:0.95rem;">'
+        f"Redefinir minha senha</a></p>"
+        f"<br>"
+        f'<p style="font-size:0.82rem;color:#64748b;">Se você não solicitou a redefinição, ignore este e-mail. '
+        f"Sua senha permanece a mesma.</p>"
+        f'<p style="font-size:0.82rem;color:#64748b;">Link: <code>{reset_link}</code></p>'
     )
     return await _enviar_email(
         db,
         email,
-        "Recuperação de Senha - Instituto de Psicologia",
+        "Redefinição de Senha - Instituto de Psicologia",
         html,
-        "Recuperação de Senha"
+        "Redefinição de Senha",
     )
 
 

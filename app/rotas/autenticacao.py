@@ -6,15 +6,17 @@ Rotas de Autenticação
 
 import secrets
 import logging
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from pydantic import BaseModel
 
 from app.database import AsyncSession, get_db
-from app.models import User, Patient
+from app.models import User, Patient, PasswordResetToken
 from app.auth import verify_password, get_password_hash, create_access_token
-from app.schemas import ForgotPasswordRequest
-from app.email_utils import send_forgot_password_email
+from app.config import settings
+from app.schemas import ForgotPasswordRequest, ResetPasswordRequest
+from app.email_utils import send_reset_password_link_email
 
 
 router = APIRouter(prefix="/api", tags=["Autenticação"])
@@ -95,65 +97,82 @@ async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
 @router.post("/forgot-password")
 async def forgot_password(request: ForgotPasswordRequest, db: AsyncSession = Depends(get_db)) -> dict:
     """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta 'função' atua como o Balcão de Recuperação de Senhas.
-    A pessoa entrega apenas o e-mail dela.
-    
-    1. A função procura esse e-mail no Banco de Dados.
-    2. Se a pessoa existir na lista, o computador inventa uma senha maluca e provisória (usando a função secrets), e em seguida criptografa ela pra ficar ilegível pra nós, e finalmente substitui a senha velha esquecida.
-    3. Por último, ele pega o papelzinho da nova senha em texto legível, e entrega ao nosso carteiro eletrônico (função _enviar_email) para que despache para o correio de quem pediu!
+    Inicia o fluxo de redefinição de senha por link com token de uso único.
+    Sempre retorna a mesma mensagem para evitar enumeração de e-mails cadastrados.
     """
     email = request.email.strip()
+    _GENERIC_RESPONSE = {"message": "Se esse e-mail estiver cadastrado, você receberá um link de redefinição em instantes."}
 
-    # --- Verifica se o e-mail pertence a um funcionário ---
-    stmt_user = select(User).where(User.email == email)
-    result_user = await db.execute(stmt_user)
+    # Verifica se pertence a um funcionário ou paciente
+    result_user = await db.execute(select(User).where(User.email == email))
     user = result_user.scalars().first()
-    
-    if user:
-        temp_pwd = secrets.token_urlsafe(8)
-        user.hashed_password = get_password_hash(temp_pwd)
-        # Envia o e-mail ANTES de commitar: se o envio falhar, o banco não é alterado
-        email_sent = await send_forgot_password_email(
-            db=db,
-            email=email,
-            is_patient=False,
-            login_id=email,
-            temp_password=temp_pwd
-        )
-        if not email_sent:
-            await db.rollback()
-            raise HTTPException(
-                status_code=502,
-                detail="Falha ao enviar e-mail. A senha não foi alterada. Tente novamente."
-            )
-        await db.commit()
-        return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
 
-    # --- Verifica se o e-mail pertence a um paciente ---
-    stmt_patient = select(Patient).where(Patient.email == email)
-    result_patient = await db.execute(stmt_patient)
+    result_patient = await db.execute(select(Patient).where(Patient.email == email))
     patient = result_patient.scalars().first()
 
-    if patient:
-        temp_pwd = secrets.token_urlsafe(8)
-        patient.hashed_password = get_password_hash(temp_pwd)
-        email_sent = await send_forgot_password_email(
-            db=db,
-            email=email,
-            is_patient=True,
-            login_id=patient.cpf or "Não cadastrado",
-            temp_password=temp_pwd
-        )
-        if not email_sent:
-            await db.rollback()
-            raise HTTPException(
-                status_code=502,
-                detail="Falha ao enviar e-mail. A senha não foi alterada. Tente novamente."
-            )
-        await db.commit()
-        return {"message": "Uma senha provisória foi enviada para o seu e-mail."}
+    if not user and not patient:
+        # Retorna a mesma resposta genérica — não revela se o e-mail existe
+        return _GENERIC_RESPONSE
 
-    # Retorna erro genérico se o e-mail não foi achado para evitar vazamento de dados, 
-    # mas informando que não existe no sistema.
-    raise HTTPException(status_code=404, detail="E-mail não encontrado no sistema.")
+    # Gera token seguro e persiste com expiração de 1 hora
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(hours=1)
+
+    db.add(PasswordResetToken(token=token, email=email, expires_at=expires_at))
+    await db.flush()  # persiste o token sem commit ainda
+
+    reset_link = f"{settings.APP_BASE_URL}/reset-password?token={token}"
+
+    email_sent = await send_reset_password_link_email(db=db, email=email, reset_link=reset_link)
+    if not email_sent:
+        await db.rollback()
+        raise HTTPException(status_code=502, detail="Falha ao enviar e-mail. Tente novamente.")
+
+    await db.commit()
+    return _GENERIC_RESPONSE
+
+
+@router.post("/reset-password")
+async def reset_password(request: ResetPasswordRequest, db: AsyncSession = Depends(get_db)) -> dict:
+    """
+    Redefine a senha usando o token recebido por e-mail.
+    O token é de uso único e expira em 1 hora.
+    """
+    if len(request.new_password) < 8:
+        raise HTTPException(status_code=422, detail="A nova senha deve ter pelo menos 8 caracteres.")
+
+    # Busca e valida o token
+    result = await db.execute(
+        select(PasswordResetToken).where(PasswordResetToken.token == request.token)
+    )
+    reset_token = result.scalars().first()
+
+    if not reset_token:
+        raise HTTPException(status_code=400, detail="Link inválido ou já utilizado.")
+    if reset_token.used:
+        raise HTTPException(status_code=400, detail="Este link já foi utilizado. Solicite um novo.")
+    if datetime.utcnow() > reset_token.expires_at:
+        raise HTTPException(status_code=400, detail="Este link expirou. Solicite um novo.")
+
+    email = reset_token.email
+    new_hash = get_password_hash(request.new_password)
+
+    # Atualiza a senha do usuário ou paciente correspondente
+    result_user = await db.execute(select(User).where(User.email == email))
+    user = result_user.scalars().first()
+    if user:
+        user.hashed_password = new_hash
+    else:
+        result_patient = await db.execute(select(Patient).where(Patient.email == email))
+        patient = result_patient.scalars().first()
+        if patient:
+            patient.hashed_password = new_hash
+        else:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado.")
+
+    # Invalida o token para uso único
+    reset_token.used = True
+    await db.commit()
+
+    return {"message": "Senha redefinida com sucesso. Você já pode fazer login."}
+

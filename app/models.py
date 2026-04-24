@@ -320,5 +320,20 @@ class SystemSettings(Base):
     smtp_username = Column(String, nullable=True)
     smtp_password = Column(String, nullable=True)
     smtp_from_email = Column(String, nullable=True)
-    
+
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
+class PasswordResetToken(Base):
+    """
+    Tokens de uso único para redefinição de senha via link por e-mail.
+    Cada token é válido por 1 hora e só pode ser usado uma vez.
+    """
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

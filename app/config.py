@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     # Debug — habilita /api/debug/* (false em produção)
     ENABLE_DEBUG: bool = False
 
+    # URL base da aplicação — usada em links de e-mail (reset de senha, etc.)
+    APP_BASE_URL: str = "https://clinicapsi.onrender.com"
+
     # Bootstrap do admin — definir via variável de ambiente, nunca hardcoded
     ADMIN_EMAIL: str = ""
     ADMIN_PASSWORD: str = ""

@@ -249,3 +249,9 @@ async def login():
     Lembre-se: o paciente não tem um site separado, ele usa a aba "Sou Paciente" nesta mesma tela.
     """
     return FileResponse("static/login.html")
+
+
+@app.get("/reset-password")
+async def reset_password_page():
+    """Página de redefinição de senha acessada via link no e-mail."""
+    return FileResponse("static/reset-password.html")

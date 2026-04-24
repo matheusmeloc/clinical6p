@@ -353,6 +353,14 @@ class ForgotPasswordRequest(BaseModel):
     email: str
 
 
+class ResetPasswordRequest(BaseModel):
+    """
+    Requisição JSON do endpoint de redefinição de senha via token.
+    """
+    token: str
+    new_password: str
+
+
 class UpdateUserPasswordRequest(BaseModel):
     """
     Requisição JSON para o endpoint de alteração manual de senha por usuário logado.
