@@ -123,10 +123,19 @@ async def forgot_password(request: ForgotPasswordRequest, db: AsyncSession = Dep
 
     reset_link = f"{settings.APP_BASE_URL}/reset-password?token={token}"
 
-    email_sent = await send_reset_password_link_email(db=db, email=email, reset_link=reset_link)
-    if not email_sent:
+    email_status = await send_reset_password_link_email(db=db, email=email, reset_link=reset_link)
+    if email_status == "not_configured":
         await db.rollback()
-        raise HTTPException(status_code=502, detail="Falha ao enviar e-mail. Tente novamente.")
+        raise HTTPException(
+            status_code=503,
+            detail="O sistema de e-mail não está configurado. Entre em contato com o administrador."
+        )
+    if email_status == "error":
+        await db.rollback()
+        raise HTTPException(
+            status_code=502,
+            detail="Falha ao enviar o e-mail. Verifique as configurações de SMTP no painel e tente novamente."
+        )
 
     await db.commit()
     return _GENERIC_RESPONSE

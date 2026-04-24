@@ -69,23 +69,18 @@ async def get_smtp_settings(db: AsyncSession) -> tuple[str, int, str, str, str |
         )
 
 
-async def _enviar_email(db: AsyncSession, destinatario: str, assunto: str, html: str, texto_plano: str = "") -> bool:
+async def _enviar_email(db: AsyncSession, destinatario: str, assunto: str, html: str, texto_plano: str = "") -> str:
     """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    O que faz esta 'função' (async def)? Ela é o nosso "Carteiro Eletrônico".
-    O processo dela é:
-    1. Pede as chaves do correio para a função 'get_smtp_settings' acima.
-    2. Escreve a cartinha (quem é o remetente, qual é o assunto, a mensagem HTML colorida).
-    3. Faz o login seguro (TLS) no provedor de e-mail e aperta "Enviar".
-    Por que o nome começa com underline (_enviar_email)? O '_' indica para os outros programadores que ela é "secreta/interna", não devendo ser chamada diretamente por botões do site.
+    Envia um e-mail HTML via SMTP configurado no banco ou nas variáveis de ambiente.
+    Retorna uma string de status: "ok" | "not_configured" | "error".
     """
     server, port, username, password, from_email = await get_smtp_settings(db)
 
     if not server or not username or not destinatario:
-        logger.warning(f"SMTP não configurado ou sem destinatário. Pulando envio para {destinatario}")
-        return False
+        logger.warning(f"SMTP não configurado. Pulando envio para {destinatario}")
+        return "not_configured"
 
-    def _send() -> bool:
+    def _send() -> str:
         msg = EmailMessage()
         msg["Subject"], msg["From"], msg["To"] = assunto, from_email, destinatario
         msg.set_content(texto_plano or assunto, subtype="plain")
@@ -98,10 +93,10 @@ async def _enviar_email(db: AsyncSession, destinatario: str, assunto: str, html:
                 smtp.login(username, password)
                 smtp.send_message(msg)
             logger.info(f"E-mail enviado para {destinatario}: {assunto}")
-            return True
+            return "ok"
         except Exception as e:
             logger.error(f"Falha ao enviar e-mail para {destinatario}: {e}")
-            return False
+            return "error"
 
     # Executa _send() em um thread independente para não bloquear o loop assíncrono
     return await asyncio.get_running_loop().run_in_executor(None, _send)
@@ -161,7 +156,7 @@ async def send_appointment_alarm(
         f"Lembrete de Consulta: {patient_name} às {time_str}",
         html,
         "Lembrete de Consulta"
-    )
+    ) == "ok"
 
 
 async def send_patient_message_notification(
@@ -186,7 +181,7 @@ async def send_patient_message_notification(
         f"Nova Mensagem de Paciente: {patient_name}",
         html,
         "Nova Mensagem de Paciente"
-    )
+    ) == "ok"
 
 
 async def send_patient_welcome_email(
@@ -218,7 +213,7 @@ async def send_patient_welcome_email(
         "Bem-vindo ao Sistema do Instituto de Psicologia",
         html,
         "Bem-vindo ao Sistema da Clínica"
-    )
+    ) == "ok"
 
 
 async def send_professional_welcome_email(
@@ -249,14 +244,14 @@ async def send_professional_welcome_email(
         "Bem-vindo ao Sistema do Instituto de Psicologia",
         html,
         "Bem-vindo ao Sistema da Clínica"
-    )
+    ) == "ok"
 
 
 async def send_reset_password_link_email(
     db: AsyncSession,
     email: str,
     reset_link: str,
-) -> bool:
+) -> str:
     """Envia e-mail com link de redefinição de senha (token de uso único, expira em 1h)."""
     html = _template(
         "Redefinição de Senha",
