@@ -1,4 +1,4 @@
-"""
+﻿"""
 Utilitários de E-mail
 - Função genérica de envio (elimina duplicação)
 - Templates específicos para cada tipo de e-mail:
@@ -138,7 +138,7 @@ async def send_appointment_alarm(
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta 'função' (async def) é uma montadora específica para "Alarmes de Consulta".
-    Tudo que ela faz é: escrever o texto (usando a fábrica de Papel Timbrado '_template') com os dados do paciente, data e hora. 
+    Tudo que ela faz é: escrever o texto (usando a fábrica de Papel Timbrado '_template') com os dados do paciente, data e hora.
     E no final, ela diz: "Ô Carteiro (_enviar_email), leva essa carta pra mim!".
     """
     html = _template(

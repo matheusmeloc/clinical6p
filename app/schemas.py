@@ -1,4 +1,4 @@
-"""
+﻿"""
 Schemas Pydantic (validação de dados da API)
 Define o formato de entrada e saída de cada endpoint.
 
@@ -33,7 +33,7 @@ class PatientBase(BaseModel):
     gender: Optional[str] = None
     marital_status: Optional[str] = None
     profession: Optional[str] = None
-    
+
     # --- Contato ---
     phone: Optional[str] = None
     email: Optional[str] = None
@@ -44,19 +44,19 @@ class PatientBase(BaseModel):
     address_neighborhood: Optional[str] = None
     address_city: Optional[str] = None
     address_state: Optional[str] = None
-    
+
     # --- Convênio ---
     attendance_type: Optional[str] = "Particular"
     insurance_plan: Optional[str] = None
     insurance_number: Optional[str] = None
     insurance_expiration_date: Optional[dt_date] = None
-    
+
     # --- Emergência ---
     emergency_contact_name: Optional[str] = None
     emergency_contact_phone: Optional[str] = None
     emergency_contact_relation: Optional[str] = None
     consent_terms_accepted: Optional[bool] = False
-    
+
     # --- Tratamento ---
     professional_id: Optional[int] = None
     status: Optional[str] = "Ativo"
@@ -85,7 +85,7 @@ class PatientResponse(PatientBase):
     id: int
     professional_name: Optional[str] = None
     created_at: Optional[datetime] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -133,7 +133,7 @@ class ProfessionalResponse(ProfessionalBase):
     """
     id: int
     created_at: Optional[datetime] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -173,7 +173,7 @@ class AppointmentResponse(AppointmentBase):
     patient_name: Optional[str] = None
     professional_name: Optional[str] = None
     created_at: Optional[datetime] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -213,7 +213,7 @@ class PrescriptionResponse(PrescriptionBase):
     patient_name: Optional[str] = None
     professional_name: Optional[str] = None
     created_at: Optional[datetime] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -251,7 +251,7 @@ class CertificateResponse(CertificateBase):
     patient_name: Optional[str] = None
     professional_name: Optional[str] = None
     created_at: Optional[datetime] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -283,7 +283,7 @@ class PatientMessageResponse(PatientMessageBase):
     patient_name: Optional[str] = None
     professional_name: Optional[str] = None
     created_at: Optional[datetime] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -308,7 +308,7 @@ class SystemSettingsBase(BaseModel):
         [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
         O que é esta 'função' (def)? Ela atua como um INSPETOR NA ESTEIRA de produção!
         Como ela tem a placa '@field_validator' em cima, ela inspeciona o que o navegador da web mandou antes de aceitar.
-        Se o usuário preencher nada no servidor de email e salvar, o navegador manda um texto vazio (""). 
+        Se o usuário preencher nada no servidor de email e salvar, o navegador manda um texto vazio ("").
         Esta função pega essa caixa vazia ("") e converte para "None" (O vazio absoluto do Python), evitando que o banco de dados quebre.
         """
         # Converte string vazia do frontend para None
@@ -338,7 +338,7 @@ class SystemSettingsUpdate(SystemSettingsBase):
 class SystemSettingsResponse(SystemSettingsBase):
     id: int
     updated_at: Optional[datetime] = None
-    
+
     model_config = ConfigDict(from_attributes=True)
 
 

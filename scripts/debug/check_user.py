@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Depuração: check_user.py
 
 Este script permite inspecionar isoladamente as informações de um usuário
@@ -15,11 +15,11 @@ from app.auth import get_password_hash, verify_password
 async def main():
     engine = create_async_engine(settings.DATABASE_URL)
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     async with async_session() as session:
         result_users = await session.execute(select(User).where(User.email == "matheumelo@gmail.com"))
         user = result_users.scalars().first()
-        
+
         if user:
             print(f"User: {user.email}")
             print(f"Is Active: {user.is_active}")

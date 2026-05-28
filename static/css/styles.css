@@ -1,4 +1,4 @@
-/* =========================================
+﻿/* =========================================
    MODERN PROFESSIONAL DESIGN SYSTEM
    Theme: "Refined Horizon"
    Font: Plus Jakarta Sans
@@ -48,7 +48,6 @@
     --indigo-700-light: #4338ca;
     --indigo-700-dark: #4f46e5;
 
-
     /* --- MAPPED PALETTE (Dynamic) --- */
     --slate-50: color-mix(in srgb, var(--slate-50-light), var(--slate-50-dark) var(--theme-inv));
     --slate-100: color-mix(in srgb, var(--slate-100-light), var(--slate-100-dark) var(--theme-inv));
@@ -66,7 +65,6 @@
     --indigo-500: color-mix(in srgb, var(--indigo-500-light), var(--indigo-500-dark) var(--theme-inv));
     --indigo-600: color-mix(in srgb, var(--indigo-600-light), var(--indigo-600-dark) var(--theme-inv));
     --indigo-700: color-mix(in srgb, var(--indigo-700-light), var(--indigo-700-dark) var(--theme-inv));
-
 
     /* --- DYNAMIC VARIABLES (COLOR-MIX) --- */
     /* Theme interpolation variables */
@@ -620,7 +618,6 @@ button {
     font-weight: 600;
 }
 
-
 .kpi-card {
     background-color: var(--bg-surface);
     border-radius: var(--radius-xl);
@@ -840,8 +837,6 @@ button {
 .widget-card:hover .upcoming-list::-webkit-scrollbar-thumb {
     background-color: var(--text-tertiary);
 }
-
-
 
 .timeline-content:hover {
     transform: translateX(4px);

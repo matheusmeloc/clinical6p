@@ -52,3 +52,19 @@ def get_current_user(
         raise HTTPException(status_code=401, detail="Token expirado. Faça login novamente.")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido.")
+
+
+def require_role(allowed_roles: list[str]):
+    """
+    Factory de dependência RBAC.
+    Uso: Depends(require_role(["admin", "user"]))
+    Lança 403 se o role do JWT não estiver na lista permitida.
+    """
+    def dependency(current_user: dict = Depends(get_current_user)) -> dict:
+        if current_user.get("role") not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail="Permissão insuficiente para acessar este recurso.",
+            )
+        return current_user
+    return dependency

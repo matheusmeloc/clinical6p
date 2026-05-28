@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Teste: test_alarm_email.py
 
 Verifica se o envio de alarmes por e-mail (ex: urgências) está funcionando
@@ -37,7 +37,7 @@ async def main():
         # 3. Create an appointment exactly 15 minutes from now
         now = datetime.now()
         future_time = now + timedelta(minutes=15)
-        
+
         appt = Appointment(
             patient_id=pat.id,
             professional_id=prof.id,
@@ -49,15 +49,15 @@ async def main():
         )
         session.add(appt)
         await session.commit()
-        
+
         print(f"Created appointment ID {appt.id} for {future_time.date()} at {future_time.time()}")
         print("Starting the alarm task once manually to see if it processes this appointment...")
-        
+
         # 4. Trigger the equivalent of the background task exactly once
-        
+
         from app.main import appointment_alarm_task
         lookahead_time = datetime.now() + timedelta(minutes=30)
-        
+
         stmt = select(Appointment).where(
             and_(
                 Appointment.date == now.date(),
@@ -67,7 +67,7 @@ async def main():
         )
         result = await session.execute(stmt)
         appointments = result.scalars().all()
-        
+
         processed = 0
         from app.email_utils import send_appointment_alarm
         for a in appointments:
@@ -75,7 +75,7 @@ async def main():
             if now <= a_datetime <= lookahead_time:
                 patient = await session.get(Patient, a.patient_id)
                 professional = await session.get(Professional, a.professional_id)
-                
+
                 print(f"Found appointment {a.id} for {patient.name} with {professional.name}.")
                 if professional and professional.email:
                     print(f"Attempting to send email to: {professional.email}")
@@ -93,7 +93,7 @@ async def main():
                 else:
                     print("Professional missing email.")
                 processed += 1
-                
+
         await session.commit()
         print(f"Manually processed {processed} appointments via test script.")
 

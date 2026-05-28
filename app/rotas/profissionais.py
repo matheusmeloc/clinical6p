@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from app.database import AsyncSession, get_db
 from app.models import Professional, User
 from app.schemas import ProfessionalCreate, ProfessionalUpdate, ProfessionalResponse
-from app.auth import get_password_hash
+from app.auth import get_password_hash, require_role
 from app.email_utils import bg_send_professional_welcome_email
 
 router = APIRouter(prefix="/api/professionals", tags=["Profissionais"])
@@ -41,6 +41,7 @@ async def create_professional(
     professional: ProfessionalCreate,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
+    _: dict = Depends(require_role(["admin"]))
 ) -> Professional:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
@@ -59,9 +60,9 @@ async def create_professional(
         # --- Cria conta de login (User) se email e senha foram preenchidos ---
         if prof_data.get("email") and raw_password:
             new_user = User(
-                email=prof_data["email"], 
-                hashed_password=get_password_hash(raw_password), 
-                full_name=prof_data["name"], 
+                email=prof_data["email"],
+                hashed_password=get_password_hash(raw_password),
+                full_name=prof_data["name"],
                 role="user"
             )
             db.add(new_user)
@@ -79,11 +80,11 @@ async def create_professional(
             )
 
         return db_prof
-        
+
     except IntegrityError:
         await db.rollback()
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail="Professional with this email already exists or other constraint violation."
         )
     except Exception as e:
@@ -94,22 +95,23 @@ async def create_professional(
 
 @router.put("/{professional_id}", response_model=ProfessionalResponse)
 async def update_professional(
-    professional_id: int, 
-    professional_update: ProfessionalUpdate, 
-    db: AsyncSession = Depends(get_db)
+    professional_id: int,
+    professional_update: ProfessionalUpdate,
+    db: AsyncSession = Depends(get_db),
+    _: dict = Depends(require_role(["admin"]))
 ) -> Professional:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta 'função' funciona como a "Central de Atualização Cadastral".
     Se o profissional casar e mudar de nome, ou quiser trocar o e-mail ou a própria senha:
-    1. A secretária edita e manda salvar. 
+    1. A secretária edita e manda salvar.
     2. O computador atualiza na gaveta normal (Profissionais).
     3. Mas o espertinho aqui também corre lá na outra gaveta do sistema de segurança (Tabela Users), acha o "Crachá" antigo dele, e atualiza o e-mail/senha lá também! Assim ninguém perde a conta!
     """
     stmt = select(Professional).where(Professional.id == professional_id)
     result = await db.execute(stmt)
     db_prof = result.scalars().first()
-    
+
     if not db_prof:
         raise HTTPException(status_code=404, detail="Professional not found")
 
@@ -153,14 +155,18 @@ async def update_professional(
         await db.commit()
         await db.refresh(db_prof)
         return db_prof
-        
+
     except IntegrityError:
         await db.rollback()
         raise HTTPException(status_code=400, detail="Email already in use.")
 
 
 @router.delete("/{professional_id}")
-async def delete_professional(professional_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+async def delete_professional(
+    professional_id: int,
+    db: AsyncSession = Depends(get_db),
+    _: dict = Depends(require_role(["admin"]))
+) -> dict[str, str]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta 'função' é a "Tesoura de Demissão ou Cancelamento".
@@ -170,10 +176,10 @@ async def delete_professional(professional_id: int, db: AsyncSession = Depends(g
     stmt = select(Professional).where(Professional.id == professional_id)
     result = await db.execute(stmt)
     prof = result.scalars().first()
-    
+
     if not prof:
         raise HTTPException(status_code=404, detail="Professional not found")
-        
+
     try:
         await db.delete(prof)
         await db.commit()

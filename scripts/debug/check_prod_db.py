@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Depuração: check_prod_db.py
 
 Este script verifica a conexão e o estado do banco de dados de produção.
@@ -14,7 +14,7 @@ from app.models import User, SystemSettings
 async def main():
     engine = create_async_engine(settings.DATABASE_URL)
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     async with async_session() as session:
         # Check settings
         result_settings = await session.execute(select(SystemSettings).order_by(SystemSettings.id))

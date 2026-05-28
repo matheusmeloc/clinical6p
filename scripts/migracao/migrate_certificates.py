@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Migração: migrate_certificates.py
 
 Realiza a migração de registros referentes a atestados/certificados.
@@ -9,7 +9,7 @@ import sqlite3
 def migrate():
     conn = sqlite3.connect('clinic.db')
     cursor = conn.cursor()
-    
+
     # Check if table exists
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='certificates'")
     if not cursor.fetchone():
@@ -20,7 +20,7 @@ def migrate():
     # Check columns
     cursor.execute("PRAGMA table_info(certificates)")
     columns = [row[1] for row in cursor.fetchall()]
-    
+
     if 'description' not in columns:
         print("Adding 'description' column to 'certificates' table...")
         try:
@@ -31,7 +31,7 @@ def migrate():
             print(f"Error adding column: {e}")
     else:
         print("'description' column already exists.")
-        
+
     conn.close()
 
 if __name__ == "__main__":

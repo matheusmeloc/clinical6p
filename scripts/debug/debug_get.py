@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Depuração: debug_get.py
 
 Script utilizado para realizar requisições GET em modo de depuração,
@@ -20,7 +20,7 @@ async def debug_get():
         print("Executing Query...")
         try:
             result = await db.execute(select(Prescription, Patient, Professional).join(Patient).join(Professional).order_by(Prescription.date.desc()))
-            
+
             rows = result.all()
             print(f"Found {len(rows)} rows.")
 
