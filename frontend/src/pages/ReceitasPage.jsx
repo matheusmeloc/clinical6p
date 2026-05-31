@@ -1,0 +1,417 @@
+import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Card } from "../components/ui/Card";
+import { Button } from "../components/Button";
+import { Input } from "../components/ui/Input";
+import { Label } from "../components/ui/Label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "../components/ui/dialog";
+import { Search, Plus, FileText, Stethoscope, Trash } from "lucide-react";
+import api from "../lib/api";
+
+export default function ReceitasPage() {
+  const [prescriptions, setPrescriptions] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [professionals, setProfessionals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [formError, setFormError] = useState("");
+  const [formSuccess, setFormSuccess] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      patient_id: "",
+      professional_id: "",
+      medication_name: "",
+      dosage: "",
+      certificate_type: "Receita comum",
+      date: "",
+      status: "Ativo",
+    },
+  });
+
+  const formatDate = (value) =>
+    value ? new Date(value).toLocaleDateString("pt-BR") : "—";
+
+  const filteredPrescriptions = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return prescriptions;
+
+    return prescriptions.filter((item) => {
+      return [
+        item.patient_name,
+        item.professional_name,
+        item.medication_name,
+        item.dosage,
+        item.certificate_type,
+        item.status,
+        item.date,
+      ]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(term));
+    });
+  }, [prescriptions, search]);
+
+  const loadData = async () => {
+    setLoading(true);
+    setLoadError("");
+
+    try {
+      const [presRes, patientsRes, prosRes] = await Promise.all([
+        api.get("/api/prescriptions"),
+        api.get("/api/patients"),
+        api.get("/api/professionals"),
+      ]);
+
+      setPrescriptions(presRes.data);
+      setPatients(patientsRes.data);
+      setProfessionals(prosRes.data);
+    } catch (err) {
+      console.error(err);
+      setLoadError(
+        "Não foi possível carregar as receitas. Faça login e tente novamente.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleCreatePrescription = async (data) => {
+    setFormError("");
+    setFormSuccess("");
+    try {
+      const payload = {
+        patient_id: Number(data.patient_id),
+        professional_id: Number(data.professional_id),
+        medication_name: data.medication_name,
+        dosage: data.dosage || null,
+        certificate_type: data.certificate_type || "Receita comum",
+        date: data.date || null,
+        status: data.status,
+      };
+
+      const response = await api.post("/api/prescriptions", payload);
+      setPrescriptions((current) => [response.data, ...current]);
+      reset();
+      setDialogOpen(false);
+      setFormSuccess("Receita criada com sucesso!");
+      setTimeout(() => setFormSuccess(""), 4000);
+    } catch (err) {
+      console.error(err);
+      setFormError(
+        err.response?.data?.detail || "Não foi possível criar a receita. Verifique os dados e tente novamente.",
+      );
+    }
+  };
+
+  const handleDeletePrescription = async (prescriptionId) => {
+    try {
+      await api.delete(`/api/prescriptions/${prescriptionId}`);
+      setPrescriptions((current) =>
+        current.filter((prescription) => prescription.id !== prescriptionId),
+      );
+    } catch (err) {
+      console.error(err);
+      setFormError("Não foi possível excluir a receita. Tente novamente.");
+    }
+  };
+
+  const totalCount = prescriptions.length;
+  const activeCount = prescriptions.filter(
+    (item) => item.status?.toLowerCase() === "ativo",
+  ).length;
+  const latestDate = prescriptions
+    .map((item) => item.date && new Date(item.date))
+    .filter(Boolean)
+    .sort((a, b) => b - a)[0];
+
+  return (
+    <div className="space-y-6">
+      {formSuccess && (
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
+          {formSuccess}
+        </div>
+      )}
+      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+        <Card className="bg-white/90 border border-slate-200">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+                Receitas
+              </p>
+              <h2 className="mt-3 text-2xl font-bold">Gestão de prescrições</h2>
+            </div>
+            <div className="rounded-3xl bg-emerald-100 p-3 text-emerald-700">
+              <FileText className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="mt-8 space-y-4 text-slate-700">
+            <p>
+              Veja as receitas emitidas, crie novas prescrições e mantenha o
+              histórico médico organizado.
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm text-slate-500">Total de receitas</p>
+                <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm text-slate-500">Receitas ativas</p>
+                <p className="mt-3 text-3xl font-semibold">{activeCount}</p>
+              </div>
+              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-sm text-slate-500">Última emissão</p>
+                <p className="mt-3 text-3xl font-semibold">
+                  {formatDate(latestDate)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-white/90 border border-slate-200">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+                Ações rápidas
+              </p>
+              <h2 className="mt-3 text-2xl font-bold">
+                Registrar nova receita
+              </h2>
+            </div>
+            <div className="rounded-3xl bg-slate-100 p-3 text-slate-700">
+              <Plus className="w-6 h-6" />
+            </div>
+          </div>
+          <div className="mt-8 space-y-4">
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="w-full justify-between bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nova receita
+            </Button>
+          </div>
+        </Card>
+      </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent onClose={() => { setDialogOpen(false); setFormError(""); reset(); }} className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Nova receita</DialogTitle>
+            <DialogDescription>Preencha os dados para registrar uma nova prescrição.</DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit(handleCreatePrescription)} className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Paciente</Label>
+              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                {...register("patient_id", { required: "Obrigatório" })}>
+                <option value="">Selecione um paciente</option>
+                {patients.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              {errors.patient_id && <p className="text-xs text-red-600">{errors.patient_id.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Profissional</Label>
+              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                {...register("professional_id", { required: "Obrigatório" })}>
+                <option value="">Selecione um profissional</option>
+                {professionals.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              {errors.professional_id && <p className="text-xs text-red-600">{errors.professional_id.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Medicamento</Label>
+              <Input type="text" placeholder="Nome do medicamento"
+                {...register("medication_name", { required: "Obrigatório" })} />
+              {errors.medication_name && <p className="text-xs text-red-600">{errors.medication_name.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Dosagem</Label>
+              <Input type="text" placeholder="Ex: 1 comprimido 2x ao dia" {...register("dosage")} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Tipo de receita</Label>
+              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                {...register("certificate_type")}>
+                <option value="Receita comum">Receita comum</option>
+                <option value="Receita Especial">Receita Especial</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Data de emissão</Label>
+              <Input type="date" min={new Date().toISOString().split("T")[0]} {...register("date")} />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Status</Label>
+              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                {...register("status")}>
+                <option value="Ativo">Ativo</option>
+                <option value="Expirado">Expirado</option>
+                <option value="Cancelado">Cancelado</option>
+              </select>
+            </div>
+
+            {formError && (
+              <div className="sm:col-span-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                {formError}
+              </div>
+            )}
+
+            <DialogFooter className="sm:col-span-2">
+              <Button type="button" variant="secondary" onClick={() => { setDialogOpen(false); setFormError(""); reset(); }}>
+                Cancelar
+              </Button>
+              <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
+                Salvar receita
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Card className="bg-white/90 border border-slate-200">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+              Receitas recentes
+            </p>
+            <h2 className="mt-3 text-2xl font-bold">
+              Histórico de prescrições
+            </h2>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Buscar por paciente, profissional ou medicamento"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 overflow-x-auto">
+          {loading ? (
+            <div className="p-8 text-center text-slate-500">
+              Carregando receitas...
+            </div>
+          ) : loadError ? (
+            <div className="p-8 text-center text-red-600">{loadError}</div>
+          ) : (
+            <table className="min-w-full text-left text-sm text-slate-700">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                    Paciente
+                  </th>
+                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                    Profissional
+                  </th>
+                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                    Medicamento
+                  </th>
+                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                    Dosagem
+                  </th>
+                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                    Tipo
+                  </th>
+                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                    Data
+                  </th>
+                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200">
+                {filteredPrescriptions.length > 0 ? (
+                  filteredPrescriptions.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-50 transition-colors"
+                    >
+                      <td className="px-4 py-4 font-medium text-slate-900">
+                        {item.patient_name || "—"}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {item.professional_name || "—"}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {item.medication_name}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {item.dosage || "—"}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {item.certificate_type || "—"}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {formatDate(item.date)}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {item.status || "—"}
+                      </td>
+                      <td className="px-4 py-4">
+                        <Button
+                          variant="ghost"
+                          className="h-9 px-3"
+                          onClick={() => handleDeletePrescription(item.id)}
+                        >
+                          <Trash className="w-4 h-4 mr-2" /> Excluir
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={8}
+                      className="px-4 py-8 text-center text-slate-500"
+                    >
+                      Nenhuma receita encontrada.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
