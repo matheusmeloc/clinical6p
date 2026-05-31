@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Depuração: check_emails.py
 
 Este script conecta-se ao banco de dados e lista todos os e-mails cadastrados
@@ -16,7 +16,7 @@ async def get_all_emails():
         result = await db.execute(select(User))
         for u in result.scalars().all():
             print(f"ID: {u.id}, Email: {u.email}, Role: {u.role}, Hash: {u.hashed_password}")
-            
+
         print("\n=== PATIENTS ===")
         result = await db.execute(select(Patient))
         for p in result.scalars().all():

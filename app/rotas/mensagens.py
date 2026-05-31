@@ -12,7 +12,7 @@ from sqlalchemy import select, func, desc
 from sqlalchemy.orm import selectinload
 
 from app.database import AsyncSession, get_db
-from app.models import Patient, PatientMessage
+from app.models import Patient, PatientMessage, Professional
 from app.schemas import PatientMessageCreate, PatientMessageResponse
 from app.auth import verify_password, get_current_user
 from app.email_utils import bg_send_patient_message_notification
@@ -43,13 +43,13 @@ async def send_patient_message(
 
     if not patient or not patient.hashed_password or not verify_password(message_data.password, patient.hashed_password):
         raise HTTPException(status_code=401, detail="CPF ou senha inválidos")
-        
+
     if not patient.professional_id:
         raise HTTPException(status_code=400, detail="Paciente não possui um profissional vinculado para receber mensagens")
 
     db_msg = PatientMessage(
-        patient_id=patient.id, 
-        professional_id=patient.professional_id, 
+        patient_id=patient.id,
+        professional_id=patient.professional_id,
         message=message_data.message
     )
     db.add(db_msg)
@@ -72,13 +72,15 @@ async def send_patient_message(
 # ═════════════════════════════════════════════════════════════════════
 
 @router.get("/patient-messages", response_model=list[PatientMessageResponse])
-async def list_messages(professional_id: int | None = None, db: AsyncSession = Depends(get_db), _: dict = Depends(get_current_user)) -> list[dict[str, Any]]:
+async def list_messages(
+    professional_id: int | None = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[dict[str, Any]]:
     """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    A 'função' Carteiro Organizado (Para o Painel de Controle).
-    O dono da clínica quer ver as mensagens. Ela busca todas!
-    PORÉM, se passarmos um número de Filtro ('professional_id'), a chave mágica ali (query.where) tranca o sistema e devolve SÓ AS MENSAGENS daquele profissional específico, garantindo que profissionais diferentes não leiam mensagens alheias.
-    Pausa: '.order_by(desc())' faz o quê? Bota as mensagens mais novas lá no alto do painel sempre (Ordem Decrescente)!
+    Lista mensagens de pacientes.
+    Admin → pode ver todas (ou filtrar por professional_id).
+    Profissional não-admin → vê somente suas próprias mensagens (CWE-639 fix).
     """
     query = (
         select(PatientMessage)
@@ -86,18 +88,30 @@ async def list_messages(professional_id: int | None = None, db: AsyncSession = D
         .order_by(desc(PatientMessage.created_at))
     )
 
-    if professional_id:
+    role = current_user.get("role", "")
+    caller_email = current_user.get("email", "")
+
+    if role != "admin":
+        # Busca o professional_id associado ao e-mail do usuário logado
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id_result = await db.execute(stmt_prof)
+        prof_id = prof_id_result.scalar()
+        if not prof_id:
+            raise HTTPException(status_code=403, detail="Profissional não associado a este usuário.")
+        query = query.where(PatientMessage.professional_id == prof_id)
+    elif professional_id:
+        # Admin pode filtrar por profissional específico
         query = query.where(PatientMessage.professional_id == professional_id)
 
     result = await db.execute(query)
     messages = result.scalars().all()
-    
+
     return [
         {
-            "id": m.id, 
-            "patient_id": m.patient_id, 
+            "id": m.id,
+            "patient_id": m.patient_id,
             "professional_id": m.professional_id,
-            "message": m.message, 
+            "message": m.message,
             "is_read": m.is_read,
             "patient_name": m.patient.name if m.patient else None,
             "professional_name": m.professional.name if m.professional else None,
@@ -108,7 +122,11 @@ async def list_messages(professional_id: int | None = None, db: AsyncSession = D
 
 
 @router.get("/patient-messages/unread")
-async def count_unread_messages(professional_id: int | None = None, db: AsyncSession = Depends(get_db), _: dict = Depends(get_current_user)) -> dict[str, int]:
+async def count_unread_messages(
+    professional_id: int | None = None,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+) -> dict[str, int]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' Calculadora Rápida de Notificações.
@@ -116,16 +134,31 @@ async def count_unread_messages(professional_id: int | None = None, db: AsyncSes
     Ela faz um 'select(func.count)' perguntando ao banco: "Ei, me conta na ponta do lápis qual a quantidade onde o estado de leitura é FALSO (is_read == False)?". Retorna só o número isolado. É rapidíssimo.
     """
     query = select(func.count(PatientMessage.id)).where(PatientMessage.is_read == False)
-    
-    if professional_id:
+
+    role = current_user.get("role", "")
+    caller_email = current_user.get("email", "")
+
+    if role != "admin":
+        # Busca o professional_id associado ao e-mail do usuário logado e força o filtro
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id_result = await db.execute(stmt_prof)
+        prof_id = prof_id_result.scalar()
+        if not prof_id:
+            raise HTTPException(status_code=403, detail="Profissional não associado a este usuário.")
+        query = query.where(PatientMessage.professional_id == prof_id)
+    elif professional_id:
         query = query.where(PatientMessage.professional_id == professional_id)
-        
+
     count = await db.scalar(query) or 0
     return {"count": count}
 
 
 @router.put("/patient-messages/{message_id}/read")
-async def mark_message_as_read(message_id: int, db: AsyncSession = Depends(get_db), _: dict = Depends(get_current_user)) -> dict[str, str]:
+async def mark_message_as_read(
+    message_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+) -> dict[str, str]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' Marca-Texto.
@@ -135,11 +168,22 @@ async def mark_message_as_read(message_id: int, db: AsyncSession = Depends(get_d
     stmt = select(PatientMessage).where(PatientMessage.id == message_id)
     result = await db.execute(stmt)
     msg = result.scalars().first()
-    
+
     if not msg:
         raise HTTPException(status_code=404, detail="Message not found")
-        
+
+    role = current_user.get("role", "")
+    caller_email = current_user.get("email", "")
+
+    if role != "admin":
+        # Busca o professional_id associado ao e-mail do usuário logado
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id_result = await db.execute(stmt_prof)
+        prof_id = prof_id_result.scalar()
+        if not prof_id or msg.professional_id != prof_id:
+            raise HTTPException(status_code=403, detail="Você não tem permissão para marcar esta mensagem como lida.")
+
     msg.is_read = True
     await db.commit()
-    
+
     return {"message": "Marcado como lido"}

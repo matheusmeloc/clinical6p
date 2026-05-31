@@ -1,4 +1,4 @@
-"""
+﻿"""
 Ponto de entrada principal da aplicação (FastAPI)
 Aqui configuramos:
 - CORS (para permitir que o frontend faça requisições)
@@ -18,12 +18,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy import select, update as sa_update
 from sqlalchemy.orm import joinedload
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.database import engine, Base, SessionLocal
 from app.models import Appointment, Professional, Patient, User
 from app.email_utils import send_appointment_alarm
-from app.auth import get_current_user, get_password_hash
+from app.auth import get_current_user, get_password_hash, require_role
 from app.config import settings
+from app.limiter import limiter
 
 # ═════════════════════════════════════════════════════════════════════
 # ROTAS (ENDPOINTS)
@@ -55,7 +58,7 @@ async def appointment_alarm_task() -> None:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     O que é esta 'função' (async def)? Ela é como um robô que fica rodando eternamente (enquanto o servidor estiver ligado) para fazer o trabalho repetitivo de enviar e-mails de lembrete de consulta.
-    
+
     A instrução 'while True:' (Enquanto for Verdadeiro) diz ao robô para trabalhar num ciclo infinito.
     Lógica Passo a Passo:
     1. Ele vê a hora atual ('now') e calcula até que momento deve olhar no futuro (hora de limite).
@@ -136,7 +139,7 @@ async def lifespan(app: FastAPI):
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     O que é esta 'função' (async def)? Pense em 'lifespan' (tempo de vida) como o interruptor de energia da sua loja (o site).
-    
+
     - O trecho de código antes do 'yield' roda uma única vez no segundo que você liga a loja ("Abre a loja, arruma as cadeiras, e liga a máquina - o robô - de e-mails em segundo plano").
     - O 'yield' fala: "Pronto, a loja está aberta, podem entrar clientes (receber requisições)".
     - O trecho depois do 'yield' só será rodado se alguém desligar o servidor. Ou seja, ele avisa: "Cancelem o robô dos e-mails, fechem as portas em segurança."
@@ -167,7 +170,7 @@ async def lifespan(app: FastAPI):
     logger.info("Tarefa de alarme de consultas iniciada.")
 
     yield
-    
+
     alarm_task.cancel()
     logger.info("Shutdown finalizado.")
 
@@ -179,6 +182,9 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# ── Rate Limiter (slowapi) ──────────────────────────────────────────────────
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # ═════════════════════════════════════════════════════════════════════
@@ -202,18 +208,21 @@ app.add_middleware(
 
 # Rotas públicas — sem autenticação
 app.include_router(auth_router)
-app.include_router(messages_router)  # /api/patient-contact é público; staff routes protegidas individualmente
+app.include_router(messages_router)  # /api/patient-contact é público; demais rotas protegidas individualmente
 
-# Rotas protegidas — exigem Bearer token válido
-_jwt = [Depends(get_current_user)]
-app.include_router(dashboard_router, dependencies=_jwt)
-app.include_router(patients_router, dependencies=_jwt)
-app.include_router(professionals_router, dependencies=_jwt)
-app.include_router(appointments_router, dependencies=_jwt)
-app.include_router(prescriptions_router, dependencies=_jwt)
-app.include_router(certificates_router, dependencies=_jwt)
-app.include_router(settings_router, dependencies=_jwt)
-app.include_router(debug_router, dependencies=_jwt)
+# Rotas de staff (admin + user) — pacientes não têm acesso
+_staff = [Depends(require_role(["admin", "user"]))]
+app.include_router(dashboard_router, dependencies=_staff)
+app.include_router(patients_router, dependencies=_staff)
+app.include_router(professionals_router, dependencies=_staff)
+app.include_router(appointments_router, dependencies=_staff)
+app.include_router(prescriptions_router, dependencies=_staff)
+app.include_router(certificates_router, dependencies=_staff)
+
+# Rotas exclusivas de admin (configurações globais, debug)
+_admin = [Depends(require_role(["admin"]))]
+app.include_router(settings_router, dependencies=_admin)
+app.include_router(debug_router, dependencies=_admin)
 
 
 # ═════════════════════════════════════════════════════════════════════
@@ -234,8 +243,8 @@ async def root():
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     O que é esta 'função' (async def)? Chamámos ela de 'root' (raiz).
     Note que ela vem acompanhada de uma antena (@app.get("/")). Essa antena orienta o servidor.
-    Se o cliente apertar Enter apenas no endereço do site, sem barra nada (ex: "meusite.com/"), 
-    o servidor intercepta o pedido e executa essa função. Esta função só possui o trabalho 
+    Se o cliente apertar Enter apenas no endereço do site, sem barra nada (ex: "meusite.com/"),
+    o servidor intercepta o pedido e executa essa função. Esta função só possui o trabalho
     de enviar de retorno a página HTML do login do administrativo: "static/index.html".
     """
     return FileResponse("static/index.html")

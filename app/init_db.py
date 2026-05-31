@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script utilitário para forçar a criação das tabelas no banco de dados.
 Geralmente rodado apenas uma vez, ou a cada vez que as estruturas de
 modelos da pasta app/models.py sofrem mudança e optamos por não usar o Alembic.
@@ -21,7 +21,7 @@ async def init_models() -> None:
         # Remova ou comente a linha abaixo em PRODUÇÃO para não perder dados:
         # await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
-        
+
     print("Sucesso: Tabelas verificadas e criadas no banco de dados.")
 
 

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Rotas de Autenticação
 - Login (email para funcionários, CPF para pacientes)
 - Recuperação de senha (esqueci minha senha)
@@ -7,7 +7,7 @@ Rotas de Autenticação
 import secrets
 import logging
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from pydantic import BaseModel
 
@@ -17,6 +17,7 @@ from app.auth import verify_password, get_password_hash, create_access_token
 from app.config import settings
 from app.schemas import ForgotPasswordRequest, ResetPasswordRequest
 from app.email_utils import send_reset_password_link_email
+from app.limiter import limiter
 
 
 router = APIRouter(prefix="/api", tags=["Autenticação"])
@@ -40,7 +41,8 @@ class LoginRequest(BaseModel):
 # ═════════════════════════════════════════════════════════════════════
 
 @router.post("/login")
-async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
+@limiter.limit("10/minute")
+async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends(get_db)) -> dict:
     try:
         email_or_cpf = body.email.strip()
         password = body.password.strip()
@@ -184,4 +186,3 @@ async def reset_password(request: ResetPasswordRequest, db: AsyncSession = Depen
     await db.commit()
 
     return {"message": "Senha redefinida com sucesso. Você já pode fazer login."}
-

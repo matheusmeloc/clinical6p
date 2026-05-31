@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de População (Seed): seed_db.py
 
 Preenche o banco de dados com uma massa de dados inicial (pacientes, consultas, etc.).
@@ -45,23 +45,23 @@ async def seed_data():
         if count > 0:
             print("Data already seeded.")
             # return # Comentado para forçar o seed se desejado, ou apenas adicionar o que estiver faltando
-            # Para esta tarefa, vamos apenas prosseguir ou talvez limpar? 
-            # O usuário quer "números fictícios para preencher". Se disser "já semeado", eles podem não ver nada ao olhar para um novo banco. 
+            # Para esta tarefa, vamos apenas prosseguir ou talvez limpar?
+            # O usuário quer "números fictícios para preencher". Se disser "já semeado", eles podem não ver nada ao olhar para um novo banco.
             # Mas provavelmente o banco está vazio.
             if count >= 3:
                 print("Professionals exist. Skipping professional creation.")
-        
+
         # Add Professionals if needed
         pro_objs = []
         result_pros = await session.execute(select(Professional))
         existing_pros = result_pros.scalars().all()
-        
+
         if not existing_pros:
             for p in PROFESSIONALS:
                 pro = Professional(
-                    name=p["name"], 
-                    role=p["role"], 
-                    specialty=p["specialty"], 
+                    name=p["name"],
+                    role=p["role"],
+                    specialty=p["specialty"],
                     email=p["email"],
                     status="Ativo"
                 )
@@ -115,20 +115,20 @@ async def seed_data():
             print(f"Created {len(pat_objs)} patients.")
         else:
             pat_objs = existing_pats
-            
+
         for p in pat_objs: await session.refresh(p)
 
         # Add Appointments
         # Sempre adiciona alguns novos agendamentos para teste
         today = date.today()
-        
+
         # Today's appointments
         times = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"]
         for i in range(4): # 4 appointments today
             t = datetime.strptime(times[i], "%H:%M").time()
             # Check if exists
             exists = await session.execute(select(Appointment).where(
-                Appointment.date == today, 
+                Appointment.date == today,
                 Appointment.time == t
             ))
             if exists.scalars().first():
@@ -143,13 +143,13 @@ async def seed_data():
                 observations="Rotina"
             )
             session.add(appt)
-        
+
         # Future appointments
         for i in range(5):
             days_ahead = random.randint(1, 7)
             future_date = today + timedelta(days=days_ahead)
             t = datetime.strptime(random.choice(times), "%H:%M").time()
-            
+
             appt = Appointment(
                 patient_id=random.choice(pat_objs).id,
                 professional_id=random.choice(pro_objs).id,

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Depuração: dump_tables.py
 
 Extrai e exibe o conteúdo das tabelas do banco de dados.
@@ -15,7 +15,7 @@ async def run():
         r1 = await db.execute(select(User))
         for u in r1.scalars().all():
             print(u.id, u.email, u.role)
-        
+
         print("\n=== PROFESSIONALS ===")
         r2 = await db.execute(select(Professional))
         for p in r2.scalars().all():

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Teste/Apoio: reset_admin.py
 
 Redefine as credenciais do administrador para o padrão, facilitando
@@ -15,11 +15,11 @@ from app.auth import get_password_hash
 async def main():
     engine = create_async_engine(settings.DATABASE_URL)
     async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
-    
+
     async with async_session() as session:
         result_users = await session.execute(select(User).where(User.email == "admin@admin.com"))
         user = result_users.scalars().first()
-        
+
         if user:
             print("Found admin user! Resetting password to 'admin'")
             user.hashed_password = get_password_hash("admin")

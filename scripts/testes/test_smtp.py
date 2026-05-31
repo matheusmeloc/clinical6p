@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Teste: test_smtp.py
 
 Verifica as configurações e a liberação de portas SMTP locais
@@ -15,7 +15,7 @@ def test_smtp_direct():
         # SMTP=smtp.gmail.com:587 User=matheusimporer@gmail.com
         server_addr = "smtp.gmail.com"
         port = 587
-        
+
         print(f"Connecting to {server_addr}:{port}...")
         smtp = smtplib.SMTP(server_addr, port, timeout=10)
         smtp.set_debuglevel(1)

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Teste: test_hash.py
 
 Testa rigorosamente as funções de geração e verificação de hashes de
@@ -13,7 +13,7 @@ def test_hash():
     p2 = "1234 "
     print(f"Testing 1234: {verify_password(p1, h)}")
     print(f"Testing 1234 : {verify_password(p2, h)}")
-    
+
     # Verifica se podemos gerar o hash e verificar agora mesmo
     from app.auth import get_password_hash
     new_h = get_password_hash("1234")

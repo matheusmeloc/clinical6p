@@ -1,7 +1,7 @@
-"""
+﻿"""
 Script de Teste: test_route.py
 
-Framework simples contido num único script para bater em rotas da  
+Framework simples contido num único script para bater em rotas da
 aplicação web, avaliando status codes retornados (200, 404, etc).
 """
 import requests

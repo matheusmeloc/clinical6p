@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Teste: test_insert.py
 
 Testa a inserção de entidades principais (como novos pacientes) no
@@ -21,10 +21,10 @@ async def test_insert():
             # Check dependencies
             pat = await db.execute(select(Patient).limit(1))
             patient = pat.scalars().first()
-            
+
             prof = await db.execute(select(Professional).limit(1))
             professional = prof.scalars().first()
-            
+
             if not patient or not professional:
                 print("Error: Need at least 1 patient and 1 professional.")
                 return
@@ -43,7 +43,7 @@ async def test_insert():
             db.add(new_presc)
             await db.commit()
             print("Successfully inserted prescription!")
-            
+
         except Exception as e:
             print(f"Error inserting: {e}")
             await db.rollback()

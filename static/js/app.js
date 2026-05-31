@@ -1,4 +1,4 @@
-// Lógica do App e Roteamento
+﻿// Lógica do App e Roteamento
 
 const routes = {
     '/': renderDashboard,
@@ -80,11 +80,10 @@ function handleRoute(path) {
 
 // --- Renderizadores de Tela ---
 
-
 function renderDashboard() {
     return `
         <!-- Minimalist Dashboard Content -->
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             <!-- Card 1: Mint -->
             <div class="bg-primary/20 p-8 rounded-[2rem] flex items-center justify-between relative overflow-hidden group hover:shadow-lg transition-all duration-500">
@@ -97,7 +96,7 @@ function renderDashboard() {
                  </div>
                  <div class="w-24 h-24 bg-white/30 rounded-full absolute -right-6 -bottom-6 group-hover:scale-125 transition-transform duration-500"></div>
             </div>
-            
+
             <!-- Card 2: Yellow -->
             <div class="bg-secondary p-8 rounded-[2rem] flex items-center justify-between relative overflow-hidden group hover:shadow-lg transition-all duration-500">
                  <div>
@@ -148,7 +147,7 @@ function renderEmployees() {
                 Cadastrar Funcionário
             </button>
         </div>
-        
+
         <!-- KPI Cards for Employees -->
         <div class="grid grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
             <div class="bg-surface p-4 rounded-lg border border-gray-100 shadow-sm flex items-center gap-4">
@@ -246,7 +245,7 @@ function renderCertificates() {
 function renderSettings() {
     return `
         <h2 class="text-2xl font-bold text-text-main mb-6">Configurações</h2>
-        
+
         <div class="bg-surface rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="border-b border-gray-100">
                 <nav class="flex">
@@ -257,12 +256,12 @@ function renderSettings() {
                     <button class="px-6 py-4 text-text-muted hover:text-text-main transition-colors">Sistema</button>
                 </nav>
             </div>
-            
+
             <div class="p-8">
                 <!-- Profile Tab Content (Default) -->
                 <div class="max-w-xl">
                     <h3 class="text-lg font-medium text-text-main mb-6">Dados do Perfil</h3>
-                    
+
                     <div class="flex items-center gap-6 mb-8">
                         <div class="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
                             <i data-feather="camera" class="w-8 h-8"></i>
@@ -272,7 +271,7 @@ function renderSettings() {
                             <p class="text-xs text-text-muted mt-2">JPG ou PNG. Max 1MB.</p>
                         </div>
                     </div>
-                    
+
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -292,7 +291,7 @@ function renderSettings() {
                             <label class="block text-sm font-medium text-text-muted mb-1">Cargo</label>
                             <input type="text" value="Administrador" disabled class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-text-muted cursor-not-allowed">
                         </div>
-                        
+
                         <div class="pt-4 flex justify-end">
                              <button class="px-6 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg transition-colors font-medium">Salvar Alterações</button>
                         </div>
@@ -302,4 +301,3 @@ function renderSettings() {
         </div>
     `;
 }
-

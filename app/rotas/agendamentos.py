@@ -1,4 +1,4 @@
-"""
+﻿"""
 Rotas de Agendamentos (Appointments)
 - CRUD completo
 - Consultas de hoje e próximas consultas (para o dashboard)
@@ -30,16 +30,16 @@ def _appointment_to_dict(a: Appointment) -> dict[str, Any]:
     A mesma lógica de sempre: Pega do Banco de Dados um formato pesado (Classe), traduz pra um pacote leve (Dicionário) e no meio do processo já "gruda" os nomes certos de quem vai (paciente) e quem atende (profissional) na consulta!
     """
     return {
-        "id": a.id, 
-        "patient_id": a.patient_id, 
+        "id": a.id,
+        "patient_id": a.patient_id,
         "professional_id": a.professional_id,
         "patient_name": a.patient.name if getattr(a, 'patient', None) else None,
         "professional_name": a.professional.name if getattr(a, 'professional', None) else None,
-        "date": str(a.date), 
+        "date": str(a.date),
         "time": str(a.time),
-        "type": a.type, 
+        "type": a.type,
         "status": a.status,
-        "observations": a.observations, 
+        "observations": a.observations,
         "created_at": a.created_at,
     }
 
@@ -48,12 +48,12 @@ def _query_with_relations():
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta 'função' é como um Truque de Mágica (ou atalho para preguiçosos).
-    A consulta (Appointment) guarda apenas o "Número" das pessoas (ex: Paciente 5, Psicólogo 2) na sua tabela de dados. 
+    A consulta (Appointment) guarda apenas o "Número" das pessoas (ex: Paciente 5, Psicólogo 2) na sua tabela de dados.
     Toda vez que pesquisarmos uma consulta, queremos exibir o "João", e não o "ID 5".
     Então em vez de colar esse mesmo código grande para colar as tabelas (o selectinload) em todas as outras funções, a gente guarda o código aqui e só chama a magia: _query_with_relations(). Menos digitação!
     """
     return select(Appointment).options(
-        selectinload(Appointment.patient), 
+        selectinload(Appointment.patient),
         selectinload(Appointment.professional)
     )
 
@@ -73,16 +73,16 @@ async def today_appointments(db: AsyncSession = Depends(get_db)) -> list[dict[st
     try:
         stmt = _query_with_relations().where(Appointment.date == date.today()).order_by(Appointment.time)
         result = await db.execute(stmt)
-        
+
         appointments = []
         for a in result.scalars().all():
             appt_dict = _appointment_to_dict(a)
             appt_dict["date"] = str(a.date) if a.date else None
             appt_dict["time"] = a.time.strftime("%H:%M") if a.time else None
             appointments.append(appt_dict)
-            
+
         return appointments
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar consultas de hoje: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -104,7 +104,7 @@ async def upcoming_appointments(db: AsyncSession = Depends(get_db)) -> list[dict
             .limit(10)
         )
         result = await db.execute(stmt)
-        
+
         appointments = []
         for a in result.scalars().all():
             appt_dict = _appointment_to_dict(a)
@@ -112,9 +112,9 @@ async def upcoming_appointments(db: AsyncSession = Depends(get_db)) -> list[dict
             appt_dict["date"] = a.date.strftime("%d/%m") if hasattr(a.date, "strftime") else (str(a.date)[:5] if a.date else None)
             appt_dict["time"] = a.time.strftime("%H:%M") if a.time else None
             appointments.append(appt_dict)
-            
+
         return appointments
-        
+
     except Exception as e:
         logger.error(f"Erro ao buscar próximas consultas: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -137,14 +137,14 @@ async def list_appointments(
     Você pode passar pra ela uma data específica (o date_filter) para "Filtrar". Se você jogar uma palavra totalmente aleatória que não é uma data válida pra ela (tipo "Batata"), ela não dá "Tela Azul". Ela percebe no bloco "try/except", diz "Opa, não entendi, então vou ignorar" (pass) e varre toda a agenda do mesmo jeito!
     """
     query = _query_with_relations()
-    
+
     if date_filter:
         try:
             filter_date = date.fromisoformat(date_filter)
             query = query.where(Appointment.date == filter_date)
         except ValueError:
             pass # Ignora filtros mal formatados
-            
+
     result = await db.execute(query.order_by(Appointment.date, Appointment.time).offset(skip).limit(limit))
     return [_appointment_to_dict(a) for a in result.scalars().all()]
 
@@ -159,10 +159,10 @@ async def get_appointment(appointment_id: int, db: AsyncSession = Depends(get_db
     stmt = select(Appointment).where(Appointment.id == appointment_id)
     result = await db.execute(stmt)
     appt = result.scalars().first()
-    
+
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
-        
+
     return appt
 
 
@@ -171,14 +171,14 @@ async def create_appointment(appointment: AppointmentCreate, db: AsyncSession = 
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta 'função' entra em cena quando a secretária clica no botão verde gigantesco de "Marcar Nova Consulta".
-    O computador não confia em ninguém. Antes de carimbar o papel e salvar na pasta (banco de dados), ele checa pra ver se tudo faz sentido: 
+    O computador não confia em ninguém. Antes de carimbar o papel e salvar na pasta (banco de dados), ele checa pra ver se tudo faz sentido:
     "Espera aí, o Paciente de ID 5 realmente existe na minha clínica? E esse Profissional ID 2, é falso?".
     Se não existirem, bloqueia o agendamento! Só salva (commit) com tudo verificado.
     """
     patient = await db.get(Patient, appointment.patient_id)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
-        
+
     professional = await db.get(Professional, appointment.professional_id)
     if not professional:
         raise HTTPException(status_code=404, detail="Professional not found")
@@ -187,14 +187,14 @@ async def create_appointment(appointment: AppointmentCreate, db: AsyncSession = 
     db.add(db_appt)
     await db.commit()
     await db.refresh(db_appt)
-    
+
     return db_appt
 
 
 @router.put("/{appointment_id}")
 async def update_appointment(
-    appointment_id: int, 
-    appointment_update: AppointmentUpdate, 
+    appointment_id: int,
+    appointment_update: AppointmentUpdate,
     db: AsyncSession = Depends(get_db)
 ) -> dict[str, Any]:
     """
@@ -205,14 +205,14 @@ async def update_appointment(
     stmt = select(Appointment).where(Appointment.id == appointment_id)
     result = await db.execute(stmt)
     db_appt = result.scalars().first()
-    
+
     if not db_appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
     # exclude_unset=True previne a sobrescrita por campos Nulos não preenchidos no form do frontend
     for key, value in appointment_update.model_dump(exclude_unset=True).items():
         setattr(db_appt, key, value)
-        
+
     await db.commit()
 
     # Recarrega com os relacionamentos para que a resposta contenha os nomes associados
@@ -230,17 +230,17 @@ async def delete_appointment(appointment_id: int, db: AsyncSession = Depends(get
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     Esta é a "Função Detonadora".
-    Cedeu ao paciente? Cancelou tudo para vida toda? Ela pega o agendamento lá no fundo da gaveta e manda pra lixeira permanentemente (delete). 
+    Cedeu ao paciente? Cancelou tudo para vida toda? Ela pega o agendamento lá no fundo da gaveta e manda pra lixeira permanentemente (delete).
     Se o agendamento já não tava nem lá, ela avisa com o clássico Erro 404.
     """
     stmt = select(Appointment).where(Appointment.id == appointment_id)
     result = await db.execute(stmt)
     appt = result.scalars().first()
-    
+
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
-        
+
     await db.delete(appt)
     await db.commit()
-    
+
     return {"message": "Appointment deleted successfully"}

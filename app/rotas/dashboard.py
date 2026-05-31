@@ -1,4 +1,4 @@
-"""
+﻿"""
 Rotas do Dashboard
 - Estatísticas gerais (total pacientes, consultas hoje/semana)
 - Dados para gráficos numéricos (diário, semanal, mensal)
@@ -39,9 +39,9 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)) -> dict[str, A
 
     if not total_patients or total_patients == 0:
         return {
-            "total_patients": 0, 
-            "appointments_today": 0, 
-            "appointments_week": 0, 
+            "total_patients": 0,
+            "appointments_today": 0,
+            "appointments_week": 0,
             "next_appointment": "N/A"
         }
 
@@ -55,7 +55,7 @@ async def get_dashboard_stats(db: AsyncSession = Depends(get_db)) -> dict[str, A
     start_week = today - timedelta(days=today.weekday())
     end_week = start_week + timedelta(days=6)
     appointments_week_stmt = select(func.count(Appointment.id)).where(
-        Appointment.date >= start_week, 
+        Appointment.date >= start_week,
         Appointment.date <= end_week
     )
     appointments_week = await db.scalar(appointments_week_stmt) or 0
@@ -181,8 +181,8 @@ async def get_chart_data(period: str = "daily", db: AsyncSession = Depends(get_d
 
 @router.get("/calendar")
 async def get_calendar_data(
-    month: int | None = None, 
-    year: int | None = None, 
+    month: int | None = None,
+    year: int | None = None,
     db: AsyncSession = Depends(get_db)
 ) -> dict[str, Any]:
     """

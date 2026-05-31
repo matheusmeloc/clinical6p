@@ -1,4 +1,4 @@
-"""
+﻿"""
 Script de Teste: test_email.py
 
 Realiza o teste padrão de envio de e-mails comum (ex: boas-vindas)
@@ -17,7 +17,7 @@ async def test_email_direct():
     async with SessionLocal() as db:
         result = await db.execute(select(SystemSettings).order_by(SystemSettings.id))
         db_settings = result.scalars().first()
-        
+
         server = db_settings.smtp_server if db_settings and db_settings.smtp_server else settings.SMTP_SERVER
         port = db_settings.smtp_port if db_settings and db_settings.smtp_port else settings.SMTP_PORT
         username = db_settings.smtp_username if db_settings and db_settings.smtp_username else settings.SMTP_USERNAME
@@ -45,14 +45,14 @@ async def test_email_direct():
                 smtp.ehlo()
                 print("Logging in...")
                 smtp.login(username, password)
-                
+
                 print("Sending test email...")
                 msg = EmailMessage()
                 msg['Subject'] = "Apenas um teste do Sistema Clínico"
                 msg['From'] = from_email
                 msg['To'] = "matheusimporer@gmail.com" # Usando o e-mail do usuário como destino para o teste
                 msg.set_content("Teste de envio de e-mail pelo console de diagnóstico.")
-                
+
                 smtp.send_message(msg)
                 print("SUCCESS: Email sent without exceptions!")
         except Exception as e:

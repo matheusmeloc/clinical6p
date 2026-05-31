@@ -1,7 +1,7 @@
-"""
+﻿"""
 Script de Teste: test_production_debug.py
 
-Testes auxiliares de diagnóstico projetados especificamente para a 
+Testes auxiliares de diagnóstico projetados especificamente para a
 coleta segura de métricas em um ambiente simulando produção.
 """
 import requests

@@ -1,7 +1,7 @@
-"""
+﻿"""
 Script de Teste: test_hang.py
 
-Reproduz cenários de travamento deliberado (hang) na aplicação 
+Reproduz cenários de travamento deliberado (hang) na aplicação
 para verificar timeouts e a resiliência dos serviços.
 """
 import requests
@@ -15,7 +15,7 @@ def test_login_and_dashboard():
     })
     print(f"Login Status: {login_resp.status_code}")
     print(f"Login Response: {login_resp.text}")
-    
+
     if login_resp.status_code == 200:
         print("\nTesting Dashboard Stats...")
         stats_resp = session.get("https://clinicapsi.onrender.com/api/dashboard/stats")
@@ -29,7 +29,7 @@ def test_login_and_dashboard():
         prof_resp = session.get("https://clinicapsi.onrender.com/api/professionals")
         print(f"Prof Status: {prof_resp.status_code}")
         # print(f"Prof Response: {prof_resp.text}") # might be large
-        
+
         print("\nTesting /api/appointments...")
         apt_resp = session.get("https://clinicapsi.onrender.com/api/appointments")
         print(f"Apt Status: {apt_resp.status_code}")
