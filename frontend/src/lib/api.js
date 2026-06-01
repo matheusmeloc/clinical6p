@@ -22,8 +22,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const isLoginRoute = error.config?.url?.includes("/login");
+    const hasToken = !!localStorage.getItem("token");
+    // Só redireciona se o usuário JÁ estava autenticado (token existia)
+    // Evita redirecionar quando o próprio login falha com 401
+    if (error.response?.status === 401 && hasToken && !isLoginRoute) {
       localStorage.removeItem("token");
+      localStorage.removeItem("user");
       window.location.href = "/login";
     }
     return Promise.reject(error);

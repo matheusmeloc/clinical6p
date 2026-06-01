@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+html, body {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
 @theme {
   --color-primary: #2563eb;
   --color-primary-dark: #1e40af;

@@ -186,7 +186,7 @@ export default function MensagensPage() {
           ) : error ? (
             <div className="p-8 text-center text-red-600">{error}</div>
           ) : (
-            <table className="min-w-full text-left text-sm text-slate-700">
+            <table className="min-w-[640px] w-full text-left text-sm text-slate-700">
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="px-4 py-3 text-slate-500 font-semibold">
@@ -270,3 +270,4 @@ export default function MensagensPage() {
     </div>
   );
 }
+

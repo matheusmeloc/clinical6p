@@ -76,47 +76,57 @@ export default function DashboardPage() {
         }}
       />
       <main
-        className={`flex-1 min-h-screen p-6 sm:p-10 space-y-8 transition-all duration-300 ease-in-out ${
-          sidebarCollapsed ? "xl:ml-[70px]" : "xl:ml-[270px]"
+        className={`flex-1 min-h-screen p-4 sm:p-6 lg:p-10 space-y-6 transition-all duration-300 ease-in-out overflow-x-hidden ${
+          sidebarCollapsed ? "lg:ml-[70px]" : "lg:ml-[270px]"
         }`}
       >
-        <header className="space-y-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Button
+        <header className="space-y-3">
+          {/* Linha 1: menu + instituição + botões */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <button
                 type="button"
-                variant="ghost"
                 onClick={() => setSidebarOpen(true)}
-                className="inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 xl:hidden h-auto shrink-0"
+                className="lg:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 shrink-0"
+                aria-label="Abrir menu"
               >
-                <Menu className="h-4 w-4" />
-                Menu
-              </Button>
-              <div>
-                <p className="text-sm uppercase tracking-[0.24em] text-emerald-700 font-semibold">
-                  Instituto de Psicologia
-                </p>
-                <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight">
-                  {showDashboardGreeting
-                    ? user
-                      ? `Olá, ${user.full_name}`
-                      : "Bem-vindo ao painel"
-                    : pageTitle}
-                </h1>
-              </div>
+                <Menu className="h-5 w-5" />
+              </button>
+              <p className="text-xs sm:text-sm uppercase tracking-widest text-emerald-700 font-semibold truncate">
+                Instituto de Psicologia
+              </p>
             </div>
-            <div className="flex items-center gap-3 shrink-0 pt-1">
-              <Button variant="dark" onClick={handleLogout}>
-                <LogOut className="w-4 h-4 mr-2" /> Sair
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="dark" size="sm" onClick={handleLogout} className="hidden sm:inline-flex">
+                <LogOut className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Sair</span>
               </Button>
+              <button
+                onClick={handleLogout}
+                className="sm:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-red-50 hover:text-red-600"
+                aria-label="Sair"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
               <Button
+                size="sm"
                 onClick={() => navigate("/agendamentos")}
                 className="bg-emerald-600 hover:bg-emerald-700"
               >
-                <ArrowRight className="w-4 h-4 mr-2" /> Ver consultas
+                <ArrowRight className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">Ver consultas</span>
               </Button>
             </div>
           </div>
+
+          {/* Linha 2: título da página */}
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
+            {showDashboardGreeting
+              ? user
+                ? `Olá, ${user.full_name.split(" ")[0]}`
+                : "Bem-vindo"
+              : pageTitle}
+          </h1>
 
           {showDashboardGreeting && (
             <p className="max-w-2xl text-slate-500 text-sm leading-relaxed">
@@ -133,3 +143,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

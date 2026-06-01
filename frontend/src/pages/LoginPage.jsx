@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
+import { maskCPF } from "../lib/masks";
 import { Button } from "../components/Button";
 import api from "../lib/api";
 import { Leaf, LogIn, User, Mail, Lock } from "lucide-react";
@@ -12,9 +14,6 @@ export default function LoginPage() {
     password: "",
     message: "",
   });
-  const [proError, setProError] = useState("");
-  const [patientError, setPatientError] = useState("");
-  const [patientSuccess, setPatientSuccess] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -27,19 +26,16 @@ export default function LoginPage() {
   const handleProChange = (e) => {
     const { name, value } = e.target;
     setProFormData((prev) => ({ ...prev, [name]: value }));
-    setProError("");
   };
 
   const handlePatientChange = (e) => {
     const { name, value } = e.target;
     setPatientFormData((prev) => ({ ...prev, [name]: value }));
-    setPatientError("");
   };
 
   const handleProLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setProError("");
     try {
       const response = await api.post("/api/login", {
         email: proFormData.email,
@@ -50,7 +46,7 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(userData));
       navigate("/dashboard", { replace: true });
     } catch (error) {
-      setProError(error.response?.data?.detail || "Erro ao fazer login");
+      toast.error(error.response?.data?.detail || "Erro ao fazer login");
     } finally {
       setIsLoading(false);
     }
@@ -59,22 +55,16 @@ export default function LoginPage() {
   const handlePatientContact = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setPatientError("");
-    setPatientSuccess("");
     try {
       await api.post("/api/patient-contact", {
         cpf: patientFormData.cpf.replace(/\D/g, ""),
         password: patientFormData.password,
         message: patientFormData.message,
       });
-      setPatientSuccess(
-        "Mensagem enviada com sucesso! Seu psicólogo receberá em breve.",
-      );
+      toast.success("Mensagem enviada! Seu psicólogo receberá em breve.");
       setPatientFormData({ cpf: "", password: "", message: "" });
     } catch (error) {
-      setPatientError(
-        error.response?.data?.detail || "Erro ao enviar mensagem",
-      );
+      toast.error(error.response?.data?.detail || "Erro ao enviar mensagem");
     } finally {
       setIsLoading(false);
     }
@@ -85,13 +75,11 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await api.post("/api/forgot-password", { email: forgotEmail });
-      alert("Email de recuperação enviado com sucesso!");
+      toast.success("E-mail de recuperação enviado com sucesso!");
       setShowForgotPassword(false);
       setForgotEmail("");
     } catch (error) {
-      alert(
-        error.response?.data?.detail || "Erro ao enviar email de recuperação",
-      );
+      toast.error(error.response?.data?.detail || "Erro ao enviar e-mail de recuperação");
     } finally {
       setIsLoading(false);
     }
@@ -190,11 +178,6 @@ export default function LoginPage() {
                 {isLoading ? "Entrando..." : "Entrar no Painel"}
               </Button>
 
-              {proError && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                  {proError}
-                </div>
-              )}
             </form>
           )}
 
@@ -203,14 +186,18 @@ export default function LoginPage() {
             <form onSubmit={handlePatientContact} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  CPF (Apenas números ou formatado)
+                  CPF
                 </label>
                 <input
                   type="text"
                   name="cpf"
                   value={patientFormData.cpf}
-                  onChange={handlePatientChange}
+                  onChange={(e) => {
+                    e.target.value = maskCPF(e.target.value);
+                    handlePatientChange(e);
+                  }}
                   placeholder="000.000.000-00"
+                  maxLength={14}
                   className={inputClass}
                   required
                   autoFocus
@@ -261,16 +248,6 @@ export default function LoginPage() {
                 {isLoading ? "Enviando..." : "Enviar"}
               </Button>
 
-              {patientError && (
-                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700">
-                  {patientError}
-                </div>
-              )}
-              {patientSuccess && (
-                <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700">
-                  {patientSuccess}
-                </div>
-              )}
             </form>
           )}
         </div>
@@ -320,3 +297,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
@@ -20,9 +21,7 @@ export default function ReceitasPage() {
   const [patients, setPatients] = useState([]);
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
+  const [hasLoadError, setHasLoadError] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -67,7 +66,7 @@ export default function ReceitasPage() {
 
   const loadData = async () => {
     setLoading(true);
-    setLoadError("");
+    setHasLoadError(false);
 
     try {
       const [presRes, patientsRes, prosRes] = await Promise.all([
@@ -81,9 +80,8 @@ export default function ReceitasPage() {
       setProfessionals(prosRes.data);
     } catch (err) {
       console.error(err);
-      setLoadError(
-        "Não foi possível carregar as receitas. Faça login e tente novamente.",
-      );
+      setHasLoadError(true);
+      toast.error("Não foi possível carregar as receitas. Faça login e tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -94,8 +92,6 @@ export default function ReceitasPage() {
   }, []);
 
   const handleCreatePrescription = async (data) => {
-    setFormError("");
-    setFormSuccess("");
     try {
       const payload = {
         patient_id: Number(data.patient_id),
@@ -111,11 +107,10 @@ export default function ReceitasPage() {
       setPrescriptions((current) => [response.data, ...current]);
       reset();
       setDialogOpen(false);
-      setFormSuccess("Receita criada com sucesso!");
-      setTimeout(() => setFormSuccess(""), 4000);
+      toast.success("Receita criada com sucesso!");
     } catch (err) {
       console.error(err);
-      setFormError(
+      toast.error(
         err.response?.data?.detail || "Não foi possível criar a receita. Verifique os dados e tente novamente.",
       );
     }
@@ -129,7 +124,7 @@ export default function ReceitasPage() {
       );
     } catch (err) {
       console.error(err);
-      setFormError("Não foi possível excluir a receita. Tente novamente.");
+      toast.error("Não foi possível excluir a receita. Tente novamente.");
     }
   };
 
@@ -144,11 +139,6 @@ export default function ReceitasPage() {
 
   return (
     <div className="space-y-6">
-      {formSuccess && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
-          {formSuccess}
-        </div>
-      )}
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <Card className="bg-white/90 border border-slate-200">
           <div className="flex items-center justify-between gap-3">
@@ -215,7 +205,7 @@ export default function ReceitasPage() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent onClose={() => { setDialogOpen(false); setFormError(""); reset(); }} className="max-w-2xl">
+        <DialogContent onClose={() => { setDialogOpen(false); reset(); }} className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Nova receita</DialogTitle>
             <DialogDescription>Preencha os dados para registrar uma nova prescrição.</DialogDescription>
@@ -278,14 +268,8 @@ export default function ReceitasPage() {
               </select>
             </div>
 
-            {formError && (
-              <div className="sm:col-span-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                {formError}
-              </div>
-            )}
-
             <DialogFooter className="sm:col-span-2">
-              <Button type="button" variant="secondary" onClick={() => { setDialogOpen(false); setFormError(""); reset(); }}>
+              <Button type="button" variant="secondary" onClick={() => { setDialogOpen(false); reset(); }}>
                 Cancelar
               </Button>
               <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
@@ -326,10 +310,10 @@ export default function ReceitasPage() {
             <div className="p-8 text-center text-slate-500">
               Carregando receitas...
             </div>
-          ) : loadError ? (
-            <div className="p-8 text-center text-red-600">{loadError}</div>
+          ) : hasLoadError ? (
+            <div className="p-8 text-center text-slate-500">Erro ao carregar dados.</div>
           ) : (
-            <table className="min-w-full text-left text-sm text-slate-700">
+            <table className="min-w-[640px] w-full text-left text-sm text-slate-700">
               <thead>
                 <tr className="border-b border-slate-200">
                   <th className="px-4 py-3 text-slate-500 font-semibold">
@@ -415,3 +399,4 @@ export default function ReceitasPage() {
     </div>
   );
 }
+

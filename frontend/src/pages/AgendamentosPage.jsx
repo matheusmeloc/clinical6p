@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
@@ -21,9 +22,7 @@ export default function AgendamentosPage() {
   const [patients, setPatients] = useState([]);
   const [professionals, setProfessionals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
+  const [hasLoadError, setHasLoadError] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
 
@@ -61,7 +60,7 @@ export default function AgendamentosPage() {
 
   const loadData = async () => {
     setLoading(true);
-    setLoadError("");
+    setHasLoadError(false);
     try {
       const [appointmentsRes, patientsRes, professionalsRes] = await Promise.all([
         api.get("/api/appointments"),
@@ -73,7 +72,8 @@ export default function AgendamentosPage() {
       setProfessionals(professionalsRes.data);
     } catch (err) {
       console.error(err);
-      setLoadError("Não foi possível carregar os dados. Tente novamente.");
+      setHasLoadError(true);
+      toast.error("Não foi possível carregar os dados. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -84,7 +84,6 @@ export default function AgendamentosPage() {
   }, []);
 
   const handleCreateAppointment = async (data) => {
-    setFormError("");
     try {
       const payload = {
         patient_id: Number(data.patient_id),
@@ -97,11 +96,10 @@ export default function AgendamentosPage() {
       setAppointments((current) => [response.data, ...current]);
       reset();
       setDialogOpen(false);
-      setFormSuccess("Agendamento criado com sucesso!");
-      setTimeout(() => setFormSuccess(""), 4000);
+      toast.success("Agendamento criado com sucesso!");
     } catch (err) {
       console.error(err);
-      setFormError(
+      toast.error(
         err.response?.data?.detail ||
           "Não foi possível criar o agendamento. Verifique os dados.",
       );
@@ -110,7 +108,6 @@ export default function AgendamentosPage() {
 
   const handleClose = () => {
     setDialogOpen(false);
-    setFormError("");
     reset();
   };
 
@@ -126,12 +123,6 @@ export default function AgendamentosPage() {
 
   return (
     <div className="space-y-6">
-      {formSuccess && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
-          {formSuccess}
-        </div>
-      )}
-
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
@@ -233,12 +224,6 @@ export default function AgendamentosPage() {
               <Textarea rows={3} placeholder="Informações adicionais do atendimento" {...register("notes")} />
             </div>
 
-            {formError && (
-              <div className="sm:col-span-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                {formError}
-              </div>
-            )}
-
             <DialogFooter className="sm:col-span-2">
               <Button type="button" variant="secondary" onClick={handleClose}>
                 Cancelar
@@ -274,10 +259,10 @@ export default function AgendamentosPage() {
         <div className="overflow-x-auto">
           {loading ? (
             <div className="p-8 text-center text-slate-500">Carregando agendamentos...</div>
-          ) : loadError ? (
-            <div className="p-8 text-center text-red-600">{loadError}</div>
+          ) : hasLoadError ? (
+            <div className="p-8 text-center text-slate-500">Erro ao carregar dados.</div>
           ) : (
-            <table className="min-w-full text-left text-sm text-slate-700">
+            <table className="min-w-[640px] w-full text-left text-sm text-slate-700">
               <thead>
                 <tr className="border-b border-slate-200">
                   {["Paciente", "Profissional", "Data", "Horário", "Status", "Ações"].map((h) => (
@@ -320,3 +305,4 @@ export default function AgendamentosPage() {
     </div>
   );
 }
+

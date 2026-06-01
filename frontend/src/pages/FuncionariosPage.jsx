@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "react-hot-toast";
+import { maskPhone, maskRegister } from "../lib/masks";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
@@ -22,9 +24,7 @@ export default function FuncionariosPage() {
   const [professionals, setProfessionals] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState("");
-  const [formError, setFormError] = useState("");
-  const [formSuccess, setFormSuccess] = useState("");
+  const [hasLoadError, setHasLoadError] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const {
@@ -48,13 +48,14 @@ export default function FuncionariosPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      setLoadError("");
+      setHasLoadError(false);
       try {
         const response = await api.get("/api/professionals");
         setProfessionals(response.data);
       } catch (err) {
         console.error(err);
-        setLoadError("Não foi possível carregar a lista de profissionais.");
+        setHasLoadError(true);
+        toast.error("Não foi possível carregar a lista de profissionais.");
       } finally {
         setLoading(false);
       }
@@ -77,7 +78,6 @@ export default function FuncionariosPage() {
   const inactiveCount = professionals.filter((p) => p.status?.toLowerCase() !== "ativo").length;
 
   const handleCreate = async (data) => {
-    setFormError("");
     try {
       const payload = {
         name: data.name,
@@ -93,33 +93,25 @@ export default function FuncionariosPage() {
       setProfessionals((current) => [...current, response.data]);
       reset();
       setDialogOpen(false);
-      setFormSuccess("Funcionário cadastrado com sucesso!");
-      setTimeout(() => setFormSuccess(""), 4000);
+      toast.success("Funcionário cadastrado com sucesso!");
     } catch (err) {
       console.error(err);
       const detail = err.response?.data?.detail || "";
       if (detail.includes("already exists") || detail.includes("email")) {
-        setFormError("Este e-mail já está cadastrado no sistema.");
+        toast.error("Este e-mail já está cadastrado no sistema.");
       } else {
-        setFormError(detail || "Não foi possível cadastrar o funcionário. Verifique os dados.");
+        toast.error(detail || "Não foi possível cadastrar o funcionário. Verifique os dados.");
       }
     }
   };
 
   const handleClose = () => {
     setDialogOpen(false);
-    setFormError("");
     reset();
   };
 
   return (
     <div className="space-y-6">
-      {formSuccess && (
-        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
-          {formSuccess}
-        </div>
-      )}
-
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         <Card className="bg-white/90 border border-slate-200">
           <div className="flex items-center justify-between gap-3">
@@ -224,7 +216,12 @@ export default function FuncionariosPage() {
               <Label>Telefone</Label>
               <Input
                 placeholder="(11) 99999-0000"
+                maxLength={16}
                 {...register("phone")}
+                onChange={(e) => {
+                  e.target.value = maskPhone(e.target.value);
+                  register("phone").onChange(e);
+                }}
               />
             </div>
 
@@ -232,7 +229,12 @@ export default function FuncionariosPage() {
               <Label>Registro profissional</Label>
               <Input
                 placeholder="Ex: CRP 06/12345"
+                maxLength={20}
                 {...register("professional_register")}
+                onChange={(e) => {
+                  e.target.value = maskRegister(e.target.value);
+                  register("professional_register").onChange(e);
+                }}
               />
             </div>
 
@@ -264,12 +266,6 @@ export default function FuncionariosPage() {
                 Se preenchida, um login será criado automaticamente.
               </p>
             </div>
-
-            {formError && (
-              <div className="sm:col-span-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
-                {formError}
-              </div>
-            )}
 
             <DialogFooter className="sm:col-span-2">
               <Button type="button" variant="secondary" onClick={handleClose}>
@@ -309,10 +305,10 @@ export default function FuncionariosPage() {
         <div className="mt-8 overflow-x-auto">
           {loading ? (
             <div className="p-8 text-center text-slate-500">Carregando profissionais...</div>
-          ) : loadError ? (
-            <div className="p-8 text-center text-red-600">{loadError}</div>
+          ) : hasLoadError ? (
+            <div className="p-8 text-center text-slate-500">Erro ao carregar dados.</div>
           ) : (
-            <table className="min-w-full text-left text-sm text-slate-700">
+            <table className="min-w-[640px] w-full text-left text-sm text-slate-700">
               <thead>
                 <tr className="border-b border-slate-200">
                   {["Nome", "Função", "Especialidade", "Registro", "E-mail", "Telefone", "Status", "Ações"].map((h) => (
@@ -361,3 +357,4 @@ export default function FuncionariosPage() {
     </div>
   );
 }
+
