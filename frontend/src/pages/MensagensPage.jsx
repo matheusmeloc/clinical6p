@@ -94,7 +94,7 @@ export default function MensagensPage() {
                 Central de comunicação
               </h2>
             </div>
-            <div className="rounded-3xl bg-emerald-100 p-3 text-emerald-700">
+            <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
               <Mail className="w-6 h-6" />
             </div>
           </div>
@@ -105,15 +105,15 @@ export default function MensagensPage() {
               acompanha os atendimentos que ainda precisam de resposta.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Total de mensagens</p>
                 <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Não lidas</p>
                 <p className="mt-3 text-3xl font-semibold">{unreadCount}</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Última mensagem</p>
                 <p className="mt-3 text-3xl font-semibold">
                   {formatDate(latestMessage)}
@@ -133,21 +133,21 @@ export default function MensagensPage() {
                 Organize seu atendimento
               </h2>
             </div>
-            <div className="rounded-3xl bg-slate-100 p-3 text-slate-700">
+            <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
               <MessageSquare className="w-6 h-6" />
             </div>
           </div>
           <div className="mt-8 space-y-4">
             <Button
               variant="ghost"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
               onClick={loadMessages}
             >
               <span>Atualizar mensagens</span>
             </Button>
             <Button
               variant="ghost"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
             >
               <span>Responder no sistema do paciente</span>
             </Button>
@@ -172,7 +172,7 @@ export default function MensagensPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar por paciente, profissional ou conteúdo"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
           </div>
@@ -270,4 +270,5 @@ export default function MensagensPage() {
     </div>
   );
 }
+
 

@@ -8,6 +8,7 @@ import AgendamentosPage from "./pages/AgendamentosPage";
 import ReceitasPage from "./pages/ReceitasPage";
 import AtestadosPage from "./pages/AtestadosPage";
 import MensagensPage from "./pages/MensagensPage";
+import ConfiguracoesPage from "./pages/ConfiguracoesPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import "./index.css";
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/receitas" element={<ReceitasPage />} />
             <Route path="/atestados" element={<AtestadosPage />} />
             <Route path="/mensagens" element={<MensagensPage />} />
+            <Route path="/configuracoes" element={<ConfiguracoesPage />} />
           </Route>
         </Route>
       </Routes>

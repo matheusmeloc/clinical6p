@@ -371,10 +371,11 @@ class UpdateUserPasswordRequest(BaseModel):
 
 class UserUpdate(BaseModel):
     """
-    Schema para atualização de perfil do usuário logado (nome, senha, telefone, cargo, CRP).
+    Schema para atualização de perfil do usuário logado (nome, senha, telefone, cargo, CRP, foto).
     """
     full_name: Optional[str] = None
     password: Optional[str] = None
     phone: Optional[str] = None
     role_title: Optional[str] = None
     crp: Optional[str] = None
+    photo: Optional[str] = None

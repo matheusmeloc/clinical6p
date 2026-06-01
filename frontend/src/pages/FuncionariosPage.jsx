@@ -121,7 +121,7 @@ export default function FuncionariosPage() {
               </p>
               <h2 className="mt-3 text-2xl font-bold">Gestão da equipe</h2>
             </div>
-            <div className="rounded-3xl bg-blue-100 p-3 text-blue-700">
+            <div className="rounded-xl bg-blue-100 p-3 text-blue-700">
               <Users className="w-6 h-6" />
             </div>
           </div>
@@ -132,15 +132,15 @@ export default function FuncionariosPage() {
               dados de contato com facilidade.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Profissionais ativos</p>
                 <p className="mt-3 text-3xl font-semibold">{activeCount}</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Total</p>
                 <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Inativos / Licença</p>
                 <p className="mt-3 text-3xl font-semibold">{inactiveCount}</p>
               </div>
@@ -156,7 +156,7 @@ export default function FuncionariosPage() {
               </p>
               <h2 className="mt-3 text-2xl font-bold">Ferramentas</h2>
             </div>
-            <div className="rounded-3xl bg-slate-100 p-3 text-slate-700">
+            <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
               <Plus className="w-6 h-6" />
             </div>
           </div>
@@ -297,7 +297,7 @@ export default function FuncionariosPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, função ou e-mail"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
             />
           </div>
         </div>
@@ -357,4 +357,5 @@ export default function FuncionariosPage() {
     </div>
   );
 }
+
 

@@ -149,7 +149,7 @@ export default function AtestadosPage() {
               </p>
               <h2 className="mt-3 text-2xl font-bold">Gestão de atestados</h2>
             </div>
-            <div className="rounded-3xl bg-emerald-100 p-3 text-emerald-700">
+            <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
               <FileCheck className="w-6 h-6" />
             </div>
           </div>
@@ -160,15 +160,15 @@ export default function AtestadosPage() {
               mantenha o histórico de ausências ordenado.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Total de atestados</p>
                 <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Médico</p>
                 <p className="mt-3 text-3xl font-semibold">{medicalCount}</p>
               </div>
-              <div className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
                 <p className="text-sm text-slate-500">Comparecimento</p>
                 <p className="mt-3 text-3xl font-semibold">{attendanceCount}</p>
               </div>
@@ -184,7 +184,7 @@ export default function AtestadosPage() {
               </p>
               <h2 className="mt-3 text-2xl font-bold">Registrar atestado</h2>
             </div>
-            <div className="rounded-3xl bg-slate-100 p-3 text-slate-700">
+            <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
               <Clipboard className="w-6 h-6" />
             </div>
           </div>
@@ -282,7 +282,7 @@ export default function AtestadosPage() {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar por paciente, profissional ou tipo"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
           </div>
@@ -376,4 +376,5 @@ export default function AtestadosPage() {
     </div>
   );
 }
+
 

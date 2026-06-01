@@ -12,8 +12,15 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.config import settings
 
-# Contexto de criptografia — Argon2 para hash de senhas
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+# Contexto de criptografia — Argon2 com parâmetros otimizados para resposta rápida
+# memory_cost: 19456 KB (~19 MB), time_cost: 2 iterações, parallelism: 1
+pwd_context = CryptContext(
+    schemes=["argon2"],
+    deprecated="auto",
+    argon2__memory_cost=19456,
+    argon2__time_cost=2,
+    argon2__parallelism=1,
+)
 
 # Esquema de autenticação: extrai o Bearer token do header Authorization
 security = HTTPBearer()

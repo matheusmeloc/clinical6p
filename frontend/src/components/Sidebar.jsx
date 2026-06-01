@@ -122,12 +122,16 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
       <div className={cn("border-t border-slate-100 bg-white shrink-0", isCollapsed && !isMobile ? "p-2" : "p-4")}>
         {isCollapsed && !isMobile ? (
           <div className="flex flex-col items-center gap-3">
+            {user?.photo ? (
+              <img src={user.photo} alt="Foto" className="h-9 w-9 rounded-lg object-cover shadow-sm" title={user?.full_name || "Usuário"} />
+            ) : (
             <div
               className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-xs font-bold uppercase text-white shadow-sm"
               title={user?.full_name || "Usuário"}
             >
               {getUserInitials(user?.full_name)}
             </div>
+            )}
             <button
               className="h-8 w-8 rounded-md flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
               title="Configurações"
@@ -145,9 +149,13 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
         ) : (
           <div className="space-y-4">
             <div className="flex items-center gap-3 rounded-lg bg-slate-50/50 p-2 border border-slate-100/50">
+              {user?.photo ? (
+                <img src={user.photo} alt="Foto" className="h-9 w-9 rounded-lg object-cover shadow-sm shrink-0" />
+              ) : (
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-xs font-bold uppercase text-white shadow-sm shrink-0">
                 {getUserInitials(user?.full_name)}
               </div>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-900 truncate">
                   {user?.full_name || "Usuário"}
@@ -158,7 +166,7 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
               </div>
             </div>
             <div className="space-y-1">
-              <button className="w-full flex items-center h-9 px-3 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+              <button onClick={() => onNavigate({ path: "/configuracoes" })} className="w-full flex items-center h-9 px-3 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
                 <Settings className="mr-3 h-[18px] w-[18px] shrink-0" />
                 Configurações
               </button>

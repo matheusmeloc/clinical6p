@@ -46,6 +46,7 @@ class User(Base):
     phone = Column(String, nullable=True)
     role_title = Column(String, nullable=True)          # Cargo (ex: Psicólogo)
     crp = Column(String, nullable=True)                 # Registro profissional
+    photo = Column(Text, nullable=True)                 # Foto em base64
     is_active = Column(Boolean, default=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())

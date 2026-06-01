@@ -65,6 +65,7 @@ async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends
                 "email": user.email,
                 "full_name": user.full_name,
                 "role": user.role,
+                "photo": user.photo,
             }
 
         # --- Tenta login como paciente (tabela Patients) ---

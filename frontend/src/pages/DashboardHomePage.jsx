@@ -22,7 +22,7 @@ const getUserFromStorage = () => {
 };
 
 const StatCard = ({ label, value, loading }) => (
-  <div className="rounded-3xl border border-slate-200 p-5 bg-slate-50">
+  <div className="rounded-xl border border-slate-200 p-5 bg-slate-50">
     <p className="text-sm text-slate-500">{label}</p>
     <p className="mt-3 text-3xl font-semibold">
       {loading ? <span className="text-slate-300 animate-pulse">—</span> : value}
@@ -62,7 +62,7 @@ export default function DashboardHomePage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-sm shadow-slate-200/40">
+      <div className="rounded-xl border border-slate-200 bg-white/90 p-6 shadow-sm shadow-slate-200/40">
         <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
           Visão geral
         </p>
@@ -83,7 +83,7 @@ export default function DashboardHomePage() {
               </p>
               <h2 className="mt-3 text-2xl font-bold">Fluxo atual</h2>
             </div>
-            <div className="rounded-3xl bg-emerald-100 p-3 text-emerald-700">
+            <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
               <CalendarDays className="w-6 h-6" />
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function DashboardHomePage() {
           </div>
 
           {!loading && stats?.next_appointment && stats.next_appointment !== "N/A" && (
-            <div className="mt-4 flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
               <Clock className="w-4 h-4 shrink-0" />
               Próxima consulta às <strong>{stats.next_appointment}</strong>
             </div>
@@ -129,7 +129,7 @@ export default function DashboardHomePage() {
                 </p>
                 <h2 className="mt-3 text-2xl font-bold">Acesso imediato</h2>
               </div>
-              <div className="rounded-3xl bg-blue-100 p-3 text-blue-700">
+              <div className="rounded-xl bg-blue-100 p-3 text-blue-700">
                 <ClipboardList className="w-6 h-6" />
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function DashboardHomePage() {
               <Button
                 variant="ghost"
                 onClick={() => navigate("/agendamentos")}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
               >
                 <div className="flex items-center gap-3">
                   <CalendarDays className="w-5 h-5 text-emerald-600 shrink-0" />
@@ -153,7 +153,7 @@ export default function DashboardHomePage() {
               <Button
                 variant="ghost"
                 onClick={() => navigate("/pacientes")}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
               >
                 <div className="flex items-center gap-3">
                   <Users className="w-5 h-5 text-blue-600 shrink-0" />
@@ -168,7 +168,7 @@ export default function DashboardHomePage() {
               <Button
                 variant="ghost"
                 onClick={() => navigate("/mensagens")}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+                className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
               >
                 <div className="flex items-center gap-3">
                   <MessageSquare className="w-5 h-5 text-amber-600 shrink-0" />
@@ -191,7 +191,7 @@ export default function DashboardHomePage() {
                 </p>
                 <h2 className="mt-3 text-2xl font-bold">Dados do usuário</h2>
               </div>
-              <div className="rounded-3xl bg-emerald-100 p-3 text-emerald-700">
+              <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
                 <UserCheck className="w-6 h-6" />
               </div>
             </div>
@@ -215,4 +215,5 @@ export default function DashboardHomePage() {
     </div>
   );
 }
+
 

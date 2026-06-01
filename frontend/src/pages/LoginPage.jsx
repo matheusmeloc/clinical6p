@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 import { maskCPF } from "../lib/masks";
 import { Button } from "../components/Button";
+import { BackgroundBeamsWithCollision } from "../components/ui/background-beams-with-collision";
 import api from "../lib/api";
 import { Leaf, LogIn, User, Mail, Lock } from "lucide-react";
 
@@ -62,6 +64,11 @@ export default function LoginPage() {
         message: patientFormData.message,
       });
       toast.success("Mensagem enviada! Seu psicólogo receberá em breve.");
+      toast("Interface do paciente está em desenvolvimento. Em breve disponível!", {
+        icon: "🚧",
+        duration: 6000,
+        style: { fontWeight: 500 },
+      });
       setPatientFormData({ cpf: "", password: "", message: "" });
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao enviar mensagem");
@@ -89,9 +96,9 @@ export default function LoginPage() {
     "w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-800 placeholder-gray-400 transition-all";
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4"
+    <BackgroundBeamsWithCollision className="min-h-screen flex items-center justify-center p-4"
       style={{ background: "linear-gradient(135deg, #d1fae5 0%, #f0fdf4 30%, #f8fafc 60%, #e0f2fe 100%)" }}>
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-md relative z-10">
         {/* Logo acima do card */}
         <div className="flex flex-col items-center mb-6">
           <div className="w-16 h-16 bg-white rounded-full shadow-md flex items-center justify-center mb-4">
@@ -102,7 +109,11 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-xl p-8">
+        <motion.div
+          layout
+          transition={{ layout: { duration: 0.35, ease: [0.4, 0, 0.2, 1] } }}
+          className="bg-white rounded-xl shadow-xl p-8 overflow-hidden"
+        >
           {/* Tabs */}
           <div className="flex gap-2 mb-8 bg-gray-100 rounded-xl p-1">
             <button
@@ -129,9 +140,16 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Formulário - Profissional */}
+          {/* Formulários com animação */}
+          <AnimatePresence mode="wait" initial={false}>
           {activeTab === "pro" && (
-            <form onSubmit={handleProLogin} className="space-y-5">
+            <motion.form
+              key="pro"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              onSubmit={handleProLogin} className="space-y-5">
               <div>
                 <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-2">
                   <Mail className="w-4 h-4 text-green-600" />
@@ -178,12 +196,17 @@ export default function LoginPage() {
                 {isLoading ? "Entrando..." : "Entrar no Painel"}
               </Button>
 
-            </form>
+            </motion.form>
           )}
 
-          {/* Formulário - Paciente */}
           {activeTab === "patient" && (
-            <form onSubmit={handlePatientContact} className="space-y-5">
+            <motion.form
+              key="patient"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              onSubmit={handlePatientContact} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   CPF
@@ -248,15 +271,16 @@ export default function LoginPage() {
                 {isLoading ? "Enviando..." : "Enviar"}
               </Button>
 
-            </form>
+            </motion.form>
           )}
-        </div>
+          </AnimatePresence>
+        </motion.div>
       </div>
 
       {/* Modal - Recuperação de Senha */}
       {showForgotPassword && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+          <div className="bg-white rounded-lg shadow-2xl p-8 w-full max-w-md">
             <h3 className="text-xl font-bold text-gray-800 mb-2">Recuperar Senha</h3>
             <p className="text-gray-600 text-sm mb-6 leading-relaxed">
               Digite seu e-mail de cadastro. Se encontrarmos sua conta, enviaremos um
@@ -294,7 +318,8 @@ export default function LoginPage() {
           </div>
         </div>
       )}
-    </div>
+    </BackgroundBeamsWithCollision>
   );
 }
+
 

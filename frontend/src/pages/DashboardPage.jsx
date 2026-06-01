@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Button } from "../components/Button";
 import Sidebar from "../components/Sidebar";
-import { ArrowRight, LogOut, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 
 const getUserFromStorage = () => {
   const stored = localStorage.getItem("user");
@@ -22,6 +21,7 @@ const pageTitleMap = {
   receitas: "Receitas",
   atestados: "Atestados",
   mensagens: "Mensagens",
+  configuracoes: "Configurações",
 };
 
 const getSectionFromPath = (pathname) => {
@@ -31,6 +31,7 @@ const getSectionFromPath = (pathname) => {
   if (pathname.startsWith("/receitas")) return "receitas";
   if (pathname.startsWith("/atestados")) return "atestados";
   if (pathname.startsWith("/mensagens")) return "mensagens";
+  if (pathname.startsWith("/configuracoes")) return "configuracoes";
   return "dashboard";
 };
 
@@ -95,27 +96,6 @@ export default function DashboardPage() {
               <p className="text-xs sm:text-sm uppercase tracking-widest text-emerald-700 font-semibold truncate">
                 Instituto de Psicologia
               </p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Button variant="dark" size="sm" onClick={handleLogout} className="hidden sm:inline-flex">
-                <LogOut className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Sair</span>
-              </Button>
-              <button
-                onClick={handleLogout}
-                className="sm:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-red-50 hover:text-red-600"
-                aria-label="Sair"
-              >
-                <LogOut className="h-4 w-4" />
-              </button>
-              <Button
-                size="sm"
-                onClick={() => navigate("/agendamentos")}
-                className="bg-emerald-600 hover:bg-emerald-700"
-              >
-                <ArrowRight className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Ver consultas</span>
-              </Button>
             </div>
           </div>
 

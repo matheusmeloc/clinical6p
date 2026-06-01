@@ -28,7 +28,7 @@ const DialogContent = React.forwardRef(({ className, children, onClose, ...props
   <div
     ref={ref}
     className={cn(
-      "relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-slate-200 p-6",
+      "relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-2xl border border-slate-200 p-6",
       className,
     )}
     onClick={(e) => e.stopPropagation()}
@@ -73,3 +73,4 @@ const DialogFooter = ({ className, ...props }) => (
 );
 
 export { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter };
+
