@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
@@ -45,8 +45,8 @@ function NavItem({ item, active, onClick, isCollapsed }) {
       className={cn(
         "w-full flex items-center rounded-md text-sm font-medium transition-colors h-9 px-3",
         active
-          ? "bg-slate-100 text-slate-900 font-semibold"
-          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+          ? "bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold"
+          : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100",
         isCollapsed && "justify-center px-0 w-9 mx-auto",
       )}
     >
@@ -60,7 +60,7 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex h-[60px] items-center justify-between px-4 border-b border-slate-100 shrink-0">
+      <div className="flex h-[60px] items-center justify-between px-4 border-b border-slate-100 dark:border-slate-700 shrink-0">
         {(!isCollapsed || isMobile) ? (
           <>
             <div className="flex items-center gap-2.5 min-w-0">
@@ -68,15 +68,15 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
                 IP
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="font-semibold text-sm leading-none text-slate-900 truncate">
+                <span className="font-semibold text-sm leading-none text-slate-900 dark:text-slate-100 truncate">
                   Inst. de Psicologia
                 </span>
-                <span className="text-xs text-slate-500 mt-1">Sistema clínico</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Sistema clínico</span>
               </div>
             </div>
             <button
               onClick={isMobile ? onClose : onToggleCollapse}
-              className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-slate-50 text-slate-500 hover:text-slate-900 shrink-0 transition-colors"
+              className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 shrink-0 transition-colors"
               aria-label={isMobile ? "Fechar menu" : "Recolher painel"}
             >
               {isMobile ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -89,7 +89,7 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
             </div>
             <button
               onClick={onToggleCollapse}
-              className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 text-slate-500 shadow-sm z-30 transition-colors"
+              className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 shadow-sm z-30 transition-colors"
               title="Expandir painel"
             >
               <ChevronRight className="h-3 w-3" />
@@ -101,7 +101,7 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
       {/* Nav */}
       <div className="flex-1 overflow-y-auto py-4 px-3">
         {(!isCollapsed || isMobile) && (
-          <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+          <p className="px-3 mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             Navegação
           </p>
         )}
@@ -119,7 +119,7 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
       </div>
 
       {/* Footer */}
-      <div className={cn("border-t border-slate-100 bg-white shrink-0", isCollapsed && !isMobile ? "p-2" : "p-4")}>
+      <div className={cn("border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shrink-0", isCollapsed && !isMobile ? "p-2" : "p-4")}>
         {isCollapsed && !isMobile ? (
           <div className="flex flex-col items-center gap-3">
             {user?.photo ? (
@@ -133,14 +133,15 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
             </div>
             )}
             <button
-              className="h-8 w-8 rounded-md flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+              onClick={() => onNavigate({ path: "/configuracoes" })}
+              className="h-8 w-8 rounded-md flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               title="Configurações"
             >
               <Settings className="h-4 w-4" />
             </button>
             <button
               onClick={onLogout}
-              className="h-8 w-8 rounded-md flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-slate-50 transition-colors"
+              className="h-8 w-8 rounded-md flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-red-600 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
               title="Sair"
             >
               <LogOut className="h-4 w-4" />
@@ -148,7 +149,7 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-3 rounded-lg bg-slate-50/50 p-2 border border-slate-100/50">
+            <div className="flex items-center gap-3 rounded-lg bg-slate-50/50 dark:bg-slate-700/50 p-2 border border-slate-100/50 dark:border-slate-600/50">
               {user?.photo ? (
                 <img src={user.photo} alt="Foto" className="h-9 w-9 rounded-lg object-cover shadow-sm shrink-0" />
               ) : (
@@ -157,22 +158,22 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
               </div>
               )}
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-slate-900 truncate">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
                   {user?.full_name || "Usuário"}
                 </p>
-                <p className="text-xs text-slate-500 truncate mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
                   {user?.role === "admin" ? "Administrador" : user?.role || "Profissional"}
                 </p>
               </div>
             </div>
             <div className="space-y-1">
-              <button onClick={() => onNavigate({ path: "/configuracoes" })} className="w-full flex items-center h-9 px-3 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors">
+              <button onClick={() => onNavigate({ path: "/configuracoes" })} className="w-full flex items-center h-9 px-3 rounded-md text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 transition-colors">
                 <Settings className="mr-3 h-[18px] w-[18px] shrink-0" />
                 Configurações
               </button>
               <button
                 onClick={onLogout}
-                className="w-full flex items-center h-9 px-3 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-red-600 transition-colors"
+                className="w-full flex items-center h-9 px-3 rounded-md text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-red-600 transition-colors"
               >
                 <LogOut className="mr-3 h-[18px] w-[18px] shrink-0" />
                 Sair
@@ -219,7 +220,7 @@ export function Sidebar({ user, onSelect, onLogout, isOpen, onClose, isCollapsed
             onClick={onClose}
           />
           {/* Drawer */}
-          <div className="relative z-10 w-[280px] h-full bg-white shadow-2xl border-r border-slate-200 flex flex-col">
+          <div className="relative z-10 w-[280px] h-full bg-white dark:bg-slate-800 shadow-2xl border-r border-slate-200 dark:border-slate-700 flex flex-col">
             <SidebarContent
               user={user}
               isCollapsed={false}
@@ -235,7 +236,7 @@ export function Sidebar({ user, onSelect, onLogout, isOpen, onClose, isCollapsed
       {/* ── Desktop sidebar (≥ lg) ── */}
       <aside
         className={cn(
-          "fixed left-0 top-0 h-screen border-r border-slate-200 bg-white transition-all duration-300 ease-in-out hidden lg:flex lg:flex-col z-20",
+          "fixed left-0 top-0 h-screen border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-300 ease-in-out hidden lg:flex lg:flex-col z-20",
           isCollapsed ? "w-[70px]" : "w-[270px]",
         )}
       >

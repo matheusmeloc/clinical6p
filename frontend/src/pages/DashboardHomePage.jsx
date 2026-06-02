@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/Button";
@@ -22,10 +22,16 @@ const getUserFromStorage = () => {
 };
 
 const StatCard = ({ label, value, loading }) => (
-  <div className="rounded-xl border border-slate-200 p-5 bg-slate-50">
-    <p className="text-sm text-slate-500">{label}</p>
-    <p className="mt-3 text-3xl font-semibold">
-      {loading ? <span className="text-slate-300 animate-pulse">—</span> : value}
+  <div className="rounded-xl border border-slate-200 dark:border-slate-600 p-5 bg-slate-50 dark:bg-slate-700/50">
+    <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
+    <p className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">
+      {loading ? (
+        <span className="text-slate-300 dark:text-slate-600 animate-pulse">
+          —
+        </span>
+      ) : (
+        value
+      )}
     </p>
   </div>
 );
@@ -48,10 +54,15 @@ export default function DashboardHomePage() {
         setUnreadMessages(
           typeof msgsRes.data === "number"
             ? msgsRes.data
-            : msgsRes.data?.count ?? msgsRes.data?.length ?? 0,
+            : (msgsRes.data?.count ?? msgsRes.data?.length ?? 0),
         );
       } catch {
-        setStats({ total_patients: "—", appointments_today: "—", appointments_week: "—", next_appointment: "—" });
+        setStats({
+          total_patients: "—",
+          appointments_today: "—",
+          appointments_week: "—",
+          next_appointment: "—",
+        });
         setUnreadMessages("—");
       } finally {
         setLoading(false);
@@ -62,26 +73,17 @@ export default function DashboardHomePage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-xl border border-slate-200 bg-white/90 p-6 shadow-sm shadow-slate-200/40">
-        <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
-          Visão geral
-        </p>
-        <h2 className="mt-3 text-3xl font-bold">Resumo do painel</h2>
-        <p className="mt-3 text-slate-500 text-sm leading-relaxed">
-          Aqui você encontra os principais indicadores e os próximos passos para
-          administrar a clínica.
-        </p>
-      </div>
-
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
         {/* Card de stats */}
-        <Card className="bg-white/90 border border-slate-200">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                 Status geral
               </p>
-              <h2 className="mt-3 text-2xl font-bold">Fluxo atual</h2>
+              <h2 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                Fluxo atual
+              </h2>
             </div>
             <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
               <CalendarDays className="w-6 h-6" />
@@ -111,23 +113,27 @@ export default function DashboardHomePage() {
             />
           </div>
 
-          {!loading && stats?.next_appointment && stats.next_appointment !== "N/A" && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-              <Clock className="w-4 h-4 shrink-0" />
-              Próxima consulta às <strong>{stats.next_appointment}</strong>
-            </div>
-          )}
+          {!loading &&
+            stats?.next_appointment &&
+            stats.next_appointment !== "N/A" && (
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+                <Clock className="w-4 h-4 shrink-0" />
+                Próxima consulta às <strong>{stats.next_appointment}</strong>
+              </div>
+            )}
         </Card>
 
         <div className="space-y-6">
           {/* Ações rápidas */}
-          <Card className="bg-white/90 border border-slate-200">
+          <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+                <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                   Ações rápidas
                 </p>
-                <h2 className="mt-3 text-2xl font-bold">Acesso imediato</h2>
+                <h2 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  Acesso imediato
+                </h2>
               </div>
               <div className="rounded-xl bg-blue-100 p-3 text-blue-700">
                 <ClipboardList className="w-6 h-6" />
@@ -138,64 +144,78 @@ export default function DashboardHomePage() {
               <Button
                 variant="ghost"
                 onClick={() => navigate("/agendamentos")}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-4 text-left hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 h-auto justify-between"
               >
                 <div className="flex items-center gap-3">
                   <CalendarDays className="w-5 h-5 text-emerald-600 shrink-0" />
                   <div>
-                    <p className="text-sm text-slate-500">Ver agenda</p>
-                    <p className="mt-0.5 text-base font-semibold">Próximas consultas</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Ver agenda
+                    </p>
+                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">
+                      Próximas consultas
+                    </p>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 shrink-0" />
+                <ArrowRight className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" />
               </Button>
 
               <Button
                 variant="ghost"
                 onClick={() => navigate("/pacientes")}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-4 text-left hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 h-auto justify-between"
               >
                 <div className="flex items-center gap-3">
                   <Users className="w-5 h-5 text-blue-600 shrink-0" />
                   <div>
-                    <p className="text-sm text-slate-500">Gerenciar</p>
-                    <p className="mt-0.5 text-base font-semibold">Pacientes</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Gerenciar
+                    </p>
+                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">
+                      Pacientes
+                    </p>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 shrink-0" />
+                <ArrowRight className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" />
               </Button>
 
               <Button
                 variant="ghost"
                 onClick={() => navigate("/mensagens")}
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-4 text-left hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 h-auto justify-between"
               >
                 <div className="flex items-center gap-3">
                   <MessageSquare className="w-5 h-5 text-amber-600 shrink-0" />
                   <div>
-                    <p className="text-sm text-slate-500">Caixa de entrada</p>
-                    <p className="mt-0.5 text-base font-semibold">Mensagens de pacientes</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Caixa de entrada
+                    </p>
+                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">
+                      Mensagens de pacientes
+                    </p>
                   </div>
                 </div>
-                <ArrowRight className="w-5 h-5 text-slate-400 shrink-0" />
+                <ArrowRight className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" />
               </Button>
             </div>
           </Card>
 
           {/* Perfil */}
-          <Card className="bg-white/90 border border-slate-200">
+          <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+                <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                   Perfil
                 </p>
-                <h2 className="mt-3 text-2xl font-bold">Dados do usuário</h2>
+                <h2 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  Dados do usuário
+                </h2>
               </div>
               <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
                 <UserCheck className="w-6 h-6" />
               </div>
             </div>
-            <div className="mt-8 space-y-3 text-slate-700">
+            <div className="mt-8 space-y-3 text-slate-700 dark:text-slate-300">
               <p>
                 <span className="font-semibold">Nome:</span>{" "}
                 {user?.full_name ?? "—"}
@@ -206,7 +226,11 @@ export default function DashboardHomePage() {
               </p>
               <p>
                 <span className="font-semibold">Perfil:</span>{" "}
-                {user?.role === "admin" ? "Administrador" : user?.role === "patient" ? "Paciente" : "Profissional"}
+                {user?.role === "admin"
+                  ? "Administrador"
+                  : user?.role === "patient"
+                    ? "Paciente"
+                    : "Profissional"}
               </p>
             </div>
           </Card>
@@ -215,5 +239,3 @@ export default function DashboardHomePage() {
     </div>
   );
 }
-
-

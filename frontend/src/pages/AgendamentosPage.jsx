@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { Card } from "../components/ui/Card";
@@ -119,17 +119,17 @@ export default function AgendamentosPage() {
     appointments.find((a) => new Date(a.date) >= new Date()) || appointments[0];
 
   const selectClass =
-    "w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100";
+    "w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-2.5 px-3 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100";
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
             Agendamentos
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">Agenda de consultas</h1>
-          <p className="mt-2 text-sm text-slate-500 max-w-2xl">
+          <h1 className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">Agenda de consultas</h1>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
             Crie, revise e gerencie os agendamentos de pacientes e profissionais.
           </p>
         </div>
@@ -143,30 +143,30 @@ export default function AgendamentosPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="bg-white/90 border border-slate-200 p-6">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
             Agendamentos hoje
           </p>
-          <p className="mt-4 text-4xl font-bold text-slate-900">{todayCount}</p>
-          <p className="mt-2 text-sm text-slate-500">Consultas marcadas para hoje.</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{todayCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Consultas marcadas para hoje.</p>
         </Card>
-        <Card className="bg-white/90 border border-slate-200 p-6">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
             Total agendado
           </p>
-          <p className="mt-4 text-4xl font-bold text-slate-900">{upcomingCount}</p>
-          <p className="mt-2 text-sm text-slate-500">Consultas futuras e confirmadas.</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{upcomingCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Consultas futuras e confirmadas.</p>
         </Card>
-        <Card className="bg-white/90 border border-slate-200 p-6">
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
             Próxima consulta
           </p>
-          <p className="mt-4 text-2xl font-bold text-slate-900">
+          <p className="mt-4 text-2xl font-bold text-slate-900 dark:text-slate-100">
             {nextAppointment
               ? `${formatDate(nextAppointment.date)} às ${formatTime(nextAppointment.time)}`
               : "—"}
           </p>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
             {nextAppointment
               ? `${nextAppointment.patient_name} com ${nextAppointment.professional_name}`
               : "Nenhum agendamento disponível."}
@@ -236,16 +236,16 @@ export default function AgendamentosPage() {
         </DialogContent>
       </Dialog>
 
-      <Card className="bg-white/90 border border-slate-200 p-6">
+      <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
               Agenda completa
             </p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-900">Próximos agendamentos</h2>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Próximos agendamentos</h2>
           </div>
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <Input
               className="pl-10"
               type="search"
@@ -258,33 +258,33 @@ export default function AgendamentosPage() {
 
         <div className="overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-slate-500">Carregando agendamentos...</div>
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">Carregando agendamentos...</div>
           ) : hasLoadError ? (
-            <div className="p-8 text-center text-slate-500">Erro ao carregar dados.</div>
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">Erro ao carregar dados.</div>
           ) : (
-            <table className="min-w-[640px] w-full text-left text-sm text-slate-700">
+            <table className="min-w-[640px] w-full text-left text-sm text-slate-700 dark:text-slate-300">
               <thead>
-                <tr className="border-b border-slate-200">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
                   {["Paciente", "Profissional", "Data", "Horário", "Status", "Ações"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-slate-500 font-semibold">{h}</th>
+                    <th key={h} className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {filteredAppointments.length > 0 ? (
                   filteredAppointments.map((a) => (
-                    <tr key={a.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-4 font-medium text-slate-900">{a.patient_name}</td>
-                      <td className="px-4 py-4 text-slate-600">{a.professional_name}</td>
-                      <td className="px-4 py-4 text-slate-600">{formatDate(a.date)}</td>
-                      <td className="px-4 py-4 text-slate-600">{formatTime(a.time)}</td>
+                    <tr key={a.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                      <td className="px-4 py-4 font-medium text-slate-900 dark:text-slate-100">{a.patient_name}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{a.professional_name}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{formatDate(a.date)}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{formatTime(a.time)}</td>
                       <td className="px-4 py-4">
                         <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                           {a.status}
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <Button variant="ghost" className="h-9 px-3 text-slate-600">
+                        <Button variant="ghost" className="h-9 px-3 text-slate-600 dark:text-slate-300">
                           <Edit3 className="w-4 h-4 mr-2" /> Editar
                         </Button>
                       </td>
@@ -292,7 +292,7 @@ export default function AgendamentosPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                       Nenhum agendamento encontrado.
                     </td>
                   </tr>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { maskPhone, maskRegister } from "../lib/masks";
@@ -18,7 +18,7 @@ import { Users, Plus, Search, Edit3 } from "lucide-react";
 import api from "../lib/api";
 
 const selectClass =
-  "w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100";
+  "w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-2.5 px-3 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100";
 
 export default function FuncionariosPage() {
   const [professionals, setProfessionals] = useState([]);
@@ -113,10 +113,10 @@ export default function FuncionariosPage() {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <Card className="bg-white/90 border border-slate-200">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                 Funcionários
               </p>
               <h2 className="mt-3 text-2xl font-bold">Gestão da equipe</h2>
@@ -126,37 +126,37 @@ export default function FuncionariosPage() {
             </div>
           </div>
 
-          <div className="mt-8 space-y-4 text-slate-700">
+          <div className="mt-8 space-y-4 text-slate-700 dark:text-slate-300">
             <p>
               Acompanhe a equipe de profissionais, revise permissões e atualize
               dados de contato com facilidade.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Profissionais ativos</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Profissionais ativos</p>
                 <p className="mt-3 text-3xl font-semibold">{activeCount}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Total</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Total</p>
                 <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Inativos / Licença</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Inativos / Licença</p>
                 <p className="mt-3 text-3xl font-semibold">{inactiveCount}</p>
               </div>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-white/90 border border-slate-200">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                 Ações rápidas
               </p>
               <h2 className="mt-3 text-2xl font-bold">Ferramentas</h2>
             </div>
-            <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
+            <div className="rounded-xl bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
               <Plus className="w-6 h-6" />
             </div>
           </div>
@@ -262,7 +262,7 @@ export default function FuncionariosPage() {
                 placeholder="Deixe em branco para não criar login"
                 {...register("password")}
               />
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 dark:text-slate-500">
                 Se preenchida, um login será criado automaticamente.
               </p>
             </div>
@@ -283,60 +283,60 @@ export default function FuncionariosPage() {
         </DialogContent>
       </Dialog>
 
-      <Card className="bg-white/90 border border-slate-200">
+      <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
               Lista de funcionários
             </p>
             <h2 className="mt-3 text-2xl font-bold">Equipe atual</h2>
           </div>
           <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Buscar por nome, função ou e-mail"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-3 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
             />
           </div>
         </div>
 
         <div className="mt-8 overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-slate-500">Carregando profissionais...</div>
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">Carregando profissionais...</div>
           ) : hasLoadError ? (
-            <div className="p-8 text-center text-slate-500">Erro ao carregar dados.</div>
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">Erro ao carregar dados.</div>
           ) : (
-            <table className="min-w-[640px] w-full text-left text-sm text-slate-700">
+            <table className="min-w-[640px] w-full text-left text-sm text-slate-700 dark:text-slate-300">
               <thead>
-                <tr className="border-b border-slate-200">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
                   {["Nome", "Função", "Especialidade", "Registro", "E-mail", "Telefone", "Status", "Ações"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-slate-500 font-semibold whitespace-nowrap">{h}</th>
+                    <th key={h} className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {filteredProfessionals.length > 0 ? (
                   filteredProfessionals.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-4 py-4 font-medium text-slate-900 whitespace-nowrap">{p.name}</td>
-                      <td className="px-4 py-4 text-slate-600 whitespace-nowrap">{p.role}</td>
-                      <td className="px-4 py-4 text-slate-600">{p.specialty ?? "—"}</td>
-                      <td className="px-4 py-4 text-slate-600 whitespace-nowrap">{p.professional_register ?? "—"}</td>
-                      <td className="px-4 py-4 text-slate-600">{p.email ?? "—"}</td>
-                      <td className="px-4 py-4 text-slate-600 whitespace-nowrap">{p.phone ?? "—"}</td>
+                    <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                      <td className="px-4 py-4 font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">{p.name}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">{p.role}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{p.specialty ?? "—"}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">{p.professional_register ?? "—"}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">{p.email ?? "—"}</td>
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">{p.phone ?? "—"}</td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                           p.status === "Ativo"
                             ? "bg-emerald-100 text-emerald-700"
-                            : "bg-slate-100 text-slate-600"
+                            : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
                         }`}>
                           {p.status ?? "Ativo"}
                         </span>
                       </td>
                       <td className="px-4 py-4">
-                        <Button variant="ghost" className="h-9 px-3 text-slate-600">
+                        <Button variant="ghost" className="h-9 px-3 text-slate-600 dark:text-slate-300">
                           <Edit3 className="w-4 h-4 mr-2" /> Editar
                         </Button>
                       </td>
@@ -344,7 +344,7 @@ export default function FuncionariosPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-slate-500 dark:text-slate-400">
                       Nenhum profissional encontrado.
                     </td>
                   </tr>

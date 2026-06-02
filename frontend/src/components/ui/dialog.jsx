@@ -1,4 +1,5 @@
 import * as React from "react";
+import ReactDOM from "react-dom";
 import { X } from "lucide-react";
 import { cn } from "../../lib/utils";
 
@@ -13,14 +14,14 @@ const Dialog = ({ open, onOpenChange, children }) => {
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => onOpenChange?.(false)}
-      />
+  return ReactDOM.createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={() => onOpenChange?.(false)}
+    >
       {children}
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -28,7 +29,7 @@ const DialogContent = React.forwardRef(({ className, children, onClose, ...props
   <div
     ref={ref}
     className={cn(
-      "relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-2xl border border-slate-200 p-6",
+      "relative z-50 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-lg bg-white dark:bg-slate-800 shadow-2xl border border-slate-200 dark:border-slate-700 p-6",
       className,
     )}
     onClick={(e) => e.stopPropagation()}
@@ -37,7 +38,7 @@ const DialogContent = React.forwardRef(({ className, children, onClose, ...props
     {onClose && (
       <button
         onClick={onClose}
-        className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+        className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
       >
         <X className="h-4 w-4" />
       </button>
@@ -54,14 +55,14 @@ const DialogHeader = ({ className, ...props }) => (
 const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
   <h2
     ref={ref}
-    className={cn("text-xl font-bold text-slate-900 pr-8", className)}
+    className={cn("text-xl font-bold text-slate-900 dark:text-slate-100 pr-8", className)}
     {...props}
   />
 ));
 DialogTitle.displayName = "DialogTitle";
 
 const DialogDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn("mt-1 text-sm text-slate-500", className)} {...props} />
+  <p ref={ref} className={cn("mt-1 text-sm text-slate-500 dark:text-slate-400", className)} {...props} />
 ));
 DialogDescription.displayName = "DialogDescription";
 

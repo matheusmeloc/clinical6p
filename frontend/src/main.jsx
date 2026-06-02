@@ -4,6 +4,11 @@ import { Toaster } from 'react-hot-toast'
 import './index.css'
 import App from './App.jsx'
 
+// Aplica o tema salvo antes do primeiro render (evita flash)
+if (localStorage.getItem('theme') === 'dark') {
+  document.documentElement.classList.add('dark')
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

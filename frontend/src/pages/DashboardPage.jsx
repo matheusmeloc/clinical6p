@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { Menu } from "lucide-react";
@@ -59,7 +59,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 text-slate-900 flex">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex">
       <Sidebar
         user={user}
         activeItem={activeSection}
@@ -77,7 +77,7 @@ export default function DashboardPage() {
         }}
       />
       <main
-        className={`flex-1 min-h-screen p-4 sm:p-6 lg:p-10 space-y-6 transition-all duration-300 ease-in-out overflow-x-hidden ${
+        className={`flex-1 min-h-screen p-4 sm:p-6 lg:p-10 space-y-6 transition-all duration-300 ease-in-out overflow-x-hidden bg-slate-50 dark:bg-slate-900 ${
           sidebarCollapsed ? "lg:ml-[70px]" : "lg:ml-[270px]"
         }`}
       >
@@ -88,12 +88,12 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 shrink-0"
+                className="lg:hidden flex items-center justify-center h-9 w-9 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 shrink-0"
                 aria-label="Abrir menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <p className="text-xs sm:text-sm uppercase tracking-widest text-emerald-700 font-semibold truncate">
+              <p className="text-xs sm:text-sm uppercase tracking-widest text-emerald-700 dark:text-emerald-400 font-semibold truncate">
                 Instituto de Psicologia
               </p>
             </div>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
           </h1>
 
           {showDashboardGreeting && (
-            <p className="max-w-2xl text-slate-500 text-sm leading-relaxed">
+            <p className="max-w-2xl text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
               Bem-vindo ao painel. Aqui você encontrará um resumo rápido do seu
               fluxo de trabalho e acesso direto às principais funcionalidades.
             </p>

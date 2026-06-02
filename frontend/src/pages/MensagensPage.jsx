@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/Button";
 import { Search, Mail, CheckCircle, MessageSquare } from "lucide-react";
@@ -84,10 +84,10 @@ export default function MensagensPage() {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-        <Card className="bg-white/90 border border-slate-200">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                 Mensagens
               </p>
               <h2 className="mt-3 text-2xl font-bold">
@@ -99,22 +99,22 @@ export default function MensagensPage() {
             </div>
           </div>
 
-          <div className="mt-8 space-y-4 text-slate-700">
+          <div className="mt-8 space-y-4 text-slate-700 dark:text-slate-300">
             <p>
               Aqui você visualiza todas as mensagens enviadas pelos pacientes e
               acompanha os atendimentos que ainda precisam de resposta.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Total de mensagens</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Total de mensagens</p>
                 <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Não lidas</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Não lidas</p>
                 <p className="mt-3 text-3xl font-semibold">{unreadCount}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Última mensagem</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Última mensagem</p>
                 <p className="mt-3 text-3xl font-semibold">
                   {formatDate(latestMessage)}
                 </p>
@@ -123,31 +123,31 @@ export default function MensagensPage() {
           </div>
         </Card>
 
-        <Card className="bg-white/90 border border-slate-200">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                 Ações rápidas
               </p>
               <h2 className="mt-3 text-2xl font-bold">
                 Organize seu atendimento
               </h2>
             </div>
-            <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
+            <div className="rounded-xl bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
               <MessageSquare className="w-6 h-6" />
             </div>
           </div>
           <div className="mt-8 space-y-4">
             <Button
               variant="ghost"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-4 text-left hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 h-auto justify-between"
               onClick={loadMessages}
             >
               <span>Atualizar mensagens</span>
             </Button>
             <Button
               variant="ghost"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4 text-left hover:border-slate-300 hover:bg-slate-100 h-auto justify-between"
+              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-4 text-left hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 h-auto justify-between"
             >
               <span>Responder no sistema do paciente</span>
             </Button>
@@ -155,10 +155,10 @@ export default function MensagensPage() {
         </Card>
       </div>
 
-      <Card className="bg-white/90 border border-slate-200">
+      <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
               Mensagens recentes
             </p>
             <h2 className="mt-3 text-2xl font-bold">Caixa de entrada</h2>
@@ -166,13 +166,13 @@ export default function MensagensPage() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar por paciente, profissional ou conteúdo"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-3 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
           </div>
@@ -180,55 +180,55 @@ export default function MensagensPage() {
 
         <div className="mt-6 overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-slate-500">
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">
               Carregando mensagens...
             </div>
           ) : error ? (
             <div className="p-8 text-center text-red-600">{error}</div>
           ) : (
-            <table className="min-w-[640px] w-full text-left text-sm text-slate-700">
+            <table className="min-w-[640px] w-full text-left text-sm text-slate-700 dark:text-slate-300">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Paciente
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Profissional
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Mensagem
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {filteredMessages.length > 0 ? (
                   filteredMessages.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-slate-50 transition-colors"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                     >
-                      <td className="px-4 py-4 font-medium text-slate-900">
+                      <td className="px-4 py-4 font-medium text-slate-900 dark:text-slate-100">
                         {item.patient_name || "—"}
                       </td>
-                      <td className="px-4 py-4 text-slate-600">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
                         {item.professional_name || "—"}
                       </td>
-                      <td className="px-4 py-4 text-slate-600 max-w-[360px] truncate">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 max-w-[360px] truncate">
                         {item.message}
                       </td>
-                      <td className="px-4 py-4 text-slate-600">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
                         {formatDate(item.created_at)}
                       </td>
-                      <td className="px-4 py-4 text-slate-600">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
                         {item.is_read ? (
                           <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">
                             Lida
@@ -256,7 +256,7 @@ export default function MensagensPage() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-8 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                     >
                       Nenhuma mensagem encontrada.
                     </td>

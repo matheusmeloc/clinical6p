@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+﻿import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { Card } from "../components/ui/Card";
@@ -6,7 +6,8 @@ import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { maskPhone } from "../lib/masks";
-import { User, Lock, Mail, Shield, Save, Camera, Trash2 } from "lucide-react";
+import { User, Lock, Mail, Shield, Save, Camera, Trash2, Moon, Sun } from "lucide-react";
+import { useTheme } from "../lib/useTheme";
 import api from "../lib/api";
 
 const getUserFromStorage = () => {
@@ -18,6 +19,7 @@ export default function ConfiguracoesPage() {
   const isAdmin = user?.role === "admin";
 
   const [smtpLoading, setSmtpLoading] = useState(false);
+  const { dark, toggle: toggleTheme } = useTheme();
   const [photoPreview, setPhotoPreview] = useState(user?.photo || null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -182,19 +184,19 @@ export default function ConfiguracoesPage() {
     <div className="space-y-6 max-w-2xl">
 
       {/* ── Perfil ── */}
-      <Card className="bg-white/90 border border-slate-200">
+      <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 mb-6">
-          <div className="rounded-lg bg-emerald-100 p-3 text-emerald-700">
+          <div className="rounded-lg bg-emerald-100 dark:bg-emerald-900/40 p-3 text-emerald-700 dark:text-emerald-400">
             <User className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Dados do perfil</h2>
-            <p className="text-sm text-slate-500">Atualize suas informações pessoais e profissionais.</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Dados do perfil</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Atualize suas informações pessoais e profissionais.</p>
           </div>
         </div>
 
         {/* Avatar com foto */}
-        <div className="flex items-center gap-4 mb-6 p-4 rounded-lg bg-slate-50 border border-slate-200">
+        <div className="flex items-center gap-4 mb-6 p-4 rounded-lg bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600">
           <div className="relative shrink-0">
             {photoPreview ? (
               <img src={photoPreview} alt="Foto de perfil"
@@ -219,9 +221,9 @@ export default function ConfiguracoesPage() {
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-slate-900 truncate">{user?.full_name || "Usuário"}</p>
-            <p className="text-sm text-slate-500 truncate">{user?.email}</p>
-            <span className="inline-flex items-center mt-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
+            <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{user?.full_name || "Usuário"}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
+            <span className="inline-flex items-center mt-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
               {user?.role === "admin" ? "Administrador" : "Profissional"}
             </span>
           </div>
@@ -282,14 +284,14 @@ export default function ConfiguracoesPage() {
       </Card>
 
       {/* ── Senha ── */}
-      <Card className="bg-white/90 border border-slate-200">
+      <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 mb-6">
-          <div className="rounded-lg bg-slate-100 p-3 text-slate-700">
+          <div className="rounded-lg bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
             <Lock className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Alterar senha</h2>
-            <p className="text-sm text-slate-500">Defina uma nova senha de acesso ao sistema.</p>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Alterar senha</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Defina uma nova senha de acesso ao sistema.</p>
           </div>
         </div>
 
@@ -301,7 +303,7 @@ export default function ConfiguracoesPage() {
                 {...passwordForm.register("password", { required: "Obrigatório" })}
               />
               {passwordForm.formState.errors.password && (
-                <p className="text-xs text-red-600">{passwordForm.formState.errors.password.message}</p>
+                <p className="text-xs text-red-500 dark:text-red-400">{passwordForm.formState.errors.password.message}</p>
               )}
             </div>
             <div className="space-y-1.5">
@@ -322,19 +324,19 @@ export default function ConfiguracoesPage() {
 
       {/* ── SMTP (só admin) ── */}
       {isAdmin && (
-        <Card className="bg-white/90 border border-slate-200">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3 mb-6">
-            <div className="rounded-lg bg-blue-100 p-3 text-blue-700">
+            <div className="rounded-lg bg-blue-100 dark:bg-blue-900/40 p-3 text-blue-700 dark:text-blue-400">
               <Mail className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Configurações de e-mail (SMTP)</h2>
-              <p className="text-sm text-slate-500">Defina o servidor de envio de e-mails automáticos.</p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Configurações de e-mail (SMTP)</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Defina o servidor de envio de e-mails automáticos.</p>
             </div>
           </div>
 
           {smtpLoading ? (
-            <p className="text-sm text-slate-500 py-4">Carregando configurações...</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 py-4">Carregando configurações...</p>
           ) : (
             <form onSubmit={smtpForm.handleSubmit(handleSaveSmtp)} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -357,7 +359,7 @@ export default function ConfiguracoesPage() {
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label>E-mail remetente</Label>
                   <Input type="email" placeholder="noreply@clinica.com" {...smtpForm.register("smtp_from_email")} />
-                  <p className="text-xs text-slate-400">Este e-mail aparecerá como remetente nos lembretes de consulta.</p>
+                  <p className="text-xs text-slate-400 dark:text-slate-500">Este e-mail aparecerá como remetente nos lembretes de consulta.</p>
                 </div>
               </div>
               <div className="flex justify-end pt-2">
@@ -371,34 +373,65 @@ export default function ConfiguracoesPage() {
         </Card>
       )}
 
+      {/* ── Tema ── */}
+      <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
+              {dark ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Aparência</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Tema atual: <span className="font-medium">{dark ? "Escuro" : "Claro"}</span>
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={toggleTheme}
+            className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+              dark ? "bg-emerald-600" : "bg-slate-200"
+            }`}
+            role="switch"
+            aria-checked={dark}
+          >
+            <span
+              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform ${
+                dark ? "translate-x-8" : "translate-x-1"
+              }`}
+            />
+          </button>
+        </div>
+      </Card>
+
       {/* ── Info do sistema ── */}
-      <Card className="bg-white/90 border border-slate-200">
+      <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3 mb-4">
-          <div className="rounded-lg bg-slate-100 p-3 text-slate-700">
+          <div className="rounded-lg bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
             <Shield className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">Informações do sistema</h2>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Informações do sistema</h2>
           </div>
         </div>
         <div className="grid gap-3 sm:grid-cols-2 text-sm">
-          <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-            <p className="text-slate-400 text-xs uppercase tracking-wide">Usuário logado</p>
-            <p className="font-medium text-slate-800 mt-1">{user?.full_name || "—"}</p>
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 p-3">
+            <p className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">Usuário logado</p>
+            <p className="font-medium text-slate-800 dark:text-slate-200 mt-1">{user?.full_name || "—"}</p>
           </div>
-          <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-            <p className="text-slate-400 text-xs uppercase tracking-wide">E-mail</p>
-            <p className="font-medium text-slate-800 mt-1">{user?.email || "—"}</p>
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 p-3">
+            <p className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">E-mail</p>
+            <p className="font-medium text-slate-800 dark:text-slate-200 mt-1">{user?.email || "—"}</p>
           </div>
-          <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-            <p className="text-slate-400 text-xs uppercase tracking-wide">Perfil de acesso</p>
-            <p className="font-medium text-slate-800 mt-1">
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 p-3">
+            <p className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">Perfil de acesso</p>
+            <p className="font-medium text-slate-800 dark:text-slate-200 mt-1">
               {user?.role === "admin" ? "Administrador" : "Profissional"}
             </p>
           </div>
-          <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
-            <p className="text-slate-400 text-xs uppercase tracking-wide">Versão</p>
-            <p className="font-medium text-slate-800 mt-1">Instituto de Psicologia v1.0</p>
+          <div className="rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 p-3">
+            <p className="text-slate-400 dark:text-slate-500 text-xs uppercase tracking-wide">Versão</p>
+            <p className="font-medium text-slate-800 dark:text-slate-200 mt-1">Instituto de Psicologia v1.0</p>
           </div>
         </div>
       </Card>

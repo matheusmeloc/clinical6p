@@ -19,7 +19,7 @@ const SheetContent = React.forwardRef(
       <div
         ref={ref}
         className={cn(
-          "fixed inset-y-0 z-50 flex w-[280px] flex-col border border-slate-200 bg-white shadow-xl transition-transform duration-300 ease-in-out",
+          "fixed inset-y-0 z-50 flex w-[280px] flex-col border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-xl transition-transform duration-300 ease-in-out",
           sideClasses,
           className,
         )}
@@ -42,14 +42,14 @@ SheetHeader.displayName = "SheetHeader";
 const SheetTitle = React.forwardRef(({ className, ...props }, ref) => (
   <h2
     ref={ref}
-    className={cn("text-lg font-semibold text-slate-900", className)}
+    className={cn("text-lg font-semibold text-slate-900 dark:text-slate-100", className)}
     {...props}
   />
 ));
 SheetTitle.displayName = "SheetTitle";
 
 const SheetDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <p ref={ref} className={cn("text-sm text-slate-500", className)} {...props} />
+  <p ref={ref} className={cn("text-sm text-slate-500 dark:text-slate-400", className)} {...props} />
 ));
 SheetDescription.displayName = "SheetDescription";
 

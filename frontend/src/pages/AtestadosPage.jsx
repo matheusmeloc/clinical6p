@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { Card } from "../components/ui/Card";
@@ -141,10 +141,10 @@ export default function AtestadosPage() {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-        <Card className="bg-white/90 border border-slate-200">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                 Atestados
               </p>
               <h2 className="mt-3 text-2xl font-bold">Gestão de atestados</h2>
@@ -154,37 +154,37 @@ export default function AtestadosPage() {
             </div>
           </div>
 
-          <div className="mt-8 space-y-4 text-slate-700">
+          <div className="mt-8 space-y-4 text-slate-700 dark:text-slate-300">
             <p>
               Consulte os atestados emitidos, registre novos documentos e
               mantenha o histórico de ausências ordenado.
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Total de atestados</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Total de atestados</p>
                 <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Médico</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Médico</p>
                 <p className="mt-3 text-3xl font-semibold">{medicalCount}</p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-sm text-slate-500">Comparecimento</p>
+              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Comparecimento</p>
                 <p className="mt-3 text-3xl font-semibold">{attendanceCount}</p>
               </div>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-white/90 border border-slate-200">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
                 Ações rápidas
               </p>
               <h2 className="mt-3 text-2xl font-bold">Registrar atestado</h2>
             </div>
-            <div className="rounded-xl bg-slate-100 p-3 text-slate-700">
+            <div className="rounded-xl bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
               <Clipboard className="w-6 h-6" />
             </div>
           </div>
@@ -210,7 +210,7 @@ export default function AtestadosPage() {
           <form onSubmit={handleSubmit(handleCreateCertificate)} className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>Paciente</Label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+              <select className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-2.5 px-3 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
                 {...register("patient_id", { required: "Obrigatório" })}>
                 <option value="">Selecione um paciente</option>
                 {patients.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -220,7 +220,7 @@ export default function AtestadosPage() {
 
             <div className="space-y-1.5">
               <Label>Profissional</Label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+              <select className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-2.5 px-3 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
                 {...register("professional_id", { required: "Obrigatório" })}>
                 <option value="">Selecione um profissional</option>
                 {professionals.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -230,7 +230,7 @@ export default function AtestadosPage() {
 
             <div className="space-y-1.5">
               <Label>Tipo de atestado</Label>
-              <select className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 px-3 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+              <select className="w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-2.5 px-3 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
                 {...register("type", { required: "Obrigatório" })}>
                 <option value="Médico">Médico</option>
                 <option value="Comparecimento">Comparecimento</option>
@@ -265,10 +265,10 @@ export default function AtestadosPage() {
         </DialogContent>
       </Dialog>
 
-      <Card className="bg-white/90 border border-slate-200">
+      <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 font-semibold">
+            <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
               Atestados recentes
             </p>
             <h2 className="mt-3 text-2xl font-bold">Histórico de atestados</h2>
@@ -276,13 +276,13 @@ export default function AtestadosPage() {
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <div className="relative w-full sm:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Buscar por paciente, profissional ou tipo"
-                className="w-full rounded-lg border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-3 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
           </div>
@@ -290,61 +290,61 @@ export default function AtestadosPage() {
 
         <div className="mt-6 overflow-x-auto">
           {loading ? (
-            <div className="p-8 text-center text-slate-500">
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">
               Carregando atestados...
             </div>
           ) : hasLoadError ? (
-            <div className="p-8 text-center text-slate-500">Erro ao carregar dados.</div>
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">Erro ao carregar dados.</div>
           ) : (
-            <table className="min-w-[640px] w-full text-left text-sm text-slate-700">
+            <table className="min-w-[640px] w-full text-left text-sm text-slate-700 dark:text-slate-300">
               <thead>
-                <tr className="border-b border-slate-200">
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Paciente
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Profissional
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Tipo
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Duração
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Data
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Descrição
                   </th>
-                  <th className="px-4 py-3 text-slate-500 font-semibold">
+                  <th className="px-4 py-3 text-slate-500 dark:text-slate-400 font-semibold">
                     Ações
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {filteredCertificates.length > 0 ? (
                   filteredCertificates.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-slate-50 transition-colors"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
                     >
-                      <td className="px-4 py-4 font-medium text-slate-900">
+                      <td className="px-4 py-4 font-medium text-slate-900 dark:text-slate-100">
                         {item.patient_name || "—"}
                       </td>
-                      <td className="px-4 py-4 text-slate-600">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
                         {item.professional_name || "—"}
                       </td>
-                      <td className="px-4 py-4 text-slate-600">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
                         {item.type || "—"}
                       </td>
-                      <td className="px-4 py-4 text-slate-600">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
                         {item.duration_days ?? "—"}
                       </td>
-                      <td className="px-4 py-4 text-slate-600">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
                         {formatDate(item.date)}
                       </td>
-                      <td className="px-4 py-4 text-slate-600 max-w-[320px] truncate">
+                      <td className="px-4 py-4 text-slate-600 dark:text-slate-400 max-w-[320px] truncate">
                         {item.description || "—"}
                       </td>
                       <td className="px-4 py-4">
@@ -362,7 +362,7 @@ export default function AtestadosPage() {
                   <tr>
                     <td
                       colSpan={7}
-                      className="px-4 py-8 text-center text-slate-500"
+                      className="px-4 py-8 text-center text-slate-500 dark:text-slate-400"
                     >
                       Nenhum atestado encontrado.
                     </td>
