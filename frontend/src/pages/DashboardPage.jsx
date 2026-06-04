@@ -18,7 +18,6 @@ const pageTitleMap = {
   funcionarios: "Funcionários",
   pacientes: "Pacientes",
   agendamentos: "Agendamentos",
-  receitas: "Receitas",
   atestados: "Atestados",
   mensagens: "Mensagens",
   configuracoes: "Configurações",
@@ -28,7 +27,6 @@ const getSectionFromPath = (pathname) => {
   if (pathname.startsWith("/funcionarios")) return "funcionarios";
   if (pathname.startsWith("/pacientes")) return "pacientes";
   if (pathname.startsWith("/agendamentos")) return "agendamentos";
-  if (pathname.startsWith("/receitas")) return "receitas";
   if (pathname.startsWith("/atestados")) return "atestados";
   if (pathname.startsWith("/mensagens")) return "mensagens";
   if (pathname.startsWith("/configuracoes")) return "configuracoes";

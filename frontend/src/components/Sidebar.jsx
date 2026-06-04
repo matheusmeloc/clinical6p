@@ -7,7 +7,6 @@ import {
   Briefcase,
   User,
   CalendarDays,
-  FileText,
   FileCheck,
   Mail,
   Settings,
@@ -22,7 +21,6 @@ const navItems = [
   { key: "funcionarios", label: "Funcionários",   icon: Briefcase,    path: "/funcionarios" },
   { key: "pacientes",    label: "Pacientes",      icon: User,         path: "/pacientes" },
   { key: "agendamentos", label: "Agendamentos",   icon: CalendarDays, path: "/agendamentos" },
-  { key: "receitas",     label: "Receitas",       icon: FileText,     path: "/receitas" },
   { key: "atestados",    label: "Atestados",      icon: FileCheck,    path: "/atestados" },
   { key: "mensagens",    label: "Mensagens",      icon: Mail,         path: "/mensagens" },
 ];
