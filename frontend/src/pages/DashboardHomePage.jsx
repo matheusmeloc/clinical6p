@@ -1,34 +1,24 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/Button";
+import AppointmentCalendar from "../components/AppointmentCalendar";
 import {
   ArrowRight,
   CalendarDays,
   ClipboardList,
-  UserCheck,
   Users,
   MessageSquare,
   Clock,
 } from "lucide-react";
 import api from "../lib/api";
 
-const getUserFromStorage = () => {
-  try {
-    return JSON.parse(localStorage.getItem("user"));
-  } catch {
-    return null;
-  }
-};
-
 const StatCard = ({ label, value, loading }) => (
   <div className="rounded-xl border border-slate-200 dark:border-slate-600 p-5 bg-slate-50 dark:bg-slate-700/50">
     <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
     <p className="mt-3 text-3xl font-semibold text-slate-900 dark:text-slate-100">
       {loading ? (
-        <span className="text-slate-300 dark:text-slate-600 animate-pulse">
-          —
-        </span>
+        <span className="text-slate-300 dark:text-slate-600 animate-pulse">—</span>
       ) : (
         value
       )}
@@ -38,19 +28,21 @@ const StatCard = ({ label, value, loading }) => (
 
 export default function DashboardHomePage() {
   const navigate = useNavigate();
-  const user = getUserFromStorage();
   const [stats, setStats] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(null);
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [statsRes, msgsRes] = await Promise.all([
+        const [statsRes, msgsRes, apptRes] = await Promise.all([
           api.get("/api/dashboard/stats"),
           api.get("/api/patient-messages/unread"),
+          api.get("/api/appointments?limit=300"),
         ]);
         setStats(statsRes.data);
+        setAppointments(apptRes.data ?? []);
         setUnreadMessages(
           typeof msgsRes.data === "number"
             ? msgsRes.data
@@ -74,55 +66,26 @@ export default function DashboardHomePage() {
   return (
     <div className="space-y-8">
       <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        {/* Card de stats */}
+
+        {/* Esquerda: Calendário */}
         <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 mb-6">
             <div>
               <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-                Status geral
+                Agenda
               </p>
-              <h2 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
-                Fluxo atual
+              <h2 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
+                Calendário de consultas
               </h2>
             </div>
             <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
               <CalendarDays className="w-6 h-6" />
             </div>
           </div>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <StatCard
-              label="Consultas hoje"
-              value={stats?.appointments_today}
-              loading={loading}
-            />
-            <StatCard
-              label="Consultas esta semana"
-              value={stats?.appointments_week}
-              loading={loading}
-            />
-            <StatCard
-              label="Total de pacientes"
-              value={stats?.total_patients}
-              loading={loading}
-            />
-            <StatCard
-              label="Mensagens não lidas"
-              value={unreadMessages}
-              loading={loading}
-            />
-          </div>
-
-          {!loading &&
-            stats?.next_appointment &&
-            stats.next_appointment !== "N/A" && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
-                <Clock className="w-4 h-4 shrink-0" />
-                Próxima consulta às <strong>{stats.next_appointment}</strong>
-              </div>
-            )}
+          <AppointmentCalendar appointments={appointments} />
         </Card>
 
+        {/* Direita: Ações rápidas + Status geral */}
         <div className="space-y-6">
           {/* Ações rápidas */}
           <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -149,12 +112,8 @@ export default function DashboardHomePage() {
                 <div className="flex items-center gap-3">
                   <CalendarDays className="w-5 h-5 text-emerald-600 shrink-0" />
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Ver agenda
-                    </p>
-                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">
-                      Próximas consultas
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Ver agenda</p>
+                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">Próximas consultas</p>
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" />
@@ -168,12 +127,8 @@ export default function DashboardHomePage() {
                 <div className="flex items-center gap-3">
                   <Users className="w-5 h-5 text-blue-600 shrink-0" />
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Gerenciar
-                    </p>
-                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">
-                      Pacientes
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Gerenciar</p>
+                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">Pacientes</p>
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" />
@@ -187,12 +142,8 @@ export default function DashboardHomePage() {
                 <div className="flex items-center gap-3">
                   <MessageSquare className="w-5 h-5 text-amber-600 shrink-0" />
                   <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Caixa de entrada
-                    </p>
-                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">
-                      Mensagens de pacientes
-                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Caixa de entrada</p>
+                    <p className="mt-0.5 text-base font-semibold text-slate-900 dark:text-slate-100">Mensagens de pacientes</p>
                   </div>
                 </div>
                 <ArrowRight className="w-5 h-5 text-slate-400 dark:text-slate-500 shrink-0" />
@@ -200,39 +151,35 @@ export default function DashboardHomePage() {
             </div>
           </Card>
 
-          {/* Perfil */}
+          {/* Status geral (substituiu Dados do usuário) */}
           <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-                  Perfil
+                  Status geral
                 </p>
                 <h2 className="mt-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
-                  Dados do usuário
+                  Fluxo atual
                 </h2>
               </div>
               <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
-                <UserCheck className="w-6 h-6" />
+                <CalendarDays className="w-6 h-6" />
               </div>
             </div>
-            <div className="mt-8 space-y-3 text-slate-700 dark:text-slate-300">
-              <p>
-                <span className="font-semibold">Nome:</span>{" "}
-                {user?.full_name ?? "—"}
-              </p>
-              <p>
-                <span className="font-semibold">E-mail:</span>{" "}
-                {user?.email ?? "—"}
-              </p>
-              <p>
-                <span className="font-semibold">Perfil:</span>{" "}
-                {user?.role === "admin"
-                  ? "Administrador"
-                  : user?.role === "patient"
-                    ? "Paciente"
-                    : "Profissional"}
-              </p>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <StatCard label="Consultas hoje"        value={stats?.appointments_today} loading={loading} />
+              <StatCard label="Consultas esta semana" value={stats?.appointments_week}  loading={loading} />
+              <StatCard label="Total de pacientes"    value={stats?.total_patients}     loading={loading} />
+              <StatCard label="Mensagens não lidas"   value={unreadMessages}            loading={loading} />
             </div>
+
+            {!loading && stats?.next_appointment && stats.next_appointment !== "N/A" && (
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+                <Clock className="w-4 h-4 shrink-0" />
+                Próxima consulta às <strong>{stats.next_appointment}</strong>
+              </div>
+            )}
           </Card>
         </div>
       </div>

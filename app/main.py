@@ -16,7 +16,7 @@ from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from sqlalchemy import select, update as sa_update
+from sqlalchemy import select, update as sa_update, text
 from sqlalchemy.orm import joinedload
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -146,6 +146,12 @@ async def lifespan(app: FastAPI):
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Migração: coluna adicionada após criação inicial da tabela
+        try:
+            await conn.execute(text("ALTER TABLE patient_messages ADD COLUMN saved BOOLEAN DEFAULT 0"))
+            logger.info("Migração: coluna 'saved' adicionada em patient_messages.")
+        except Exception:
+            pass  # coluna já existe
     logger.info("Tabelas criadas/verificadas no banco de dados.")
 
     admin_email = getattr(settings, "ADMIN_EMAIL", "") or ""

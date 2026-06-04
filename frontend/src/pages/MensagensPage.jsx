@@ -1,7 +1,15 @@
 ﻿import { useEffect, useMemo, useState } from "react";
+import { toast } from "react-hot-toast";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/Button";
-import { Search, Mail, CheckCircle, MessageSquare } from "lucide-react";
+import { Search, Mail, CheckCircle, MessageSquare, Bookmark, BookmarkCheck } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../components/ui/dialog";
 import api from "../lib/api";
 
 export default function MensagensPage() {
@@ -9,6 +17,7 @@ export default function MensagensPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
+  const [selectedMessage, setSelectedMessage] = useState(null);
 
   const formatDate = (value) =>
     value
@@ -66,11 +75,30 @@ export default function MensagensPage() {
           message.id === messageId ? { ...message, is_read: true } : message,
         ),
       );
+      if (selectedMessage?.id === messageId) {
+        setSelectedMessage((m) => ({ ...m, is_read: true }));
+      }
     } catch (err) {
       console.error(err);
-      setError(
-        "Não foi possível marcar a mensagem como lida. Tente novamente.",
+      setError("Não foi possível marcar a mensagem como lida. Tente novamente.");
+    }
+  };
+
+  const handleSaveToPatient = async (messageId) => {
+    try {
+      await api.put(`/api/patient-messages/${messageId}/save`);
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === messageId ? { ...message, saved: true } : message,
+        ),
       );
+      if (selectedMessage?.id === messageId) {
+        setSelectedMessage((m) => ({ ...m, saved: true }));
+      }
+      toast.success("Mensagem salva no card do paciente.");
+    } catch (err) {
+      console.error(err);
+      toast.error("Não foi possível salvar a mensagem.");
     }
   };
 
@@ -83,6 +111,57 @@ export default function MensagensPage() {
 
   return (
     <div className="space-y-6">
+      {/* ── Dialog: Detalhe da mensagem ── */}
+      <Dialog open={!!selectedMessage} onOpenChange={(v) => !v && setSelectedMessage(null)}>
+        {selectedMessage && (
+          <DialogContent onClose={() => setSelectedMessage(null)} className="max-w-xl">
+            <DialogHeader>
+              <DialogTitle>Mensagem de {selectedMessage.patient_name || "Paciente"}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
+                <span>{formatDate(selectedMessage.created_at)}</span>
+                {selectedMessage.professional_name && (
+                  <span>· Para: <span className="font-medium">{selectedMessage.professional_name}</span></span>
+                )}
+                <span>·</span>
+                {selectedMessage.is_read ? (
+                  <span className="text-emerald-600 font-medium flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Lida
+                  </span>
+                ) : (
+                  <span className="text-amber-500 font-medium">Não lida</span>
+                )}
+                {selectedMessage.saved && (
+                  <span className="text-blue-600 font-medium flex items-center gap-1">
+                    <BookmarkCheck className="w-3 h-3" /> Salva no paciente
+                  </span>
+                )}
+              </div>
+              <div className="rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 p-4">
+                <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed">
+                  {selectedMessage.message}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              {!selectedMessage.is_read && (
+                <Button variant="secondary" onClick={() => handleMarkAsRead(selectedMessage.id)}>
+                  <CheckCircle className="w-4 h-4 mr-2" /> Marcar como lida
+                </Button>
+              )}
+              {!selectedMessage.saved && (
+                <Button
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => handleSaveToPatient(selectedMessage.id)}
+                >
+                  <Bookmark className="w-4 h-4 mr-2" /> Salvar no paciente
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
       <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
         <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between gap-3">
@@ -214,7 +293,8 @@ export default function MensagensPage() {
                   filteredMessages.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
+                      className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
+                      onClick={() => setSelectedMessage(item)}
                     >
                       <td className="px-4 py-4 font-medium text-slate-900 dark:text-slate-100">
                         {item.patient_name || "—"}
@@ -239,16 +319,23 @@ export default function MensagensPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-4">
-                        {!item.is_read && (
-                          <Button
-                            variant="secondary"
-                            className="h-9 px-3"
-                            onClick={() => handleMarkAsRead(item.id)}
-                          >
-                            <CheckCircle className="w-4 h-4 mr-2" /> Marcar lida
-                          </Button>
-                        )}
+                      <td className="px-4 py-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
+                          {!item.is_read && (
+                            <Button
+                              variant="secondary"
+                              className="h-9 px-3"
+                              onClick={() => handleMarkAsRead(item.id)}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" /> Marcar lida
+                            </Button>
+                          )}
+                          {item.saved && (
+                            <span title="Salva no paciente">
+                              <BookmarkCheck className="w-4 h-4 text-blue-500" />
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

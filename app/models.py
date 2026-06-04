@@ -268,6 +268,7 @@ class PatientMessage(Base):
 
     message = Column(Text, nullable=False)
     is_read = Column(Boolean, default=False)                # Controle de leitura pelo profissional
+    saved = Column(Boolean, default=False)                  # Salvo no card do paciente pelo profissional
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
@@ -284,6 +285,28 @@ class PatientMessage(Base):
     def professional_name(self) -> str | None:
         p = self.__dict__.get("professional")
         return p.name if p else None
+
+
+# ═════════════════════════════════════════════════════════════════════
+# ANAMNESE
+# ═════════════════════════════════════════════════════════════════════
+
+class AnamnesisEntry(Base):
+    """
+    Perguntas e respostas da anamnese de um paciente.
+    Cada entrada representa uma questão com sua respectiva resposta.
+    """
+    __tablename__ = "anamnesis_entries"
+
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    patient = relationship("Patient", backref="anamnesis_entries")
 
 
 # ═════════════════════════════════════════════════════════════════════

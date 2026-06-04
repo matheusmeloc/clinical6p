@@ -66,14 +66,6 @@ export default function LoginPage() {
         message: patientFormData.message,
       });
       toast.success("Mensagem enviada! Seu psicólogo receberá em breve.");
-      toast(
-        "Interface do paciente está em desenvolvimento. Em breve disponível!",
-        {
-          icon: "🚧",
-          duration: 6000,
-          style: { fontWeight: 500 },
-        },
-      );
       setPatientFormData({ cpf: "", password: "", message: "" });
     } catch (error) {
       toast.error(error.response?.data?.detail || "Erro ao enviar mensagem");

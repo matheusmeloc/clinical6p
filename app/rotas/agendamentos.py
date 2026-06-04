@@ -35,6 +35,7 @@ def _appointment_to_dict(a: Appointment) -> dict[str, Any]:
         "professional_id": a.professional_id,
         "patient_name": a.patient.name if getattr(a, 'patient', None) else None,
         "professional_name": a.professional.name if getattr(a, 'professional', None) else None,
+        "care_modality": a.patient.care_modality if getattr(a, 'patient', None) else None,
         "date": str(a.date),
         "time": str(a.time),
         "type": a.type,

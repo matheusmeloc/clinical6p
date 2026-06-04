@@ -11,10 +11,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 
+from pydantic import BaseModel
 from app.database import AsyncSession, get_db
-from app.models import Patient
+from app.models import Patient, AnamnesisEntry, Professional
 from app.schemas import PatientCreate, PatientUpdate
-from app.auth import get_password_hash
+from app.auth import get_password_hash, get_current_user
 from app.email_utils import bg_send_patient_welcome_email
 
 
@@ -84,14 +85,28 @@ async def _reload_with_professional(db: AsyncSession, patient_id: int) -> Patien
 # ═════════════════════════════════════════════════════════════════════
 
 @router.get("")
-async def list_patients(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    O que esta 'função' faz? É o "Atendente do Arquivo Médico".
-    Quando a tela de Pacientes do site carrega, ela chama essa função.
-    O atendente vai lá, pega os primeiros 100 pacientes na pasta (limit), passa eles pelo Tradutor (acima) e devolve a listona pronta pra ser desenhada na tabela da tela!
-    """
+async def list_patients(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[dict[str, Any]]:
     stmt = select(Patient).options(selectinload(Patient.professional)).offset(skip).limit(limit).order_by(Patient.id)
+
+    role = current_user.get("role", "")
+    caller_email = current_user.get("email", "")
+
+    if role != "admin":
+        # Filtra apenas os pacientes vinculados ao profissional logado
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id_result = await db.execute(stmt_prof)
+        prof_id = prof_id_result.scalar()
+        if prof_id:
+            stmt = stmt.where(Patient.professional_id == prof_id)
+        else:
+            # Usuário não está associado a nenhum profissional — retorna lista vazia
+            return []
+
     result = await db.execute(stmt)
     patients = result.scalars().all()
 
@@ -211,3 +226,127 @@ async def update_patient(
         return _patient_to_dict(updated_patient)
     else:
         raise HTTPException(status_code=500, detail="Error fetching updated patient")
+
+
+# ═════════════════════════════════════════════════════════════════════
+# ANAMNESE
+# ═════════════════════════════════════════════════════════════════════
+
+class AnamnesisCreate(BaseModel):
+    question: str
+    answer: str | None = None
+
+
+@router.get("/{patient_id}/anamnesis")
+async def list_anamnesis(
+    patient_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[dict]:
+    stmt = (
+        select(AnamnesisEntry)
+        .where(AnamnesisEntry.patient_id == patient_id)
+        .order_by(AnamnesisEntry.created_at)
+    )
+    result = await db.execute(stmt)
+    entries = result.scalars().all()
+    return [
+        {"id": e.id, "question": e.question, "answer": e.answer, "created_at": e.created_at}
+        for e in entries
+    ]
+
+
+@router.post("/{patient_id}/anamnesis")
+async def create_anamnesis_entry(
+    patient_id: int,
+    body: AnamnesisCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    entry = AnamnesisEntry(
+        patient_id=patient_id,
+        question=body.question.strip(),
+        answer=body.answer.strip() if body.answer else None,
+    )
+    db.add(entry)
+    await db.commit()
+    await db.refresh(entry)
+    return {"id": entry.id, "question": entry.question, "answer": entry.answer, "created_at": entry.created_at}
+
+
+@router.post("/{patient_id}/summary")
+async def generate_patient_summary(
+    patient_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> dict:
+    """Gera um resumo clínico das mensagens salvas do paciente usando Groq (Llama 3)."""
+    from groq import AsyncGroq
+    from app.config import settings
+    from app.models import PatientMessage
+
+    if not settings.GROQ_API_KEY:
+        raise HTTPException(status_code=503, detail="Chave da API de IA não configurada.")
+
+    # Busca paciente
+    stmt_p = select(Patient).where(Patient.id == patient_id)
+    result_p = await db.execute(stmt_p)
+    patient = result_p.scalars().first()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Paciente não encontrado.")
+
+    # Busca mensagens salvas
+    stmt_m = (
+        select(PatientMessage)
+        .where(PatientMessage.patient_id == patient_id, PatientMessage.saved == True)
+        .order_by(PatientMessage.created_at)
+    )
+    result_m = await db.execute(stmt_m)
+    messages = result_m.scalars().all()
+
+    if not messages:
+        raise HTTPException(status_code=400, detail="Nenhuma mensagem salva para resumir.")
+
+    msgs_text = "\n\n".join(
+        f"[{m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else '—'}]\n{m.message}"
+        for m in messages
+    )
+
+    prompt = f"""Você é um assistente clínico de psicologia. Analise as anotações abaixo enviadas pelo paciente {patient.name} ao longo do tempo.
+
+Produza um resumo clínico objetivo em português, organizado nos seguintes tópicos:
+1. Padrões emocionais recorrentes
+2. Eventos ou situações relevantes mencionados
+3. Pontos de atenção ou alertas
+4. Evolução percebida ao longo das mensagens
+
+Seja conciso e clínico. Não invente informações além do que está nas mensagens.
+
+Mensagens do paciente:
+{msgs_text}"""
+
+    client = AsyncGroq(api_key=settings.GROQ_API_KEY)
+    response = await client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.3,
+        max_tokens=1024,
+    )
+
+    summary = response.choices[0].message.content
+    return {"summary": summary, "messages_count": len(messages)}
+
+
+@router.delete("/anamnesis/{entry_id}", status_code=204)
+async def delete_anamnesis_entry(
+    entry_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> None:
+    stmt = select(AnamnesisEntry).where(AnamnesisEntry.id == entry_id)
+    result = await db.execute(stmt)
+    entry = result.scalars().first()
+    if not entry:
+        raise HTTPException(status_code=404, detail="Entrada não encontrada.")
+    await db.delete(entry)
+    await db.commit()

@@ -283,6 +283,7 @@ class PatientMessageResponse(PatientMessageBase):
     patient_name: Optional[str] = None
     professional_name: Optional[str] = None
     created_at: Optional[datetime] = None
+    saved: Optional[bool] = False
 
     model_config = ConfigDict(from_attributes=True)
 
