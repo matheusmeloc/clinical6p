@@ -114,15 +114,22 @@ async def list_patients(
 
 
 @router.get("/{patient_id}")
-async def get_patient(patient_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta 'função' é chamada quando queremos abrir a "Ficha de Detalhes" de UM único paciente que já clicamos na tela.
-    Pega o número dele (ID), busca a pasta correspondente. Se não existir, responde Erro 404 (Falha - Não encontrado).
-    """
+async def get_patient(
+    patient_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
     patient = await _reload_with_professional(db, patient_id)
     if not patient:
         raise HTTPException(status_code=404, detail="Patient not found")
+
+    # Não-admins só podem acessar seus próprios pacientes
+    if current_user.get("role") != "admin":
+        caller_email = current_user.get("email", "")
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id = (await db.execute(stmt_prof)).scalar()
+        if not prof_id or patient.professional_id != prof_id:
+            raise HTTPException(status_code=403, detail="Acesso negado a este paciente.")
 
     return _patient_to_dict(patient)
 
@@ -243,6 +250,16 @@ async def list_anamnesis(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ) -> list[dict]:
+    # Verifica ownership antes de retornar dados clínicos
+    if current_user.get("role") != "admin":
+        caller_email = current_user.get("email", "")
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id = (await db.execute(stmt_prof)).scalar()
+        stmt_pat = select(Patient.professional_id).where(Patient.id == patient_id)
+        owner_id = (await db.execute(stmt_pat)).scalar()
+        if not prof_id or owner_id != prof_id:
+            raise HTTPException(status_code=403, detail="Acesso negado a este paciente.")
+
     stmt = (
         select(AnamnesisEntry)
         .where(AnamnesisEntry.patient_id == patient_id)

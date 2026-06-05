@@ -34,6 +34,9 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
+_JWT_AUDIENCE = "clinical6p-api"
+_JWT_ISSUER   = "clinical6p"
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Gera um JWT assinado com os dados fornecidos e prazo de expiração."""
     to_encode = data.copy()
@@ -41,6 +44,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
         expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     to_encode["exp"] = expire
+    to_encode["aud"] = _JWT_AUDIENCE
+    to_encode["iss"] = _JWT_ISSUER
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
@@ -53,6 +58,8 @@ def get_current_user(
             credentials.credentials,
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
+            audience=_JWT_AUDIENCE,
+            issuer=_JWT_ISSUER,
         )
         return payload
     except jwt.ExpiredSignatureError:
