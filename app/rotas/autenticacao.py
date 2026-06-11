@@ -65,6 +65,7 @@ async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends
                 "email": user.email,
                 "full_name": user.full_name,
                 "role": user.role,
+                "photo": user.photo,
             }
 
         # --- Tenta login como paciente (tabela Patients) ---
@@ -93,7 +94,7 @@ async def login(request: Request, body: LoginRequest, db: AsyncSession = Depends
         raise
     except Exception as e:
         logger.error(f"Erro inesperado no login: {e}", exc_info=True)
-        raise HTTPException(status_code=503, detail=f"Erro de conexão com o banco de dados: {type(e).__name__}: {e}")
+        raise HTTPException(status_code=503, detail="Serviço temporariamente indisponível. Tente novamente.")
 
 
 @router.post("/forgot-password")

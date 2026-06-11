@@ -184,6 +184,13 @@ async def send_patient_message_notification(
     ) == "ok"
 
 
+def _format_cpf(cpf: str) -> str:
+    digits = "".join(c for c in cpf if c.isdigit())
+    if len(digits) == 11:
+        return f"{digits[:3]}.{digits[3:6]}.{digits[6:9]}-{digits[9:]}"
+    return cpf
+
+
 async def send_patient_welcome_email(
     db: AsyncSession,
     patient_email: str,
@@ -202,7 +209,7 @@ async def send_patient_welcome_email(
         f"<p>Agora você pode acessar o portal para enviar mensagens sobre o seu dia a dia para o seu psicólogo.</p><br>"
         f"<p><strong>Seus dados de acesso:</strong></p>"
         f"<ul>"
-        f"  <li><strong>CPF (Login):</strong> {patient_cpf}</li>"
+        f"  <li><strong>CPF (Login):</strong> {_format_cpf(patient_cpf)}</li>"
         f"  <li><strong>Senha Provisória:</strong> {patient_password}</li>"
         f"</ul>"
         f"<p>Recomendamos que guarde esta senha com segurança.</p>"

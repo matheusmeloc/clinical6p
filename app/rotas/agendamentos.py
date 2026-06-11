@@ -14,6 +14,7 @@ from datetime import date
 from app.database import AsyncSession, get_db
 from app.models import Patient, Professional, Appointment
 from app.schemas import AppointmentCreate, AppointmentUpdate, AppointmentResponse
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/appointments", tags=["Agendamentos"])
 logger = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ def _appointment_to_dict(a: Appointment) -> dict[str, Any]:
         "professional_id": a.professional_id,
         "patient_name": a.patient.name if getattr(a, 'patient', None) else None,
         "professional_name": a.professional.name if getattr(a, 'professional', None) else None,
+        "care_modality": a.patient.care_modality if getattr(a, 'patient', None) else None,
         "date": str(a.date),
         "time": str(a.time),
         "type": a.type,
@@ -42,6 +44,14 @@ def _appointment_to_dict(a: Appointment) -> dict[str, Any]:
         "observations": a.observations,
         "created_at": a.created_at,
     }
+
+
+async def _get_prof_id_for_user(current_user: dict, db: AsyncSession) -> int | None:
+    """Retorna o professional_id do usuário logado, ou None se for admin."""
+    if current_user.get("role") == "admin":
+        return None
+    stmt = select(Professional.id).where(Professional.email == current_user.get("email", ""))
+    return (await db.execute(stmt)).scalar()
 
 
 def _query_with_relations():
@@ -63,15 +73,15 @@ def _query_with_relations():
 # ═════════════════════════════════════════════════════════════════════
 
 @router.get("/today")
-async def today_appointments(db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta 'função' atua como a "Secretária que Olha a Agenda de Hoje".
-    Ela usa o truque mágico acima para puxar os nomes, mas bota um filtro: "Traga apenas os registros ONDE (Where) a data for igualzinha ao dia exato de Hoje (date.today)".
-    Aí embala tudo, recorta os segundos do relógio pra ficar elegante (deixa só HH:MM) e manda pro Quadro-Resumo verde lá do site.
-    """
+async def today_appointments(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[dict[str, Any]]:
     try:
         stmt = _query_with_relations().where(Appointment.date == date.today()).order_by(Appointment.time)
+        prof_id = await _get_prof_id_for_user(current_user, db)
+        if prof_id:
+            stmt = stmt.where(Appointment.professional_id == prof_id)
         result = await db.execute(stmt)
 
         appointments = []
@@ -89,20 +99,20 @@ async def today_appointments(db: AsyncSession = Depends(get_db)) -> list[dict[st
 
 
 @router.get("/upcoming")
-async def upcoming_appointments(db: AsyncSession = Depends(get_db)) -> list[dict[str, Any]]:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta é a "Secretária das Próximas Consultas".
-    Filtro dela: "Onde (Where) a data for DE AMANHÃ EM DIANTE (> today)".
-    Como em um mês a clínica pode ter mil consultas no futuro, ela coloca um limite (limit(10)) para não travar o computador. E formata a data bem curtinha (só mês e dia, strftime("%d/%m")) para caber bonitinho no painel lá da tela.
-    """
+async def upcoming_appointments(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[dict[str, Any]]:
     try:
+        prof_id = await _get_prof_id_for_user(current_user, db)
         stmt = (
             _query_with_relations()
             .where(Appointment.date > date.today())
             .order_by(Appointment.date, Appointment.time)
             .limit(10)
         )
+        if prof_id:
+            stmt = stmt.where(Appointment.professional_id == prof_id)
         result = await db.execute(stmt)
 
         appointments = []
@@ -130,40 +140,43 @@ async def list_appointments(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ) -> list[dict[str, Any]]:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta 'função' é o Livro do Calendário completo dos agendamentos. Mostra tudo e qualquer coisa.
-    Você pode passar pra ela uma data específica (o date_filter) para "Filtrar". Se você jogar uma palavra totalmente aleatória que não é uma data válida pra ela (tipo "Batata"), ela não dá "Tela Azul". Ela percebe no bloco "try/except", diz "Opa, não entendi, então vou ignorar" (pass) e varre toda a agenda do mesmo jeito!
-    """
     query = _query_with_relations()
+
+    prof_id = await _get_prof_id_for_user(current_user, db)
+    if prof_id:
+        query = query.where(Appointment.professional_id == prof_id)
 
     if date_filter:
         try:
             filter_date = date.fromisoformat(date_filter)
             query = query.where(Appointment.date == filter_date)
         except ValueError:
-            pass # Ignora filtros mal formatados
+            pass
 
     result = await db.execute(query.order_by(Appointment.date, Appointment.time).offset(skip).limit(limit))
     return [_appointment_to_dict(a) for a in result.scalars().all()]
 
 
-@router.get("/{appointment_id}", response_model=AppointmentResponse)
-async def get_appointment(appointment_id: int, db: AsyncSession = Depends(get_db)) -> Appointment:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta 'função' busca os dados completões de UM ÚNICO agendamento quando você clica em "Ver Detalhes" na tela.
-    Se você inventar o ID número 9999 e a consulta não existir, ela joga a toalha e grita: Erro 404 (Falha - Não encontrado).
-    """
-    stmt = select(Appointment).where(Appointment.id == appointment_id)
+@router.get("/{appointment_id}")
+async def get_appointment(
+    appointment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, Any]:
+    stmt = _query_with_relations().where(Appointment.id == appointment_id)
     result = await db.execute(stmt)
     appt = result.scalars().first()
 
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
-    return appt
+    prof_id = await _get_prof_id_for_user(current_user, db)
+    if prof_id and appt.professional_id != prof_id:
+        raise HTTPException(status_code=403, detail="Acesso negado a este agendamento.")
+
+    return _appointment_to_dict(appt)
 
 
 @router.post("", response_model=AppointmentResponse)
@@ -195,7 +208,8 @@ async def create_appointment(appointment: AppointmentCreate, db: AsyncSession = 
 async def update_appointment(
     appointment_id: int,
     appointment_update: AppointmentUpdate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
 ) -> dict[str, Any]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
@@ -209,7 +223,10 @@ async def update_appointment(
     if not db_appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
 
-    # exclude_unset=True previne a sobrescrita por campos Nulos não preenchidos no form do frontend
+    prof_id = await _get_prof_id_for_user(current_user, db)
+    if prof_id and db_appt.professional_id != prof_id:
+        raise HTTPException(status_code=403, detail="Acesso negado a este agendamento.")
+
     for key, value in appointment_update.model_dump(exclude_unset=True).items():
         setattr(db_appt, key, value)
 
@@ -226,19 +243,21 @@ async def update_appointment(
 
 
 @router.delete("/{appointment_id}")
-async def delete_appointment(appointment_id: int, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta é a "Função Detonadora".
-    Cedeu ao paciente? Cancelou tudo para vida toda? Ela pega o agendamento lá no fundo da gaveta e manda pra lixeira permanentemente (delete).
-    Se o agendamento já não tava nem lá, ela avisa com o clássico Erro 404.
-    """
+async def delete_appointment(
+    appointment_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> dict[str, str]:
     stmt = select(Appointment).where(Appointment.id == appointment_id)
     result = await db.execute(stmt)
     appt = result.scalars().first()
 
     if not appt:
         raise HTTPException(status_code=404, detail="Appointment not found")
+
+    prof_id = await _get_prof_id_for_user(current_user, db)
+    if prof_id and appt.professional_id != prof_id:
+        raise HTTPException(status_code=403, detail="Acesso negado a este agendamento.")
 
     await db.delete(appt)
     await db.commit()

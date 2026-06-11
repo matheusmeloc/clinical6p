@@ -14,9 +14,8 @@ from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-from sqlalchemy import select, update as sa_update
+from fastapi.responses import JSONResponse
+from sqlalchemy import select, update as sa_update, text
 from sqlalchemy.orm import joinedload
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -37,7 +36,6 @@ from app.rotas.dashboard import router as dashboard_router
 from app.rotas.pacientes import router as patients_router
 from app.rotas.profissionais import router as professionals_router
 from app.rotas.agendamentos import router as appointments_router
-from app.rotas.receitas import router as prescriptions_router
 from app.rotas.atestados import router as certificates_router
 from app.rotas.mensagens import router as messages_router
 from app.rotas.configuracoes import router as settings_router
@@ -146,6 +144,12 @@ async def lifespan(app: FastAPI):
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Migração: coluna adicionada após criação inicial da tabela
+        try:
+            await conn.execute(text("ALTER TABLE patient_messages ADD COLUMN saved BOOLEAN DEFAULT 0"))
+            logger.info("Migração: coluna 'saved' adicionada em patient_messages.")
+        except Exception:
+            pass  # coluna já existe
     logger.info("Tabelas criadas/verificadas no banco de dados.")
 
     admin_email = getattr(settings, "ADMIN_EMAIL", "") or ""
@@ -216,7 +220,6 @@ app.include_router(dashboard_router, dependencies=_staff)
 app.include_router(patients_router, dependencies=_staff)
 app.include_router(professionals_router, dependencies=_staff)
 app.include_router(appointments_router, dependencies=_staff)
-app.include_router(prescriptions_router, dependencies=_staff)
 app.include_router(certificates_router, dependencies=_staff)
 
 # Rotas exclusivas de admin (configurações globais, debug)
@@ -225,42 +228,6 @@ app.include_router(settings_router, dependencies=_admin)
 app.include_router(debug_router, dependencies=_admin)
 
 
-# ═════════════════════════════════════════════════════════════════════
-# ARQUIVOS ESTÁTICOS (FRONTEND)
-# ═════════════════════════════════════════════════════════════════════
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-
 @app.get("/health", tags=["infra"])
 async def health_check():
     return {"status": "ok", "version": "1.0.0"}
-
-
-@app.get("/")
-async def root():
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    O que é esta 'função' (async def)? Chamámos ela de 'root' (raiz).
-    Note que ela vem acompanhada de uma antena (@app.get("/")). Essa antena orienta o servidor.
-    Se o cliente apertar Enter apenas no endereço do site, sem barra nada (ex: "meusite.com/"),
-    o servidor intercepta o pedido e executa essa função. Esta função só possui o trabalho
-    de enviar de retorno a página HTML do login do administrativo: "static/index.html".
-    """
-    return FileResponse("static/index.html")
-
-
-@app.get("/login")
-async def login():
-    """
-    [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
-    Esta função entrega a tela de login unificada (Profissional e Paciente).
-    Lembre-se: o paciente não tem um site separado, ele usa a aba "Sou Paciente" nesta mesma tela.
-    """
-    return FileResponse("static/login.html")
-
-
-@app.get("/reset-password")
-async def reset_password_page():
-    """Página de redefinição de senha acessada via link no e-mail."""
-    return FileResponse("static/reset-password.html")

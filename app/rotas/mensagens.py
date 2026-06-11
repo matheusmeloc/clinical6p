@@ -17,6 +17,8 @@ from app.schemas import PatientMessageCreate, PatientMessageResponse
 from app.auth import verify_password, get_current_user
 from app.email_utils import bg_send_patient_message_notification
 
+from typing import Optional
+
 router = APIRouter(prefix="/api", tags=["Mensagens de Pacientes"])
 
 
@@ -71,6 +73,46 @@ async def send_patient_message(
 # ENDPOINTS DO DASHBOARD (LEITURA E GERENCIAMENTO)
 # ═════════════════════════════════════════════════════════════════════
 
+@router.get("/patients/{patient_id}/messages")
+async def list_patient_messages(
+    patient_id: int,
+    saved_only: bool = False,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+) -> list[dict]:
+    """Retorna mensagens de um paciente específico. Com saved_only=true retorna apenas as salvas no card."""
+    query = (
+        select(PatientMessage)
+        .where(PatientMessage.patient_id == patient_id)
+        .order_by(desc(PatientMessage.created_at))
+    )
+    if saved_only:
+        query = query.where(PatientMessage.saved == True)
+
+    role = current_user.get("role", "")
+    caller_email = current_user.get("email", "")
+    if role != "admin":
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id_result = await db.execute(stmt_prof)
+        prof_id = prof_id_result.scalar()
+        if prof_id:
+            query = query.where(PatientMessage.professional_id == prof_id)
+
+    result = await db.execute(query)
+    messages = result.scalars().all()
+
+    return [
+        {
+            "id": m.id,
+            "message": m.message,
+            "is_read": m.is_read,
+            "saved": m.saved,
+            "created_at": m.created_at,
+        }
+        for m in messages
+    ]
+
+
 @router.get("/patient-messages", response_model=list[PatientMessageResponse])
 async def list_messages(
     professional_id: int | None = None,
@@ -113,6 +155,7 @@ async def list_messages(
             "professional_id": m.professional_id,
             "message": m.message,
             "is_read": m.is_read,
+            "saved": m.saved,
             "patient_name": m.patient.name if m.patient else None,
             "professional_name": m.professional.name if m.professional else None,
             "created_at": m.created_at
@@ -151,6 +194,64 @@ async def count_unread_messages(
 
     count = await db.scalar(query) or 0
     return {"count": count}
+
+
+@router.put("/patient-messages/{message_id}/save")
+async def save_message_to_patient_card(
+    message_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+) -> dict[str, str]:
+    """Marca a mensagem como salva no card do paciente."""
+    stmt = select(PatientMessage).where(PatientMessage.id == message_id)
+    result = await db.execute(stmt)
+    msg = result.scalars().first()
+
+    if not msg:
+        raise HTTPException(status_code=404, detail="Mensagem não encontrada.")
+
+    role = current_user.get("role", "")
+    caller_email = current_user.get("email", "")
+
+    if role != "admin":
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id_result = await db.execute(stmt_prof)
+        prof_id = prof_id_result.scalar()
+        if not prof_id or msg.professional_id != prof_id:
+            raise HTTPException(status_code=403, detail="Você não tem permissão para salvar esta mensagem.")
+
+    msg.saved = True
+    await db.commit()
+    return {"message": "Mensagem salva no card do paciente."}
+
+
+@router.put("/patient-messages/{message_id}/unsave")
+async def unsave_message_from_patient_card(
+    message_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+) -> dict[str, str]:
+    """Remove a marcação de salvo no card do paciente."""
+    stmt = select(PatientMessage).where(PatientMessage.id == message_id)
+    result = await db.execute(stmt)
+    msg = result.scalars().first()
+
+    if not msg:
+        raise HTTPException(status_code=404, detail="Mensagem não encontrada.")
+
+    role = current_user.get("role", "")
+    caller_email = current_user.get("email", "")
+
+    if role != "admin":
+        stmt_prof = select(Professional.id).where(Professional.email == caller_email)
+        prof_id_result = await db.execute(stmt_prof)
+        prof_id = prof_id_result.scalar()
+        if not prof_id or msg.professional_id != prof_id:
+            raise HTTPException(status_code=403, detail="Você não tem permissão para alterar esta mensagem.")
+
+    msg.saved = False
+    await db.commit()
+    return {"message": "Mensagem removida do card do paciente."}
 
 
 @router.put("/patient-messages/{message_id}/read")

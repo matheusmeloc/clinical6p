@@ -12,8 +12,15 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from app.config import settings
 
-# Contexto de criptografia — Argon2 para hash de senhas
-pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+# Contexto de criptografia — Argon2 com parâmetros otimizados para resposta rápida
+# memory_cost: 19456 KB (~19 MB), time_cost: 2 iterações, parallelism: 1
+pwd_context = CryptContext(
+    schemes=["argon2"],
+    deprecated="auto",
+    argon2__memory_cost=19456,
+    argon2__time_cost=2,
+    argon2__parallelism=1,
+)
 
 # Esquema de autenticação: extrai o Bearer token do header Authorization
 security = HTTPBearer()
@@ -27,6 +34,9 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
+_JWT_AUDIENCE = "clinical6p-api"
+_JWT_ISSUER   = "clinical6p"
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Gera um JWT assinado com os dados fornecidos e prazo de expiração."""
     to_encode = data.copy()
@@ -34,6 +44,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
         expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     to_encode["exp"] = expire
+    to_encode["aud"] = _JWT_AUDIENCE
+    to_encode["iss"] = _JWT_ISSUER
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
@@ -46,6 +58,8 @@ def get_current_user(
             credentials.credentials,
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
+            audience=_JWT_AUDIENCE,
+            issuer=_JWT_ISSUER,
         )
         return payload
     except jwt.ExpiredSignatureError:

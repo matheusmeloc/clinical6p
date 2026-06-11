@@ -61,6 +61,9 @@ async def update_user_profile(
     if user_update.crp is not None:
         db_user.crp = user_update.crp
 
+    if user_update.photo is not None:
+        db_user.photo = user_update.photo
+
     await db.commit()
     await db.refresh(db_user)
 
@@ -69,7 +72,8 @@ async def update_user_profile(
         "full_name": db_user.full_name,
         "phone": db_user.phone,
         "role_title": db_user.role_title,
-        "crp": db_user.crp
+        "crp": db_user.crp,
+        "photo": db_user.photo,
     }
 
 

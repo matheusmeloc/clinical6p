@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/* Habilita dark mode via classe .dark no <html> */
+@variant dark (&:where(.dark, .dark *));
+
+html, body {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+@theme {
+  --color-primary: #2563eb;
+  --color-primary-dark: #1e40af;
+  --color-secondary: #f59e0b;
+  --color-text-main: #1e293b;
+  --color-text-muted: #64748b;
+  --color-surface: #f8fafc;
+}
+
+/* Dark mode — variáveis base */
+.dark {
+  color-scheme: dark;
+}

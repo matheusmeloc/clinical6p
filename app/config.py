@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     ADMIN_EMAIL: str = ""
     ADMIN_PASSWORD: str = ""
 
+    # Groq (IA para resumo de mensagens)
+    GROQ_API_KEY: str = ""
+
     # SMTP (configuração padrão, pode ser sobrescrita pelo banco)
     SMTP_SERVER: str = ""
     SMTP_PORT: int = 587
