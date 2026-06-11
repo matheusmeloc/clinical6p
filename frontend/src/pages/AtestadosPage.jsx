@@ -42,8 +42,11 @@ export default function AtestadosPage() {
     },
   });
 
-  const formatDate = (value) =>
-    value ? new Date(value).toLocaleDateString("pt-BR") : "—";
+  const formatDate = (value) => {
+    if (!value) return "—";
+    const iso = value.endsWith("Z") || value.includes("+") ? value : value + "Z";
+    return new Date(iso).toLocaleDateString("pt-BR");
+  };
 
   const filteredCertificates = useMemo(() => {
     const term = search.trim().toLowerCase();

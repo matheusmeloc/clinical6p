@@ -19,16 +19,18 @@ export default function MensagensPage() {
   const [search, setSearch] = useState("");
   const [selectedMessage, setSelectedMessage] = useState(null);
 
-  const formatDate = (value) =>
-    value
-      ? new Date(value).toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "—";
+  const formatDate = (value) => {
+    if (!value) return "—";
+    // Garante que o backend UTC seja interpretado corretamente (adiciona Z se ausente)
+    const iso = value.endsWith("Z") || value.includes("+") ? value : value + "Z";
+    return new Date(iso).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const filteredMessages = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -105,9 +107,8 @@ export default function MensagensPage() {
   const totalCount = messages.length;
   const unreadCount = messages.filter((item) => !item.is_read).length;
   const latestMessage = messages
-    .map((item) => item.created_at && new Date(item.created_at))
-    .filter(Boolean)
-    .sort((a, b) => b - a)[0];
+    .filter((item) => item.created_at)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]?.created_at;
 
   return (
     <div className="space-y-6">

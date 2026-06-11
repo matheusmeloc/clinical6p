@@ -39,7 +39,12 @@ async def send_patient_message(
     O Porteiro vê se a senha está correta. Se estiver falso, barra (Erro 401).
     Se estiver tudo OK, guarda a mensagem no arquivo. De bônus, notifica o "Carteiro Interno" (sen_patient_message_notification) para mandar um e-mail pro Psicólogo com o recado: "Você tem nova mensagem lá no sistema!".
     """
-    stmt = select(Patient).options(selectinload(Patient.professional)).where(Patient.cpf == message_data.cpf)
+    # Normaliza o CPF (remove pontos, traço e espaços) para aceitar qualquer formato
+    cpf_digits = "".join(c for c in message_data.cpf if c.isdigit())
+    from sqlalchemy import func as sa_func
+    stmt = select(Patient).options(selectinload(Patient.professional)).where(
+        sa_func.replace(sa_func.replace(sa_func.replace(Patient.cpf, ".", ""), "-", ""), " ", "") == cpf_digits
+    )
     result = await db.execute(stmt)
     patient = result.scalars().first()
 
