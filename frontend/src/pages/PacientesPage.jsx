@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { Card } from "../components/ui/Card";
@@ -23,7 +23,6 @@ import {
   Eye,
   BookmarkCheck,
   ClipboardList,
-  MessageSquare,
   User,
   Trash2,
 } from "lucide-react";
@@ -38,7 +37,6 @@ const SectionTitle = ({ children }) => (
   </p>
 );
 
-// Campo de leitura para o dialog de visualização
 const InfoRow = ({ label, value }) => (
   <div className="space-y-0.5">
     <p className="text-xs text-slate-400 dark:text-slate-500 uppercase tracking-wide">
@@ -50,6 +48,301 @@ const InfoRow = ({ label, value }) => (
   </div>
 );
 
+function PatientForm({ form, onSubmit, submitLabel, professionals, onCancel }) {
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = form;
+
+  const [cepLoading, setCepLoading] = useState(false);
+  const cepAbortRef = useRef(null);
+
+  const handleCepChange = async (e) => {
+    e.target.value = e.target.value
+      .replace(/\D/g, "")
+      .replace(/^(\d{5})(\d)/, "$1-$2")
+      .slice(0, 9);
+    register("address_cep").onChange(e);
+
+    const raw = e.target.value.replace(/\D/g, "");
+    if (raw.length !== 8) return;
+
+    if (cepAbortRef.current) cepAbortRef.current.abort();
+    const controller = new AbortController();
+    cepAbortRef.current = controller;
+
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${raw}/json/`, {
+        signal: controller.signal,
+      });
+      const data = await res.json();
+      if (data.erro) {
+        toast.error("CEP não encontrado.");
+        return;
+      }
+      setValue("address_street", data.logradouro || "");
+      setValue("address_neighborhood", data.bairro || "");
+      setValue("address_city", data.localidade || "");
+      setValue("address_state", data.uf || "");
+    } catch (err) {
+      if (err.name === "AbortError") return;
+      toast.error("Erro ao buscar CEP. Verifique sua conexão.");
+    } finally {
+      setCepLoading(false);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="grid gap-4 sm:grid-cols-2"
+    >
+      <SectionTitle>Dados pessoais</SectionTitle>
+
+      <div className="space-y-1.5">
+        <Label>Nome completo *</Label>
+        <Input
+          placeholder="Nome do paciente"
+          {...register("name", { required: "Obrigatório" })}
+        />
+        {errors.name && (
+          <p className="text-xs text-red-600">{errors.name.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>CPF</Label>
+        <Input
+          placeholder="000.000.000-00"
+          maxLength={14}
+          {...register("cpf")}
+          onChange={(e) => {
+            e.target.value = maskCPF(e.target.value);
+            register("cpf").onChange(e);
+          }}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Data de nascimento</Label>
+        <Input type="date" {...register("birth_date")} />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Gênero</Label>
+        <select className={selectClass} {...register("gender")}>
+          <option value="">Selecione</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Feminino">Feminino</option>
+          <option value="Não binário">Não binário</option>
+          <option value="Prefiro não informar">Prefiro não informar</option>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Estado civil</Label>
+        <select className={selectClass} {...register("marital_status")}>
+          <option value="">Selecione</option>
+          <option value="Solteiro(a)">Solteiro(a)</option>
+          <option value="Casado(a)">Casado(a)</option>
+          <option value="Divorciado(a)">Divorciado(a)</option>
+          <option value="Viúvo(a)">Viúvo(a)</option>
+          <option value="União estável">União estável</option>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Profissão</Label>
+        <Input
+          placeholder="Ex: Engenheiro, Professor..."
+          {...register("profession")}
+        />
+      </div>
+
+      <SectionTitle>Contato</SectionTitle>
+
+      <div className="space-y-1.5">
+        <Label>Telefone</Label>
+        <Input
+          placeholder="(11) 99999-0000"
+          maxLength={16}
+          {...register("phone")}
+          onChange={(e) => {
+            e.target.value = maskPhone(e.target.value);
+            register("phone").onChange(e);
+          }}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>E-mail</Label>
+        <Input
+          type="email"
+          placeholder="paciente@email.com"
+          {...register("email")}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>CEP</Label>
+        <div className="relative">
+          <Input
+            placeholder="00000-000"
+            maxLength={9}
+            {...register("address_cep")}
+            onChange={handleCepChange}
+          />
+          {cepLoading && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 animate-pulse">
+              Buscando...
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Cidade / Estado</Label>
+        <div className="flex gap-2">
+          <Input placeholder="Cidade" {...register("address_city")} />
+          <Input
+            placeholder="UF"
+            maxLength={2}
+            className="w-20 uppercase"
+            {...register("address_state")}
+            onChange={(e) => {
+              e.target.value = e.target.value
+                .replace(/[^a-zA-Z]/g, "")
+                .toUpperCase()
+                .slice(0, 2);
+              register("address_state").onChange(e);
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Bairro</Label>
+        <Input placeholder="Bairro" {...register("address_neighborhood")} />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Rua / Avenida</Label>
+        <Input placeholder="Nome da rua" {...register("address_street")} />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Número / Complemento</Label>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Nº"
+            className="w-24"
+            {...register("address_number")}
+          />
+          <Input
+            placeholder="Apto, Bloco..."
+            {...register("address_complement")}
+          />
+        </div>
+      </div>
+
+      <SectionTitle>Atendimento</SectionTitle>
+
+      <div className="space-y-1.5">
+        <Label>Profissional responsável</Label>
+        <select className={selectClass} {...register("professional_id")}>
+          <option value="">Sem responsável</option>
+          {professionals.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Tipo de atendimento</Label>
+        <select className={selectClass} {...register("attendance_type")}>
+          <option value="Particular">Particular</option>
+          <option value="Convênio">Convênio</option>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Plano de saúde</Label>
+        <Input
+          placeholder="Ex: Unimed, Amil..."
+          {...register("insurance_plan")}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Número do convênio</Label>
+        <Input
+          placeholder="Número da carteirinha"
+          {...register("insurance_number")}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Modalidade</Label>
+        <select className={selectClass} {...register("care_modality")}>
+          <option value="Presencial">Presencial</option>
+          <option value="Online">Online</option>
+          <option value="Híbrido">Híbrido</option>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Status</Label>
+        <select className={selectClass} {...register("status")}>
+          <option value="Ativo">Ativo</option>
+          <option value="Aguardando">Aguardando</option>
+          <option value="Inativo">Inativo</option>
+        </select>
+      </div>
+
+      <div className="sm:col-span-2 space-y-1.5">
+        <Label>Observações</Label>
+        <Textarea
+          rows={3}
+          placeholder="Informações adicionais..."
+          {...register("observations")}
+        />
+      </div>
+
+      <SectionTitle>Acesso ao portal</SectionTitle>
+
+      <div className="sm:col-span-2 space-y-1.5">
+        <Label>Nova senha de acesso</Label>
+        <Input
+          type="password"
+          placeholder="Deixe em branco para não alterar"
+          {...register("password")}
+        />
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          Usa o CPF como login no portal do paciente.
+        </p>
+      </div>
+
+      <DialogFooter className="sm:col-span-2">
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="bg-emerald-600 hover:bg-emerald-700"
+        >
+          {isSubmitting ? "Salvando..." : submitLabel}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
 export default function PacientesPage() {
   const [patients, setPatients] = useState([]);
   const [professionals, setProfessionals] = useState([]);
@@ -57,9 +350,7 @@ export default function PacientesPage() {
   const [loading, setLoading] = useState(true);
   const [hasLoadError, setHasLoadError] = useState(false);
 
-  // Dialog de cadastro
   const [createOpen, setCreateOpen] = useState(false);
-  // Dialog de visualização
   const [viewPatient, setViewPatient] = useState(null);
   const [viewTab, setViewTab] = useState("info");
   const [patientMessages, setPatientMessages] = useState([]);
@@ -71,7 +362,6 @@ export default function PacientesPage() {
   const [anamnesisForm, setAnamnesisForm] = useState({ question: "", answer: "" });
   const [anamnesisAdding, setAnamnesisAdding] = useState(false);
   const [showAnamnesisForm, setShowAnamnesisForm] = useState(false);
-  // Dialog de edição
   const [editPatient, setEditPatient] = useState(null);
 
   const createForm = useForm({
@@ -133,6 +423,12 @@ export default function PacientesPage() {
       : cpf;
   };
 
+  const formatCEP = (cep) => {
+    if (!cep) return "";
+    const d = cep.replace(/\D/g, "");
+    return d.replace(/^(\d{5})(\d)/, "$1-$2").slice(0, 9);
+  };
+
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -173,7 +469,6 @@ export default function PacientesPage() {
     (p) => p.status?.toLowerCase() === "aguardando",
   ).length;
 
-  // ── Abrir visualização ──
   const handleOpenView = async (patient) => {
     setViewPatient(patient);
     setViewTab("info");
@@ -261,7 +556,6 @@ export default function PacientesPage() {
     }
   };
 
-  // ── Cadastrar ──
   const handleCreate = async (data) => {
     try {
       const payload = buildPayload(data);
@@ -290,19 +584,18 @@ export default function PacientesPage() {
     }
   };
 
-  // ── Abrir edição (pré-preenche o form) ──
   const handleOpenEdit = (e, patient) => {
     e.stopPropagation();
     editForm.reset({
       name: patient.name || "",
-      cpf: formatCPF(patient.cpf),
+      cpf: formatCPF(patient.cpf) === "—" ? "" : formatCPF(patient.cpf),
       birth_date: patient.birth_date || "",
       gender: patient.gender || "",
       marital_status: patient.marital_status || "",
       profession: patient.profession || "",
       phone: patient.phone || "",
       email: patient.email || "",
-      address_cep: patient.address_cep || "",
+      address_cep: formatCEP(patient.address_cep),
       address_street: patient.address_street || "",
       address_number: patient.address_number || "",
       address_complement: patient.address_complement || "",
@@ -321,7 +614,6 @@ export default function PacientesPage() {
     setEditPatient(patient);
   };
 
-  // ── Salvar edição ──
   const handleEdit = async (data) => {
     try {
       const payload = buildPayload(data);
@@ -369,262 +661,6 @@ export default function PacientesPage() {
       observations: data.observations || null,
       password: data.password || null,
     };
-  }
-
-  // ── Formulário compartilhado (cadastro e edição) ──
-  function PatientForm({ form, onSubmit, submitLabel }) {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors, isSubmitting },
-    } = form;
-    return (
-      <form
-        onSubmit={handleSubmit(onSubmit)}
-        className="grid gap-4 sm:grid-cols-2"
-      >
-        <SectionTitle>Dados pessoais</SectionTitle>
-
-        <div className="space-y-1.5">
-          <Label>Nome completo *</Label>
-          <Input
-            placeholder="Nome do paciente"
-            {...register("name", { required: "Obrigatório" })}
-          />
-          {errors.name && (
-            <p className="text-xs text-red-600">{errors.name.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>CPF</Label>
-          <Input
-            placeholder="000.000.000-00"
-            maxLength={14}
-            {...register("cpf")}
-            onChange={(e) => {
-              e.target.value = maskCPF(e.target.value);
-              register("cpf").onChange(e);
-            }}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Data de nascimento</Label>
-          <Input type="date" {...register("birth_date")} />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Gênero</Label>
-          <select className={selectClass} {...register("gender")}>
-            <option value="">Selecione</option>
-            <option value="Masculino">Masculino</option>
-            <option value="Feminino">Feminino</option>
-            <option value="Não binário">Não binário</option>
-            <option value="Prefiro não informar">Prefiro não informar</option>
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Estado civil</Label>
-          <select className={selectClass} {...register("marital_status")}>
-            <option value="">Selecione</option>
-            <option value="Solteiro(a)">Solteiro(a)</option>
-            <option value="Casado(a)">Casado(a)</option>
-            <option value="Divorciado(a)">Divorciado(a)</option>
-            <option value="Viúvo(a)">Viúvo(a)</option>
-            <option value="União estável">União estável</option>
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Profissão</Label>
-          <Input
-            placeholder="Ex: Engenheiro, Professor..."
-            {...register("profession")}
-          />
-        </div>
-
-        <SectionTitle>Contato</SectionTitle>
-
-        <div className="space-y-1.5">
-          <Label>Telefone</Label>
-          <Input
-            placeholder="(11) 99999-0000"
-            maxLength={16}
-            {...register("phone")}
-            onChange={(e) => {
-              e.target.value = maskPhone(e.target.value);
-              register("phone").onChange(e);
-            }}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>E-mail</Label>
-          <Input
-            type="email"
-            placeholder="paciente@email.com"
-            {...register("email")}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>CEP</Label>
-          <Input
-            placeholder="00000-000"
-            maxLength={9}
-            {...register("address_cep")}
-            onChange={(e) => {
-              e.target.value = e.target.value
-                .replace(/\D/g, "")
-                .replace(/^(\d{5})(\d)/, "$1-$2")
-                .slice(0, 9);
-              register("address_cep").onChange(e);
-            }}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Cidade / Estado</Label>
-          <div className="flex gap-2">
-            <Input placeholder="Cidade" {...register("address_city")} />
-            <Input
-              placeholder="UF"
-              maxLength={2}
-              className="w-20 uppercase"
-              {...register("address_state")}
-              onChange={(e) => {
-                e.target.value = e.target.value
-                  .replace(/[^a-zA-Z]/g, "")
-                  .toUpperCase()
-                  .slice(0, 2);
-                register("address_state").onChange(e);
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Rua / Avenida</Label>
-          <Input placeholder="Nome da rua" {...register("address_street")} />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Número / Complemento</Label>
-          <div className="flex gap-2">
-            <Input
-              placeholder="Nº"
-              className="w-24"
-              {...register("address_number")}
-            />
-            <Input
-              placeholder="Apto, Bloco..."
-              {...register("address_complement")}
-            />
-          </div>
-        </div>
-
-        <SectionTitle>Atendimento</SectionTitle>
-
-        <div className="space-y-1.5">
-          <Label>Profissional responsável</Label>
-          <select className={selectClass} {...register("professional_id")}>
-            <option value="">Sem responsável</option>
-            {professionals.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Tipo de atendimento</Label>
-          <select className={selectClass} {...register("attendance_type")}>
-            <option value="Particular">Particular</option>
-            <option value="Convênio">Convênio</option>
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Plano de saúde</Label>
-          <Input
-            placeholder="Ex: Unimed, Amil..."
-            {...register("insurance_plan")}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Número do convênio</Label>
-          <Input
-            placeholder="Número da carteirinha"
-            {...register("insurance_number")}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Modalidade</Label>
-          <select className={selectClass} {...register("care_modality")}>
-            <option value="Presencial">Presencial</option>
-            <option value="Online">Online</option>
-            <option value="Híbrido">Híbrido</option>
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Status</Label>
-          <select className={selectClass} {...register("status")}>
-            <option value="Ativo">Ativo</option>
-            <option value="Aguardando">Aguardando</option>
-            <option value="Inativo">Inativo</option>
-          </select>
-        </div>
-
-        <div className="sm:col-span-2 space-y-1.5">
-          <Label>Observações</Label>
-          <Textarea
-            rows={3}
-            placeholder="Informações adicionais..."
-            {...register("observations")}
-          />
-        </div>
-
-        <SectionTitle>Acesso ao portal</SectionTitle>
-
-        <div className="sm:col-span-2 space-y-1.5">
-          <Label>Nova senha de acesso</Label>
-          <Input
-            type="password"
-            placeholder="Deixe em branco para não alterar"
-            {...register("password")}
-          />
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            Usa o CPF como login no portal do paciente.
-          </p>
-        </div>
-
-        <DialogFooter className="sm:col-span-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              setCreateOpen(false);
-              setEditPatient(null);
-            }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-emerald-600 hover:bg-emerald-700"
-          >
-            {isSubmitting ? "Salvando..." : submitLabel}
-          </Button>
-        </DialogFooter>
-      </form>
-    );
   }
 
   return (
@@ -710,6 +746,11 @@ export default function PacientesPage() {
             form={createForm}
             onSubmit={handleCreate}
             submitLabel="Cadastrar paciente"
+            professionals={professionals}
+            onCancel={() => {
+              setCreateOpen(false);
+              createForm.reset();
+            }}
           />
         </DialogContent>
       </Dialog>
@@ -817,7 +858,7 @@ export default function PacientesPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       <InfoRow label="Telefone" value={viewPatient.phone} />
                       <InfoRow label="E-mail" value={viewPatient.email} />
-                      <InfoRow label="CEP" value={viewPatient.address_cep} />
+                      <InfoRow label="CEP" value={formatCEP(viewPatient.address_cep) || viewPatient.address_cep} />
                       <InfoRow
                         label="Cidade / UF"
                         value={[
@@ -827,6 +868,7 @@ export default function PacientesPage() {
                           .filter(Boolean)
                           .join(" / ")}
                       />
+                      <InfoRow label="Bairro" value={viewPatient.address_neighborhood} />
                       <InfoRow label="Rua" value={viewPatient.address_street} />
                       <InfoRow
                         label="Número"
@@ -887,7 +929,6 @@ export default function PacientesPage() {
                     </div>
                   ) : (
                     <>
-                      {/* Lista de mensagens com scroll */}
                       <div
                         className="space-y-3 overflow-y-auto pr-1"
                         style={{ maxHeight: patientMessages.length > 4 ? "240px" : "none" }}
@@ -921,7 +962,6 @@ export default function PacientesPage() {
                         ))}
                       </div>
 
-                      {/* Botão gerar resumo */}
                       {!summary && (
                         <button
                           onClick={handleGenerateSummary}
@@ -942,7 +982,6 @@ export default function PacientesPage() {
                         </button>
                       )}
 
-                      {/* Card de resumo */}
                       {summary && (
                         <div className="rounded-xl border border-violet-200 dark:border-violet-800 bg-violet-50 dark:bg-violet-900/20 p-4 space-y-3">
                           <div className="flex items-center justify-between">
@@ -982,7 +1021,6 @@ export default function PacientesPage() {
               {/* Aba: Anamnese */}
               {viewTab === "anamnese" && (
                 <div className="flex flex-col gap-4">
-                  {/* Lista de questões com scroll a partir de 5 */}
                   {anamnesisLoading ? (
                     <div className="py-8 text-center text-slate-400 dark:text-slate-500 text-sm animate-pulse">
                       Carregando anamnese...
@@ -1031,7 +1069,6 @@ export default function PacientesPage() {
                         </div>
                       )}
 
-                      {/* Formulário inline de nova questão */}
                       {showAnamnesisForm && (
                         <form onSubmit={handleAddAnamnesis} className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 dark:bg-emerald-900/10 p-4 space-y-3">
                           <div className="space-y-1.5">
@@ -1079,7 +1116,6 @@ export default function PacientesPage() {
                         </form>
                       )}
 
-                      {/* Botão Adicionar */}
                       {!showAnamnesisForm && (
                         <button
                           onClick={() => setShowAnamnesisForm(true)}
@@ -1136,6 +1172,8 @@ export default function PacientesPage() {
               form={editForm}
               onSubmit={handleEdit}
               submitLabel="Salvar alterações"
+              professionals={professionals}
+              onCancel={() => setEditPatient(null)}
             />
           </DialogContent>
         )}
