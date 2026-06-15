@@ -87,6 +87,7 @@ async def get_dashboard_stats(
     now = datetime.now()
     next_app_stmt = (
         select(Appointment)
+        .options(selectinload(Appointment.patient), selectinload(Appointment.professional))
         .where(Appointment.date == today, Appointment.time > now.time(), *_appt_filter(prof_id))
         .order_by(Appointment.time)
         .limit(1)
@@ -96,19 +97,28 @@ async def get_dashboard_stats(
     if not next_app:
         future_app_stmt = (
             select(Appointment)
+            .options(selectinload(Appointment.patient), selectinload(Appointment.professional))
             .where(Appointment.date > today, *_appt_filter(prof_id))
             .order_by(Appointment.date, Appointment.time)
             .limit(1)
         )
         next_app = (await db.execute(future_app_stmt)).scalars().first()
 
-    next_time_str = next_app.time.strftime("%H:%M") if next_app else "N/A"
+    if next_app:
+        next_appointment = {
+            "time": next_app.time.strftime("%H:%M"),
+            "date": next_app.date.isoformat(),
+            "patient_name": next_app.patient_name or "",
+            "professional_name": next_app.professional_name or "",
+        }
+    else:
+        next_appointment = None
 
     return {
         "total_patients": total_patients,
         "appointments_today": appointments_today,
         "appointments_week": appointments_week,
-        "next_appointment": next_time_str,
+        "next_appointment": next_appointment,
     }
 
 

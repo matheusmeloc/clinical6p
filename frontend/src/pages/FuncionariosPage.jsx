@@ -255,56 +255,21 @@ export default function FuncionariosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-[1.5fr_1fr]">
-        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-                Funcionários
-              </p>
-              <h2 className="mt-3 text-2xl font-bold">Gestão da equipe</h2>
-            </div>
-            <div className="rounded-xl bg-blue-100 p-3 text-blue-700">
-              <Users className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-8 space-y-4 text-slate-700 dark:text-slate-300">
-            <p>Acompanhe a equipe de profissionais, revise permissões e atualize dados de contato com facilidade.</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {[
-                { label: "Profissionais ativos", value: activeCount },
-                { label: "Total", value: totalCount },
-                { label: "Inativos / Licença", value: inactiveCount },
-              ].map(({ label, value }) => (
-                <div key={label} className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-                  <p className="mt-3 text-3xl font-semibold">{value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Profissionais ativos</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{activeCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Em exercício atualmente.</p>
         </Card>
-
-        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-                Ações rápidas
-              </p>
-              <h2 className="mt-3 text-2xl font-bold">Ferramentas</h2>
-            </div>
-            <div className="rounded-xl bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
-              <Plus className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-8">
-            <Button
-              onClick={() => setCreateOpen(true)}
-              className="w-full justify-start gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="w-4 h-4" /> Cadastrar novo funcionário
-            </Button>
-          </div>
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Total</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{totalCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Cadastrados no sistema.</p>
+        </Card>
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Inativos / Licença</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{inactiveCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Fora de atividade.</p>
         </Card>
       </div>
 
@@ -343,14 +308,19 @@ export default function FuncionariosPage() {
             </p>
             <h2 className="mt-3 text-2xl font-bold">Equipe atual</h2>
           </div>
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por nome, função ou e-mail"
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-3 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
-            />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative max-w-sm w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por nome, função ou e-mail"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-3 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+            <Button onClick={() => setCreateOpen(true)} className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white">
+              <Plus className="w-4 h-4 mr-2" /> Novo funcionário
+            </Button>
           </div>
         </div>
 
