@@ -16,11 +16,90 @@ import {
 } from "../components/ui/dialog";
 import { CalendarDays, Plus, Search, Edit3, Eye, User, Stethoscope, Clock, FileText, MapPin, Wifi } from "lucide-react";
 import api from "../lib/api";
+import { formatDate, formatTime } from "../lib/formatters";
 
 const selectClass =
   "w-full rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-2.5 px-3 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100";
 
+// ── Formulário compartilhado — definido FORA do componente pai ──────────────
+// Importante: nunca defina componentes dentro de outro componente React.
+// Isso causaria remontagem completa a cada render, perdendo o estado interno.
+function AppointmentForm({
+  form, onSubmit, submitLabel, isEdit = false,
+  patients, professionals, today, onCancel,
+}) {
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2">
+      <div className="space-y-1.5">
+        <Label>Paciente *</Label>
+        <select className={selectClass} {...register("patient_id", { required: "Obrigatório" })}>
+          <option value="">Selecione um paciente</option>
+          {patients.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        {errors.patient_id && <p className="text-xs text-red-600">{errors.patient_id.message}</p>}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Profissional *</Label>
+        <select className={selectClass} {...register("professional_id", { required: "Obrigatório" })}>
+          <option value="">Selecione um profissional</option>
+          {professionals.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        {errors.professional_id && <p className="text-xs text-red-600">{errors.professional_id.message}</p>}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Data *</Label>
+        <Input type="date" min={isEdit ? undefined : today} {...register("date", { required: "Obrigatório" })} />
+        {errors.date && <p className="text-xs text-red-600">{errors.date.message}</p>}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Horário *</Label>
+        <Input type="time" {...register("time", { required: "Obrigatório" })} />
+        {errors.time && <p className="text-xs text-red-600">{errors.time.message}</p>}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Tipo de consulta</Label>
+        <select className={selectClass} {...register("type")}>
+          <option value="">Selecione</option>
+          <option value="Primeira Consulta">Primeira Consulta</option>
+          <option value="Retorno">Retorno</option>
+          <option value="Avaliação">Avaliação</option>
+          <option value="Urgência">Urgência</option>
+        </select>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Status</Label>
+        <select className={selectClass} {...register("status")}>
+          <option value="Aguardando">Aguardando</option>
+          <option value="Confirmado">Confirmado</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+      </div>
+
+      <div className="sm:col-span-2 space-y-1.5">
+        <Label>Observações</Label>
+        <Textarea rows={3} placeholder="Informações adicionais do atendimento" {...register("notes")} />
+      </div>
+
+      <DialogFooter className="sm:col-span-2">
+        <Button type="button" variant="secondary" onClick={onCancel}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
+          {isSubmitting ? "Salvando..." : submitLabel}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
 export default function AgendamentosPage() {
+
   const [appointments, setAppointments] = useState([]);
   const [patients, setPatients] = useState([]);
   const [professionals, setProfessionals] = useState([]);
@@ -31,8 +110,6 @@ export default function AgendamentosPage() {
   const [editAppointment, setEditAppointment] = useState(null);
   const [search, setSearch] = useState("");
 
-  const today = new Date().toISOString().split("T")[0];
-
   const createForm = useForm({
     defaultValues: {
       patient_id: "", professional_id: "", date: "", time: "", type: "", status: "Aguardando", notes: "",
@@ -41,10 +118,7 @@ export default function AgendamentosPage() {
 
   const editForm = useForm();
 
-  const formatDate = (value) =>
-    value ? new Date(value + "T00:00:00").toLocaleDateString("pt-BR") : "—";
-
-  const formatTime = (value) => value?.slice(0, 5) || "—";
+  const today = new Date().toISOString().split("T")[0];
 
   const filteredAppointments = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -68,8 +142,7 @@ export default function AgendamentosPage() {
       setAppointments(appointmentsRes.data);
       setPatients(patientsRes.data);
       setProfessionals(professionalsRes.data);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setHasLoadError(true);
       toast.error("Não foi possível carregar os dados. Tente novamente.");
     } finally {
@@ -137,78 +210,7 @@ export default function AgendamentosPage() {
     }
   };
 
-  // ── Formulário compartilhado ──
-  function AppointmentForm({ form, onSubmit, submitLabel, isEdit = false }) {
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Paciente *</Label>
-          <select className={selectClass} {...register("patient_id", { required: "Obrigatório" })}>
-            <option value="">Selecione um paciente</option>
-            {patients.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          {errors.patient_id && <p className="text-xs text-red-600">{errors.patient_id.message}</p>}
-        </div>
 
-        <div className="space-y-1.5">
-          <Label>Profissional *</Label>
-          <select className={selectClass} {...register("professional_id", { required: "Obrigatório" })}>
-            <option value="">Selecione um profissional</option>
-            {professionals.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-          {errors.professional_id && <p className="text-xs text-red-600">{errors.professional_id.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Data *</Label>
-          <Input type="date" min={isEdit ? undefined : today} {...register("date", { required: "Obrigatório" })} />
-          {errors.date && <p className="text-xs text-red-600">{errors.date.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Horário *</Label>
-          <Input type="time" {...register("time", { required: "Obrigatório" })} />
-          {errors.time && <p className="text-xs text-red-600">{errors.time.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Tipo de consulta</Label>
-          <select className={selectClass} {...register("type")}>
-            <option value="">Selecione</option>
-            <option value="Primeira Consulta">Primeira Consulta</option>
-            <option value="Retorno">Retorno</option>
-            <option value="Avaliação">Avaliação</option>
-            <option value="Urgência">Urgência</option>
-          </select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Status</Label>
-          <select className={selectClass} {...register("status")}>
-            <option value="Aguardando">Aguardando</option>
-            <option value="Confirmado">Confirmado</option>
-            <option value="Cancelado">Cancelado</option>
-          </select>
-        </div>
-
-        <div className="sm:col-span-2 space-y-1.5">
-          <Label>Observações</Label>
-          <Textarea rows={3} placeholder="Informações adicionais do atendimento" {...register("notes")} />
-        </div>
-
-        <DialogFooter className="sm:col-span-2">
-          <Button type="button" variant="secondary"
-            onClick={() => { setCreateOpen(false); setEditAppointment(null); }}>
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isSubmitting} className="bg-emerald-600 hover:bg-emerald-700">
-            {isSubmitting ? "Salvando..." : submitLabel}
-          </Button>
-        </DialogFooter>
-      </form>
-    );
-  }
 
   const todayCount      = appointments.filter((a) => a.date === today).length;
   const upcomingCount   = appointments.filter((a) => a.status !== "Cancelado").length;
@@ -254,7 +256,15 @@ export default function AgendamentosPage() {
             <DialogTitle>Novo agendamento</DialogTitle>
             <DialogDescription>Preencha os dados para agendar uma nova consulta.</DialogDescription>
           </DialogHeader>
-          <AppointmentForm form={createForm} onSubmit={handleCreate} submitLabel="Agendar consulta" />
+          <AppointmentForm
+            form={createForm}
+            onSubmit={handleCreate}
+            submitLabel="Agendar consulta"
+            patients={patients}
+            professionals={professionals}
+            today={today}
+            onCancel={() => { setCreateOpen(false); createForm.reset(); }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -342,7 +352,16 @@ export default function AgendamentosPage() {
                 {editAppointment.patient_name} · {formatDate(editAppointment.date)} às {formatTime(editAppointment.time)}
               </DialogDescription>
             </DialogHeader>
-            <AppointmentForm form={editForm} onSubmit={handleEdit} submitLabel="Salvar alterações" isEdit />
+            <AppointmentForm
+              form={editForm}
+              onSubmit={handleEdit}
+              submitLabel="Salvar alterações"
+              isEdit
+              patients={patients}
+              professionals={professionals}
+              today={today}
+              onCancel={() => setEditAppointment(null)}
+            />
           </DialogContent>
         )}
       </Dialog>

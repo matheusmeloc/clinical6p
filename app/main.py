@@ -1,4 +1,4 @@
-﻿"""
+"""
 Ponto de entrada principal da aplicação (FastAPI)
 Aqui configuramos:
 - CORS (para permitir que o frontend faça requisições)
@@ -10,11 +10,13 @@ Aqui configuramos:
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select, update as sa_update, text
 from sqlalchemy.orm import joinedload
 from slowapi import _rate_limit_exceeded_handler
@@ -144,31 +146,49 @@ async def lifespan(app: FastAPI):
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # Migração: coluna adicionada após criação inicial da tabela
-        try:
-            await conn.execute(text("ALTER TABLE patient_messages ADD COLUMN saved BOOLEAN DEFAULT 0"))
-            logger.info("Migração: coluna 'saved' adicionada em patient_messages.")
-        except Exception:
-            pass  # coluna já existe
     logger.info("Tabelas criadas/verificadas no banco de dados.")
 
-    admin_email = getattr(settings, "ADMIN_EMAIL", "") or ""
-    admin_password = getattr(settings, "ADMIN_PASSWORD", "") or ""
-    if admin_email and admin_password:
-        async with SessionLocal() as db:
-            result = await db.execute(select(User).where(User.email == admin_email))
-            if not result.scalars().first():
-                db.add(User(
-                    email=admin_email,
-                    hashed_password=get_password_hash(admin_password),
-                    full_name="Administrador",
-                    role="admin",
-                    is_active=True,
-                ))
-                await db.commit()
-                logger.info(f"Usuário admin criado: {admin_email}")
-    else:
-        logger.warning("ADMIN_EMAIL/ADMIN_PASSWORD não definidos — bootstrap de admin pulado.")
+    # Executa cada migração em uma transação separada para evitar que falhas individuais
+    # (ex: coluna já existente) abortem a transação inteira no PostgreSQL.
+    for table, col, col_type in [
+        ("patient_messages", "saved", "BOOLEAN DEFAULT FALSE"),
+        ("users", "phone", "VARCHAR"),
+        ("users", "role_title", "VARCHAR"),
+        ("users", "crp", "VARCHAR"),
+        ("users", "photo", "TEXT"),
+        ("users", "created_at", "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"),
+        ("patients", "photo", "VARCHAR")
+    ]:
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}"))
+            logger.info(f"Migração: coluna '{col}' adicionada em '{table}'.")
+        except Exception:
+            pass  # Silencioso se a coluna já existir
+
+    async with SessionLocal() as db:
+        # Verifica se o banco de dados está vazio (sem nenhum usuário cadastrado)
+        result_empty = await db.execute(select(User))
+        if not result_empty.scalars().first():
+            logger.info("Banco de dados vazio detectado. Populando com dados mock/seed...")
+            from app.seed import seed_mock_data
+            await seed_mock_data(db)
+        else:
+            # Caso contrário, apenas garante a criação do admin das variáveis de ambiente se configurado
+            admin_email = getattr(settings, "ADMIN_EMAIL", "") or ""
+            admin_password = getattr(settings, "ADMIN_PASSWORD", "") or ""
+            if admin_email and admin_password:
+                result = await db.execute(select(User).where(User.email == admin_email))
+                if not result.scalars().first():
+                    db.add(User(
+                        email=admin_email,
+                        hashed_password=get_password_hash(admin_password),
+                        full_name="Administrador",
+                        role="admin",
+                        is_active=True,
+                    ))
+                    await db.commit()
+                    logger.info(f"Usuário admin criado: {admin_email}")
 
     alarm_task = asyncio.create_task(appointment_alarm_task())
     logger.info("Tarefa de alarme de consultas iniciada.")
@@ -231,3 +251,31 @@ app.include_router(debug_router, dependencies=_admin)
 @app.get("/health", tags=["infra"])
 async def health_check():
     return {"status": "ok", "version": "1.0.0"}
+
+
+# ═════════════════════════════════════════════════════════════════════
+# MONTAGEM DO FRONTEND (REACT SPA)
+# ═════════════════════════════════════════════════════════════════════
+
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+
+if os.path.exists(frontend_dist):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
+    @app.get("/{catchall:path}")
+    async def serve_frontend(catchall: str):
+        # Ignora caminhos da API e da Documentação
+        if catchall.startswith("api") or catchall.startswith("docs") or catchall.startswith("redoc") or catchall.startswith("openapi.json") or catchall.startswith("health"):
+            return JSONResponse(status_code=404, content={"message": "Not Found"})
+        
+        # Se o caminho for um arquivo real na pasta dist (ex: favicon.svg), serve o arquivo
+        file_path = os.path.join(frontend_dist, catchall)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+            
+        # Caso contrário, serve o index.html (SPA routing do React Router)
+        index_path = os.path.join(frontend_dist, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+            
+        return JSONResponse(status_code=404, content={"message": "Frontend build files missing"})

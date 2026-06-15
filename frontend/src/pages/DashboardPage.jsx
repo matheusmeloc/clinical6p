@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import { Menu } from "lucide-react";
@@ -36,11 +36,18 @@ const getSectionFromPath = (pathname) => {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [user] = useState(() => getUserFromStorage());
+  const [user, setUser] = useState(() => getUserFromStorage());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
     () => localStorage.getItem("sidebarCollapsed") === "true",
   );
+
+  // Atualiza o user quando o localStorage muda (ex: após salvar o perfil em Configurações)
+  useEffect(() => {
+    const handleStorage = () => setUser(getUserFromStorage());
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const activeSection = getSectionFromPath(location.pathname);
   const pageTitle = pageTitleMap[activeSection] ?? "Dashboard";
