@@ -77,6 +77,7 @@ function MonthView({ current, appointments }) {
   const year  = current.getFullYear();
   const month = current.getMonth();
   const today = toYMD(new Date());
+  const [selectedDay, setSelectedDay] = useState(null);
 
   const cells = useMemo(() => {
     const firstDay   = new Date(year, month, 1).getDay();
@@ -106,6 +107,8 @@ function MonthView({ current, appointments }) {
     return map;
   }, [appointments]);
 
+  const selectedAppts = selectedDay ? (byDate[selectedDay] ?? []) : [];
+
   return (
     <div>
       {/* Weekday headers */}
@@ -120,22 +123,23 @@ function MonthView({ current, appointments }) {
       {/* Day cells */}
       <div className="grid grid-cols-7 border-l border-t border-slate-200 dark:border-slate-700">
         {cells.map(({ date, outside }, idx) => {
-          const ymd     = toYMD(date);
-          const isToday = ymd === today;
-          const appts   = byDate[ymd] ?? [];
-          const visible = appts.slice(0, 3);
-          const overflow = appts.length - 3;
+          const ymd      = toYMD(date);
+          const isToday  = ymd === today;
+          const isSelected = ymd === selectedDay;
+          const appts    = byDate[ymd] ?? [];
           const hasAppts = appts.length > 0;
 
           return (
             <div
               key={idx}
-              className={`relative group min-h-[90px] border-r border-b border-slate-200 dark:border-slate-700 p-1
+              onClick={() => !outside && setSelectedDay(isSelected ? null : ymd)}
+              className={`relative group border-r border-b border-slate-200 dark:border-slate-700 p-1
                 ${outside ? "bg-slate-50/50 dark:bg-slate-800/30" : "bg-white dark:bg-slate-800"}
-                ${hasAppts && !outside ? "cursor-default" : ""}`}
+                ${!outside ? "cursor-pointer" : ""}
+                ${isSelected ? "ring-2 ring-inset ring-emerald-400 dark:ring-emerald-600" : ""}`}
             >
-              {/* Tooltip on hover — only when there are appointments */}
-              {hasAppts && <DayTooltip appts={appts} />}
+              {/* Tooltip on hover — desktop only */}
+              {hasAppts && <div className="hidden sm:block"><DayTooltip appts={appts} /></div>}
 
               <p className={`text-xs font-semibold mb-1 w-6 h-6 flex items-center justify-center rounded-full
                 ${isToday
@@ -147,30 +151,64 @@ function MonthView({ current, appointments }) {
                 {date.getDate()}
               </p>
 
-              <div className="space-y-0.5">
-                {visible.map((a) => {
+              {/* Desktop: chips with text */}
+              <div className="hidden sm:block space-y-0.5">
+                {appts.slice(0, 3).map((a) => {
                   const mod  = MODALITY[a.care_modality] ?? MODALITY.Presencial;
                   const fade = STATUS_FADE[a.status] ?? "";
                   const time = a.time?.slice(0, 5) ?? "";
                   return (
-                    <div
-                      key={a.id}
-                      className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-tight truncate
-                        ${mod.bg} ${mod.text} ${fade}`}
-                    >
+                    <div key={a.id} className={`flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium leading-tight truncate ${mod.bg} ${mod.text} ${fade}`}>
                       <span className={`shrink-0 w-1.5 h-1.5 rounded-full ${mod.dot}`} />
                       <span className="truncate">{time} {a.patient_name?.split(" ")[0]}</span>
                     </div>
                   );
                 })}
-                {overflow > 0 && (
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 pl-1">+{overflow} mais</p>
+                {appts.length > 3 && (
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 pl-1">+{appts.length - 3} mais</p>
                 )}
               </div>
+
+              {/* Mobile: dots only */}
+              {hasAppts && !outside && (
+                <div className="flex sm:hidden flex-wrap gap-0.5 mt-0.5">
+                  {appts.slice(0, 4).map((a) => {
+                    const mod = MODALITY[a.care_modality] ?? MODALITY.Presencial;
+                    return <span key={a.id} className={`w-1.5 h-1.5 rounded-full ${mod.dot}`} />;
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
+
+      {/* Mobile: selected day detail panel */}
+      {selectedDay && (
+        <div className="sm:hidden mt-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+            {new Date(selectedDay + "T12:00:00").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+          </p>
+          {selectedAppts.length === 0 ? (
+            <p className="text-sm text-slate-400 dark:text-slate-500">Nenhuma consulta neste dia.</p>
+          ) : (
+            selectedAppts.sort((a, b) => a.time?.localeCompare(b.time)).map((a) => {
+              const mod  = MODALITY[a.care_modality] ?? MODALITY.Presencial;
+              const { Icon } = mod;
+              const fade = STATUS_FADE[a.status] ?? "";
+              return (
+                <div key={a.id} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${mod.bg} ${mod.text} ${fade}`}>
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold truncate">{a.time?.slice(0, 5)} · {a.patient_name ?? "—"}</p>
+                    <p className="text-xs opacity-75 truncate">{a.professional_name ?? ""} · {a.status}</p>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -327,7 +365,7 @@ export default function AppointmentCalendar({ appointments = [] }) {
       <Legend />
 
       {view === "month"
-        ? <div className="overflow-x-auto"><MonthView current={current} appointments={appointments} /></div>
+        ? <MonthView current={current} appointments={appointments} />
         : <WeekView current={current} appointments={appointments} />
       }
     </div>

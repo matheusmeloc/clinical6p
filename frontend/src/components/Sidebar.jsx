@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import logoPSI from "../assets/logoPSI.png";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
@@ -58,33 +59,25 @@ function SidebarContent({ user, isCollapsed, activeItem, onNavigate, onLogout, o
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex h-[60px] items-center justify-between px-4 border-b border-slate-100 dark:border-slate-700 shrink-0">
+      <div className="border-b border-slate-100 dark:border-slate-700 shrink-0">
         {(!isCollapsed || isMobile) ? (
-          <>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-sm shrink-0 shadow-sm">
-                IP
-              </div>
-              <div className="flex flex-col min-w-0">
-                <span className="font-semibold text-sm leading-none text-slate-900 dark:text-slate-100 truncate">
-                  Inst. de Psicologia
-                </span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 mt-1">Sistema clínico</span>
-              </div>
-            </div>
+          <div className="flex flex-col items-center pt-6 pb-4 px-4 relative">
             <button
               onClick={isMobile ? onClose : onToggleCollapse}
-              className="h-8 w-8 rounded-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 shrink-0 transition-colors"
+              className="absolute top-3 right-3 h-7 w-7 rounded-md flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
               aria-label={isMobile ? "Fechar menu" : "Recolher painel"}
             >
               {isMobile ? <X className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
-          </>
+            <img src={logoPSI} alt="Logo" className="w-20 h-20 object-contain mb-2" />
+            <span className="font-semibold text-sm text-slate-900 dark:text-slate-100 text-center leading-tight">
+              Inst. de Psicologia
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sistema clínico</span>
+          </div>
         ) : (
-          <div className="relative w-full flex justify-center">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold text-sm shadow-sm">
-              IP
-            </div>
+          <div className="relative flex justify-center py-3">
+            <img src={logoPSI} alt="Logo" className="w-9 h-9 object-contain" />
             <button
               onClick={onToggleCollapse}
               className="absolute -right-3 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 shadow-sm z-30 transition-colors"

@@ -20,7 +20,17 @@ export default function MensagensPage() {
   const [search, setSearch] = useState("");
   const [selectedMessage, setSelectedMessage] = useState(null);
 
-
+  const formatDate = (value) => {
+    if (!value) return "—";
+    const iso = value.endsWith("Z") || value.includes("+") ? value : value + "Z";
+    return new Date(iso).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   const filteredMessages = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -94,9 +104,8 @@ export default function MensagensPage() {
   const totalCount = messages.length;
   const unreadCount = messages.filter((item) => !item.is_read).length;
   const latestMessage = messages
-    .map((item) => item.created_at && new Date(item.created_at))
-    .filter(Boolean)
-    .sort((a, b) => b - a)[0];
+    .filter((item) => item.created_at)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]?.created_at;
 
   return (
     <div className="space-y-6">
@@ -151,75 +160,21 @@ export default function MensagensPage() {
           </DialogContent>
         )}
       </Dialog>
-      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-                Mensagens
-              </p>
-              <h2 className="mt-3 text-2xl font-bold">
-                Central de comunicação
-              </h2>
-            </div>
-            <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
-              <Mail className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="mt-8 space-y-4 text-slate-700 dark:text-slate-300">
-            <p>
-              Aqui você visualiza todas as mensagens enviadas pelos pacientes e
-              acompanha os atendimentos que ainda precisam de resposta.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Total de mensagens</p>
-                <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Não lidas</p>
-                <p className="mt-3 text-3xl font-semibold">{unreadCount}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Última mensagem</p>
-                <p className="mt-3 text-3xl font-semibold">
-                  {latestMessage ? formatDateTime(latestMessage.toISOString()) : "—"}
-                </p>
-              </div>
-            </div>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Total de mensagens</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{totalCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Mensagens recebidas.</p>
         </Card>
-
-        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-                Ações rápidas
-              </p>
-              <h2 className="mt-3 text-2xl font-bold">
-                Organize seu atendimento
-              </h2>
-            </div>
-            <div className="rounded-xl bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
-              <MessageSquare className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-8 space-y-4">
-            <Button
-              variant="ghost"
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-4 text-left hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 h-auto justify-between"
-              onClick={loadMessages}
-            >
-              <span>Atualizar mensagens</span>
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-4 text-left hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 h-auto justify-between"
-            >
-              <span>Responder no sistema do paciente</span>
-            </Button>
-          </div>
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Não lidas</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{unreadCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Aguardando leitura.</p>
+        </Card>
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Última mensagem</p>
+          <p className="mt-4 text-2xl font-bold text-slate-900 dark:text-slate-100">{formatDate(latestMessage)}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Data do último contato.</p>
         </Card>
       </div>
 
@@ -243,6 +198,9 @@ export default function MensagensPage() {
                 className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-3 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
+            <Button variant="secondary" onClick={loadMessages} className="shrink-0">
+              Atualizar
+            </Button>
           </div>
         </div>
 

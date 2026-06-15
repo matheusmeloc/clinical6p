@@ -224,22 +224,6 @@ export default function AgendamentosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-            Agendamentos
-          </p>
-          <h2 className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">Agenda de consultas</h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
-            Crie, revise e gerencie os agendamentos de pacientes e profissionais.
-          </p>
-        </div>
-        <Button onClick={() => setCreateOpen(true)}
-          className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
-          <Plus className="w-4 h-4" /> Novo agendamento
-        </Button>
-      </div>
-
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
@@ -389,11 +373,17 @@ export default function AgendamentosPage() {
             <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Agenda completa</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900 dark:text-slate-100">Próximos agendamentos</h2>
           </div>
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-            <Input className="pl-10" type="search" value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar por paciente ou profissional" />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+              <Input className="pl-10" type="search" value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por paciente ou profissional" />
+            </div>
+            <Button onClick={() => setCreateOpen(true)}
+              className="shrink-0 inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Plus className="w-4 h-4" /> Novo agendamento
+            </Button>
           </div>
         </div>
 

@@ -42,8 +42,11 @@ export default function AtestadosPage() {
     },
   });
 
-  const formatDate = (value) =>
-    value ? new Date(value).toLocaleDateString("pt-BR") : "—";
+  const formatDate = (value) => {
+    if (!value) return "—";
+    const iso = value.endsWith("Z") || value.includes("+") ? value : value + "Z";
+    return new Date(iso).toLocaleDateString("pt-BR");
+  };
 
   const filteredCertificates = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -140,63 +143,21 @@ export default function AtestadosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-                Atestados
-              </p>
-              <h2 className="mt-3 text-2xl font-bold">Gestão de atestados</h2>
-            </div>
-            <div className="rounded-xl bg-emerald-100 p-3 text-emerald-700">
-              <FileCheck className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="mt-8 space-y-4 text-slate-700 dark:text-slate-300">
-            <p>
-              Consulte os atestados emitidos, registre novos documentos e
-              mantenha o histórico de ausências ordenado.
-            </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Total de atestados</p>
-                <p className="mt-3 text-3xl font-semibold">{totalCount}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Médico</p>
-                <p className="mt-3 text-3xl font-semibold">{medicalCount}</p>
-              </div>
-              <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Comparecimento</p>
-                <p className="mt-3 text-3xl font-semibold">{attendanceCount}</p>
-              </div>
-            </div>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Total de atestados</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{totalCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Atestados emitidos no sistema.</p>
         </Card>
-
-        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">
-                Ações rápidas
-              </p>
-              <h2 className="mt-3 text-2xl font-bold">Registrar atestado</h2>
-            </div>
-            <div className="rounded-xl bg-slate-100 dark:bg-slate-700 p-3 text-slate-700 dark:text-slate-300">
-              <Clipboard className="w-6 h-6" />
-            </div>
-          </div>
-          <div className="mt-8 space-y-4">
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="w-full justify-between bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Novo atestado
-            </Button>
-          </div>
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Médico</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{medicalCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Atestados médicos emitidos.</p>
+        </Card>
+        <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6">
+          <p className="text-sm uppercase tracking-[0.24em] text-slate-500 dark:text-slate-400 font-semibold">Comparecimento</p>
+          <p className="mt-4 text-4xl font-bold text-slate-900 dark:text-slate-100">{attendanceCount}</p>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Declarações de comparecimento.</p>
         </Card>
       </div>
 
@@ -285,6 +246,9 @@ export default function AtestadosPage() {
                 className="w-full rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 py-3 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
               />
             </div>
+            <Button onClick={() => setDialogOpen(true)} className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Plus className="w-4 h-4 mr-2" /> Novo atestado
+            </Button>
           </div>
         </div>
 

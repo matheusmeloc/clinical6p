@@ -6,7 +6,8 @@ import { maskCPF } from "../lib/masks";
 import { Button } from "../components/Button";
 import { BackgroundBeamsWithCollision } from "../components/ui/background-beams-with-collision";
 import api from "../lib/api";
-import { Leaf, LogIn, User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { LogIn, User, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import logoPSI from "../assets/logoPSI.png";
 
 export default function LoginPage() {
   const [activeTab, setActiveTab] = useState("pro");
@@ -105,8 +106,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative z-10">
         {/* Logo acima do card */}
         <div className="flex flex-col items-center mb-6">
-          <div className="w-16 h-16 bg-white rounded-full shadow-md flex items-center justify-center mb-4">
-            <Leaf className="w-8 h-8 text-green-600" />
+          <div className="w-28 h-28 flex items-center justify-center mb-4">
+            <img src={logoPSI} alt="Logo" className="w-28 h-28 object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900">ClinicaPsi</h1>
           <h1 className="text-lg font-medium text-gray-700">
