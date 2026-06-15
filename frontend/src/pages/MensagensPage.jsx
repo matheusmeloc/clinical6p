@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Card } from "../components/ui/Card";
 import { Button } from "../components/Button";
@@ -11,6 +11,7 @@ import {
   DialogFooter,
 } from "../components/ui/dialog";
 import api from "../lib/api";
+import { formatDateTime } from "../lib/formatters";
 
 export default function MensagensPage() {
   const [messages, setMessages] = useState([]);
@@ -19,16 +20,7 @@ export default function MensagensPage() {
   const [search, setSearch] = useState("");
   const [selectedMessage, setSelectedMessage] = useState(null);
 
-  const formatDate = (value) =>
-    value
-      ? new Date(value).toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "—";
+
 
   const filteredMessages = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -49,12 +41,10 @@ export default function MensagensPage() {
   const loadMessages = async () => {
     setLoading(true);
     setError("");
-
     try {
       const response = await api.get("/api/patient-messages");
       setMessages(response.data);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError(
         "Não foi possível carregar as mensagens. Faça login e tente novamente.",
       );
@@ -78,8 +68,7 @@ export default function MensagensPage() {
       if (selectedMessage?.id === messageId) {
         setSelectedMessage((m) => ({ ...m, is_read: true }));
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Não foi possível marcar a mensagem como lida. Tente novamente.");
     }
   };
@@ -120,7 +109,7 @@ export default function MensagensPage() {
             </DialogHeader>
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
-                <span>{formatDate(selectedMessage.created_at)}</span>
+                <span>{formatDateTime(selectedMessage.created_at)}</span>
                 {selectedMessage.professional_name && (
                   <span>· Para: <span className="font-medium">{selectedMessage.professional_name}</span></span>
                 )}
@@ -195,7 +184,7 @@ export default function MensagensPage() {
               <div className="rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50 p-5">
                 <p className="text-sm text-slate-500 dark:text-slate-400">Última mensagem</p>
                 <p className="mt-3 text-3xl font-semibold">
-                  {formatDate(latestMessage)}
+                  {latestMessage ? formatDateTime(latestMessage.toISOString()) : "—"}
                 </p>
               </div>
             </div>
@@ -306,7 +295,7 @@ export default function MensagensPage() {
                         {item.message}
                       </td>
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
-                        {formatDate(item.created_at)}
+                        {formatDateTime(item.created_at)}
                       </td>
                       <td className="px-4 py-4 text-slate-600 dark:text-slate-400">
                         {item.is_read ? (

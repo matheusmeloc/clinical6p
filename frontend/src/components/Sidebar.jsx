@@ -1,4 +1,4 @@
-﻿import { useEffect } from "react";
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { cn } from "../lib/utils";
@@ -54,7 +54,7 @@ function NavItem({ item, active, onClick, isCollapsed }) {
   );
 }
 
-function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleCollapse, onClose, isMobile }) {
+function SidebarContent({ user, isCollapsed, activeItem, onNavigate, onLogout, onToggleCollapse, onClose, isMobile }) {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
@@ -108,7 +108,7 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
             <NavItem
               key={item.key}
               item={item}
-              active={false}
+              active={item.key === activeItem}
               isCollapsed={!isMobile && isCollapsed}
               onClick={() => onNavigate(item)}
             />
@@ -184,7 +184,7 @@ function SidebarContent({ user, isCollapsed, onNavigate, onLogout, onToggleColla
   );
 }
 
-export function Sidebar({ user, onSelect, onLogout, isOpen, onClose, isCollapsed = false, onToggleCollapse }) {
+export function Sidebar({ user, activeItem, onSelect, onLogout, isOpen, onClose, isCollapsed = false, onToggleCollapse }) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -221,6 +221,7 @@ export function Sidebar({ user, onSelect, onLogout, isOpen, onClose, isCollapsed
           <div className="relative z-10 w-[280px] h-full bg-white dark:bg-slate-800 shadow-2xl border-r border-slate-200 dark:border-slate-700 flex flex-col">
             <SidebarContent
               user={user}
+              activeItem={activeItem}
               isCollapsed={false}
               isMobile={true}
               onNavigate={handleNavigation}
@@ -240,6 +241,7 @@ export function Sidebar({ user, onSelect, onLogout, isOpen, onClose, isCollapsed
       >
         <SidebarContent
           user={user}
+          activeItem={activeItem}
           isCollapsed={isCollapsed}
           isMobile={false}
           onNavigate={handleNavigation}

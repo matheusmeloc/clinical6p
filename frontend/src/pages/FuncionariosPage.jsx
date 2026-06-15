@@ -26,6 +26,121 @@ const SectionTitle = ({ children }) => (
   </p>
 );
 
+// ── Formulário de profissional — definido FORA do componente pai ─────────────
+function ProfessionalForm({ form, onSubmit, submitLabel, isEdit = false, onCancel }) {
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2">
+      <SectionTitle>Dados profissionais</SectionTitle>
+
+      <div className="space-y-1.5">
+        <Label>Nome completo *</Label>
+        <Input
+          placeholder="Ex: Dra. Ana Lima"
+          {...register("name", { required: "Nome obrigatório" })}
+        />
+        {errors.name && <p className="text-xs text-red-600">{errors.name.message}</p>}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Função / Cargo *</Label>
+        <Input
+          placeholder="Ex: Psicóloga, Psiquiatra"
+          {...register("role", { required: "Função obrigatória" })}
+        />
+        {errors.role && <p className="text-xs text-red-600">{errors.role.message}</p>}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Registro profissional</Label>
+        <Input
+          placeholder="Ex: CRP 06/12345"
+          maxLength={20}
+          {...register("professional_register")}
+          onChange={(e) => {
+            e.target.value = maskRegister(e.target.value);
+            register("professional_register").onChange(e);
+          }}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Especialidade</Label>
+        <Input
+          placeholder="Ex: Terapia Cognitivo-Comportamental"
+          {...register("specialty")}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Status</Label>
+        <select className={selectClass} {...register("status")}>
+          <option value="Ativo">Ativo</option>
+          <option value="Inativo">Inativo</option>
+          <option value="Licença">Licença</option>
+        </select>
+      </div>
+
+      <SectionTitle>Contato</SectionTitle>
+
+      <div className="space-y-1.5">
+        <Label>E-mail</Label>
+        <Input
+          type="email"
+          placeholder="profissional@email.com"
+          {...register("email")}
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <Label>Telefone</Label>
+        <Input
+          placeholder="(11) 99999-0000"
+          maxLength={16}
+          {...register("phone")}
+          onChange={(e) => {
+            e.target.value = maskPhone(e.target.value);
+            register("phone").onChange(e);
+          }}
+        />
+      </div>
+
+      <SectionTitle>Acesso ao sistema</SectionTitle>
+
+      <div className="sm:col-span-2 space-y-1.5">
+        <Label>{isEdit ? "Nova senha de acesso" : "Senha de acesso"}</Label>
+        <Input
+          type="password"
+          placeholder={isEdit ? "Deixe em branco para não alterar" : "Deixe em branco para não criar login"}
+          {...register("password")}
+        />
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          {isEdit
+            ? "Somente preencha se quiser redefinir a senha deste funcionário."
+            : "Se preenchida, um login será criado automaticamente com o e-mail informado."}
+        </p>
+      </div>
+
+      <DialogFooter className="sm:col-span-2">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={onCancel}
+        >
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          {isSubmitting ? "Salvando..." : submitLabel}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
 export default function FuncionariosPage() {
   const [professionals, setProfessionals] = useState([]);
   const [search, setSearch] = useState("");
@@ -51,8 +166,7 @@ export default function FuncionariosPage() {
       try {
         const response = await api.get("/api/professionals");
         setProfessionals(response.data);
-      } catch (err) {
-        console.error(err);
+      } catch {
         setHasLoadError(true);
         toast.error("Não foi possível carregar a lista de profissionais.");
       } finally {
@@ -139,119 +253,7 @@ export default function FuncionariosPage() {
     }
   };
 
-  function ProfessionalForm({ form, onSubmit, submitLabel, isEdit = false }) {
-    const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2">
-        <SectionTitle>Dados profissionais</SectionTitle>
 
-        <div className="space-y-1.5">
-          <Label>Nome completo *</Label>
-          <Input
-            placeholder="Ex: Dra. Ana Lima"
-            {...register("name", { required: "Nome obrigatório" })}
-          />
-          {errors.name && <p className="text-xs text-red-600">{errors.name.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Função / Cargo *</Label>
-          <Input
-            placeholder="Ex: Psicóloga, Psiquiatra"
-            {...register("role", { required: "Função obrigatória" })}
-          />
-          {errors.role && <p className="text-xs text-red-600">{errors.role.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Registro profissional</Label>
-          <Input
-            placeholder="Ex: CRP 06/12345"
-            maxLength={20}
-            {...register("professional_register")}
-            onChange={(e) => {
-              e.target.value = maskRegister(e.target.value);
-              register("professional_register").onChange(e);
-            }}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Especialidade</Label>
-          <Input
-            placeholder="Ex: Terapia Cognitivo-Comportamental"
-            {...register("specialty")}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Status</Label>
-          <select className={selectClass} {...register("status")}>
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-            <option value="Licença">Licença</option>
-          </select>
-        </div>
-
-        <SectionTitle>Contato</SectionTitle>
-
-        <div className="space-y-1.5">
-          <Label>E-mail</Label>
-          <Input
-            type="email"
-            placeholder="profissional@email.com"
-            {...register("email")}
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Telefone</Label>
-          <Input
-            placeholder="(11) 99999-0000"
-            maxLength={16}
-            {...register("phone")}
-            onChange={(e) => {
-              e.target.value = maskPhone(e.target.value);
-              register("phone").onChange(e);
-            }}
-          />
-        </div>
-
-        <SectionTitle>Acesso ao sistema</SectionTitle>
-
-        <div className="sm:col-span-2 space-y-1.5">
-          <Label>{isEdit ? "Nova senha de acesso" : "Senha de acesso"}</Label>
-          <Input
-            type="password"
-            placeholder={isEdit ? "Deixe em branco para não alterar" : "Deixe em branco para não criar login"}
-            {...register("password")}
-          />
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            {isEdit
-              ? "Somente preencha se quiser redefinir a senha deste funcionário."
-              : "Se preenchida, um login será criado automaticamente com o e-mail informado."}
-          </p>
-        </div>
-
-        <DialogFooter className="sm:col-span-2">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => { setCreateOpen(false); setEditProfessional(null); }}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            {isSubmitting ? "Salvando..." : submitLabel}
-          </Button>
-        </DialogFooter>
-      </form>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -317,7 +319,12 @@ export default function FuncionariosPage() {
               Preencha os dados do profissional. Se informar e-mail e senha, ele poderá acessar o sistema.
             </DialogDescription>
           </DialogHeader>
-          <ProfessionalForm form={createForm} onSubmit={handleCreate} submitLabel="Cadastrar funcionário" />
+          <ProfessionalForm
+            form={createForm}
+            onSubmit={handleCreate}
+            submitLabel="Cadastrar funcionário"
+            onCancel={() => { setCreateOpen(false); createForm.reset(); }}
+          />
         </DialogContent>
       </Dialog>
 
@@ -329,7 +336,13 @@ export default function FuncionariosPage() {
               <DialogTitle>Editar funcionário</DialogTitle>
               <DialogDescription>Atualize os dados de {editProfessional.name}.</DialogDescription>
             </DialogHeader>
-            <ProfessionalForm form={editForm} onSubmit={handleEdit} submitLabel="Salvar alterações" isEdit />
+            <ProfessionalForm
+              form={editForm}
+              onSubmit={handleEdit}
+              submitLabel="Salvar alterações"
+              isEdit
+              onCancel={() => setEditProfessional(null)}
+            />
           </DialogContent>
         )}
       </Dialog>

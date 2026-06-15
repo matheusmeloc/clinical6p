@@ -244,8 +244,8 @@ export default function LoginPage() {
                     name="cpf"
                     value={patientFormData.cpf}
                     onChange={(e) => {
-                      e.target.value = maskCPF(e.target.value);
-                      handlePatientChange(e);
+                      const masked = maskCPF(e.target.value);
+                      setPatientFormData((prev) => ({ ...prev, cpf: masked }));
                     }}
                     placeholder="000.000.000-00"
                     maxLength={14}

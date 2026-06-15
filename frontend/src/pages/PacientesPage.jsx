@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from "../components/ui/dialog";
 import { maskPhone, maskCPF } from "../lib/masks";
+import { formatDate, formatDateTime, formatCPF, formatCEP } from "../lib/formatters";
 import {
   Users,
   Plus,
@@ -394,40 +395,7 @@ export default function PacientesPage() {
 
   const editForm = useForm();
 
-  const formatDate = (value) => {
-    if (!value) return "—";
-    const iso = value.includes("T") ? value : value + "T00:00:00";
-    const d = new Date(iso);
-    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR");
-  };
 
-  const formatDateTime = (value) => {
-    if (!value) return "—";
-    const d = new Date(value);
-    return isNaN(d.getTime())
-      ? "—"
-      : d.toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-  };
-
-  const formatCPF = (cpf) => {
-    if (!cpf) return "—";
-    const d = cpf.replace(/\D/g, "");
-    return d.length === 11
-      ? d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, "$1.$2.$3-$4")
-      : cpf;
-  };
-
-  const formatCEP = (cep) => {
-    if (!cep) return "";
-    const d = cep.replace(/\D/g, "");
-    return d.replace(/^(\d{5})(\d)/, "$1-$2").slice(0, 9);
-  };
 
   useEffect(() => {
     const load = async () => {
@@ -440,8 +408,7 @@ export default function PacientesPage() {
         ]);
         setPatients(patientsRes.data);
         setProfessionals(prosRes.data);
-      } catch (err) {
-        console.error(err);
+      } catch {
         setHasLoadError(true);
         toast.error("Não foi possível carregar os pacientes.");
       } finally {
