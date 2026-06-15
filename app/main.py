@@ -146,34 +146,25 @@ async def lifespan(app: FastAPI):
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # Migração: colunas adicionadas na tabela patient_messages
-        try:
-            await conn.execute(text("ALTER TABLE patient_messages ADD COLUMN saved BOOLEAN DEFAULT 0"))
-            logger.info("Migração: coluna 'saved' adicionada em patient_messages.")
-        except Exception:
-            pass  # coluna já existe
-            
-        # Migração: colunas adicionadas na tabela users
-        for col, col_type in [
-            ("phone", "VARCHAR"),
-            ("role_title", "VARCHAR"),
-            ("crp", "VARCHAR"),
-            ("photo", "TEXT"),
-            ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP")
-        ]:
-            try:
-                await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type}"))
-                logger.info(f"Migração: coluna '{col}' adicionada em users.")
-            except Exception:
-                pass
-
-        # Migração: colunas adicionadas na tabela patients
-        try:
-            await conn.execute(text("ALTER TABLE patients ADD COLUMN photo VARCHAR"))
-            logger.info("Migração: coluna 'photo' adicionada em patients.")
-        except Exception:
-            pass
     logger.info("Tabelas criadas/verificadas no banco de dados.")
+
+    # Executa cada migração em uma transação separada para evitar que falhas individuais
+    # (ex: coluna já existente) abortem a transação inteira no PostgreSQL.
+    for table, col, col_type in [
+        ("patient_messages", "saved", "BOOLEAN DEFAULT FALSE"),
+        ("users", "phone", "VARCHAR"),
+        ("users", "role_title", "VARCHAR"),
+        ("users", "crp", "VARCHAR"),
+        ("users", "photo", "TEXT"),
+        ("users", "created_at", "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP"),
+        ("patients", "photo", "VARCHAR")
+    ]:
+        try:
+            async with engine.begin() as conn:
+                await conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}"))
+            logger.info(f"Migração: coluna '{col}' adicionada em '{table}'.")
+        except Exception:
+            pass  # Silencioso se a coluna já existir
 
     async with SessionLocal() as db:
         # Verifica se o banco de dados está vazio (sem nenhum usuário cadastrado)
