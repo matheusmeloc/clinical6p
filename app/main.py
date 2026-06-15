@@ -174,12 +174,13 @@ async def lifespan(app: FastAPI):
             from app.seed import seed_mock_data
             await seed_mock_data(db)
         else:
-            # Caso contrário, apenas garante a criação do admin das variáveis de ambiente se configurado
+            # Caso contrário, garante que o admin existirá E terá a senha atualizada caso configurado via variáveis de ambiente do Render
             admin_email = getattr(settings, "ADMIN_EMAIL", "") or ""
             admin_password = getattr(settings, "ADMIN_PASSWORD", "") or ""
             if admin_email and admin_password:
                 result = await db.execute(select(User).where(User.email == admin_email))
-                if not result.scalars().first():
+                existing_admin = result.scalars().first()
+                if not existing_admin:
                     db.add(User(
                         email=admin_email,
                         hashed_password=get_password_hash(admin_password),
@@ -187,8 +188,11 @@ async def lifespan(app: FastAPI):
                         role="admin",
                         is_active=True,
                     ))
-                    await db.commit()
                     logger.info(f"Usuário admin criado: {admin_email}")
+                else:
+                    existing_admin.hashed_password = get_password_hash(admin_password)
+                    logger.info(f"Senha do admin '{admin_email}' sincronizada com as variáveis de ambiente.")
+                await db.commit()
 
     alarm_task = asyncio.create_task(appointment_alarm_task())
     logger.info("Tarefa de alarme de consultas iniciada.")
