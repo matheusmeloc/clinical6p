@@ -146,12 +146,33 @@ async def lifespan(app: FastAPI):
     """
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # Migração: coluna adicionada após criação inicial da tabela
+        # Migração: colunas adicionadas na tabela patient_messages
         try:
             await conn.execute(text("ALTER TABLE patient_messages ADD COLUMN saved BOOLEAN DEFAULT 0"))
             logger.info("Migração: coluna 'saved' adicionada em patient_messages.")
         except Exception:
             pass  # coluna já existe
+            
+        # Migração: colunas adicionadas na tabela users
+        for col, col_type in [
+            ("phone", "VARCHAR"),
+            ("role_title", "VARCHAR"),
+            ("crp", "VARCHAR"),
+            ("photo", "TEXT"),
+            ("created_at", "TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP")
+        ]:
+            try:
+                await conn.execute(text(f"ALTER TABLE users ADD COLUMN {col} {col_type}"))
+                logger.info(f"Migração: coluna '{col}' adicionada em users.")
+            except Exception:
+                pass
+
+        # Migração: colunas adicionadas na tabela patients
+        try:
+            await conn.execute(text("ALTER TABLE patients ADD COLUMN photo VARCHAR"))
+            logger.info("Migração: coluna 'photo' adicionada em patients.")
+        except Exception:
+            pass
     logger.info("Tabelas criadas/verificadas no banco de dados.")
 
     async with SessionLocal() as db:
