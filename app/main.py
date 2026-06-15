@@ -154,23 +154,29 @@ async def lifespan(app: FastAPI):
             pass  # coluna já existe
     logger.info("Tabelas criadas/verificadas no banco de dados.")
 
-    admin_email = getattr(settings, "ADMIN_EMAIL", "") or ""
-    admin_password = getattr(settings, "ADMIN_PASSWORD", "") or ""
-    if admin_email and admin_password:
-        async with SessionLocal() as db:
-            result = await db.execute(select(User).where(User.email == admin_email))
-            if not result.scalars().first():
-                db.add(User(
-                    email=admin_email,
-                    hashed_password=get_password_hash(admin_password),
-                    full_name="Administrador",
-                    role="admin",
-                    is_active=True,
-                ))
-                await db.commit()
-                logger.info(f"Usuário admin criado: {admin_email}")
-    else:
-        logger.warning("ADMIN_EMAIL/ADMIN_PASSWORD não definidos — bootstrap de admin pulado.")
+    async with SessionLocal() as db:
+        # Verifica se o banco de dados está vazio (sem nenhum usuário cadastrado)
+        result_empty = await db.execute(select(User))
+        if not result_empty.scalars().first():
+            logger.info("Banco de dados vazio detectado. Populando com dados mock/seed...")
+            from app.seed import seed_mock_data
+            await seed_mock_data(db)
+        else:
+            # Caso contrário, apenas garante a criação do admin das variáveis de ambiente se configurado
+            admin_email = getattr(settings, "ADMIN_EMAIL", "") or ""
+            admin_password = getattr(settings, "ADMIN_PASSWORD", "") or ""
+            if admin_email and admin_password:
+                result = await db.execute(select(User).where(User.email == admin_email))
+                if not result.scalars().first():
+                    db.add(User(
+                        email=admin_email,
+                        hashed_password=get_password_hash(admin_password),
+                        full_name="Administrador",
+                        role="admin",
+                        is_active=True,
+                    ))
+                    await db.commit()
+                    logger.info(f"Usuário admin criado: {admin_email}")
 
     alarm_task = asyncio.create_task(appointment_alarm_task())
     logger.info("Tarefa de alarme de consultas iniciada.")
