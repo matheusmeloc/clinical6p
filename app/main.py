@@ -1,4 +1,4 @@
-﻿"""
+"""
 Ponto de entrada principal da aplicação (FastAPI)
 Aqui configuramos:
 - CORS (para permitir que o frontend faça requisições)
@@ -10,11 +10,13 @@ Aqui configuramos:
 
 import asyncio
 import logging
+import os
 from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select, update as sa_update, text
 from sqlalchemy.orm import joinedload
 from slowapi import _rate_limit_exceeded_handler
@@ -231,3 +233,31 @@ app.include_router(debug_router, dependencies=_admin)
 @app.get("/health", tags=["infra"])
 async def health_check():
     return {"status": "ok", "version": "1.0.0"}
+
+
+# ═════════════════════════════════════════════════════════════════════
+# MONTAGEM DO FRONTEND (REACT SPA)
+# ═════════════════════════════════════════════════════════════════════
+
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
+
+if os.path.exists(frontend_dist):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+
+    @app.get("/{catchall:path}")
+    async def serve_frontend(catchall: str):
+        # Ignora caminhos da API e da Documentação
+        if catchall.startswith("api") or catchall.startswith("docs") or catchall.startswith("redoc") or catchall.startswith("openapi.json") or catchall.startswith("health"):
+            return JSONResponse(status_code=404, content={"message": "Not Found"})
+        
+        # Se o caminho for um arquivo real na pasta dist (ex: favicon.svg), serve o arquivo
+        file_path = os.path.join(frontend_dist, catchall)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+            
+        # Caso contrário, serve o index.html (SPA routing do React Router)
+        index_path = os.path.join(frontend_dist, "index.html")
+        if os.path.exists(index_path):
+            return FileResponse(index_path)
+            
+        return JSONResponse(status_code=404, content={"message": "Frontend build files missing"})
