@@ -6,7 +6,7 @@ import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { maskPhone } from "../lib/masks";
-import { User, Lock, Shield, Save, Camera, Trash2, Moon, Sun } from "lucide-react";
+import { User, Lock, Shield, Save, Camera, Trash2, Moon, Sun, Send } from "lucide-react";
 import { useTheme } from "../lib/useTheme";
 import api from "../lib/api";
 
@@ -21,6 +21,24 @@ export default function ConfiguracoesPage() {
 
   const { dark, toggle: toggleTheme } = useTheme();
   const [photoPreview, setPhotoPreview] = useState(user?.photo || null);
+  const [testingSmtp, setTestingSmtp] = useState(false);
+
+  const handleTestSmtp = async () => {
+    setTestingSmtp(true);
+    try {
+      const response = await api.get("/api/debug/test-email");
+      if (response.data.success) {
+        toast.success("SMTP conectado e autenticado com sucesso!");
+      } else {
+        toast.error(`Falha no SMTP: ${response.data.error || "Erro desconhecido"}`);
+        console.error(response.data.traceback);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Erro ao tentar conectar com o servidor SMTP.");
+    } finally {
+      setTestingSmtp(false);
+    }
+  };
   const [photoUploading, setPhotoUploading] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -269,6 +287,31 @@ export default function ConfiguracoesPage() {
             </button>
           </div>
         </Card>
+
+        {/* ── Diagnóstico SMTP (só admin) ── */}
+        {isAdmin && (
+          <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="rounded-lg bg-blue-100 dark:bg-blue-900/40 p-3 text-blue-700 dark:text-blue-400">
+                <Send className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Diagnóstico de E-mail (SMTP)</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Verifique se as credenciais SMTP salvas no backend estão funcionando corretamente.</p>
+              </div>
+            </div>
+            <div className="flex justify-start">
+              <Button 
+                type="button" 
+                onClick={handleTestSmtp} 
+                disabled={testingSmtp} 
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {testingSmtp ? "Testando conexão..." : "Testar Conexão SMTP"}
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* ── Info do sistema ── */}
         <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">

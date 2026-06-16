@@ -1,4 +1,4 @@
-﻿"""
+"""
 Rotas de Debug e Ferramentas Internas
 - Teste de conexão SMTP (diagnóstico de infraestrutura de e-mails)
 """
@@ -15,10 +15,30 @@ from app.config import settings
 router = APIRouter(prefix="/api/debug", tags=["Debug"])
 
 
-def _require_debug() -> None:
-    """Bloqueia o endpoint se ENABLE_DEBUG não estiver ativo no .env."""
-    if not settings.ENABLE_DEBUG:
-        raise HTTPException(status_code=404, detail="Not found")
+from fastapi.security import HTTPBearer
+import jwt
+
+security_optional = HTTPBearer(auto_error=False)
+
+
+async def _require_debug_or_admin(auth: Any = Depends(security_optional)) -> None:
+    """Libera o acesso se ENABLE_DEBUG estiver ativo ou se for admin autenticado."""
+    if settings.ENABLE_DEBUG:
+        return
+    if not auth:
+        raise HTTPException(status_code=401, detail="Token de autenticação ausente.")
+    try:
+        payload = jwt.decode(
+            auth.credentials,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+            audience="clinical6p-api",
+            issuer="clinical6p",
+        )
+        if payload.get("role") != "admin":
+            raise HTTPException(status_code=403, detail="Apenas administradores podem testar a conexão SMTP.")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Token inválido ou expirado.")
 
 
 # ═════════════════════════════════════════════════════════════════════
@@ -26,7 +46,7 @@ def _require_debug() -> None:
 # ═════════════════════════════════════════════════════════════════════
 
 @router.get("/test-email")
-async def test_smtp_connection(db: AsyncSession = Depends(get_db), _: None = Depends(_require_debug)) -> dict[str, Any]:
+async def test_smtp_connection(db: AsyncSession = Depends(get_db), _: None = Depends(_require_debug_or_admin)) -> dict[str, Any]:
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' Bate-Papo com o Correio.
