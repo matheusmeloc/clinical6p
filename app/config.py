@@ -43,8 +43,11 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_FROM_EMAIL: str = ""
     SMTP_TLS: bool = True
+
+    # Resend API Key (para desviar envio SMTP em ambientes com portas bloqueadas)
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = "onboarding@resend.dev"
 
     # Carrega variáveis do arquivo .env automaticamente
     model_config = ConfigDict(env_file=".env")

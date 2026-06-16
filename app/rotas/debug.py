@@ -50,10 +50,33 @@ async def test_smtp_connection(db: AsyncSession = Depends(get_db), _: None = Dep
     """
     [EXPLICAÇÃO DIDÁTICA PARA INICIANTES]
     A 'função' Bate-Papo com o Correio.
-    Ela tenta ligar correndo lá pro servidor do GMail (ou Outlook) usando os dados que gravamos nas configurações.
-    Se a ligação for atendida (Sucesso), ela se desconecta e avisa: "Tá tudo funcionando!".
-    Se a ligação cair ou a senha estiver errada, ela "captura" o motivo da falha no bloco 'except Exception' e joga na tela, dizendo o porquê deu errado.
+    Se a API do Resend estiver ativada, ela tenta fazer uma chamada rápida de validação para a API deles.
+    Se a API do Resend não estiver ativa, ela tenta conectar de forma clássica via SMTP do GMail/Outlook.
     """
+    if settings.RESEND_API_KEY:
+        import httpx
+        response = {
+            "server": "api.resend.com (HTTP API)",
+            "port": 443,
+            "username": "API Key configurada",
+            "from_email": settings.RESEND_FROM_EMAIL,
+            "success": False,
+            "error": None,
+            "traceback": None
+        }
+        try:
+            headers = {"Authorization": f"Bearer {settings.RESEND_API_KEY}"}
+            async with httpx.AsyncClient(timeout=10) as client:
+                res = await client.get("https://api.resend.com/domains", headers=headers)
+                if res.status_code == 200:
+                    response["success"] = True
+                else:
+                    response["error"] = f"Resend API retornou status {res.status_code}: {res.text}"
+        except Exception as e:
+            response["error"] = str(e)
+            response["traceback"] = traceback.format_exc()
+        return response
+
     server, port, username, password, from_email = await get_smtp_settings(db)
 
     response = {

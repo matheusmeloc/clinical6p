@@ -1,4 +1,4 @@
-﻿"""
+"""
 Utilitários de E-mail
 - Função genérica de envio (elimina duplicação)
 - Templates específicos para cada tipo de e-mail:
@@ -71,9 +71,48 @@ async def get_smtp_settings(db: AsyncSession) -> tuple[str, int, str, str, str |
 
 async def _enviar_email(db: AsyncSession, destinatario: str, assunto: str, html: str, texto_plano: str = "") -> str:
     """
-    Envia um e-mail HTML via SMTP configurado no banco ou nas variáveis de ambiente.
+    Envia um e-mail HTML.
+    Se a chave RESEND_API_KEY estiver configurada nas variáveis de ambiente, envia via API HTTP do Resend.
+    Caso contrário, faz fallback para o SMTP tradicional via smtplib.
     Retorna uma string de status: "ok" | "not_configured" | "error".
     """
+    if settings.RESEND_API_KEY:
+        import httpx
+        try:
+            # Recupera as configurações do banco (caso o remetente esteja configurado)
+            server, port, username, password, from_email = await get_smtp_settings(db)
+            
+            # Se o remetente do banco for um e-mail padrão/pessoal (Gmail/Hotmail), o Resend vai recusar
+            # a menos que o domínio esteja verificado. Portanto, fazemos fallback para settings.RESEND_FROM_EMAIL
+            # (onboarding@resend.dev) caso o e-mail não seja de um domínio próprio.
+            remetente = settings.RESEND_FROM_EMAIL
+            if from_email and not any(from_email.endswith(dom) for dom in ["gmail.com", "hotmail.com", "outlook.com", "yahoo.com", "yahoo.com.br"]):
+                remetente = from_email
+
+            headers = {
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "from": remetente,
+                "to": destinatario,
+                "subject": assunto,
+                "html": html
+            }
+            
+            async with httpx.AsyncClient(timeout=10) as client:
+                response = await client.post("https://api.resend.com/emails", json=payload, headers=headers)
+                if response.status_code in (200, 201):
+                    logger.info(f"E-mail enviado via Resend para {destinatario}: {assunto}")
+                    return "ok"
+                else:
+                    logger.error(f"Erro na API do Resend ao enviar para {destinatario}: {response.status_code} - {response.text}")
+                    return "error"
+        except Exception as e:
+            logger.error(f"Falha ao enviar e-mail via Resend para {destinatario}: {e}")
+            return "error"
+
+    # --- FALLBACK: SMTP Tradicional ---
     server, port, username, password, from_email = await get_smtp_settings(db)
 
     if not server or not username or not destinatario:
