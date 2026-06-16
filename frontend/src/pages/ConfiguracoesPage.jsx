@@ -6,7 +6,7 @@ import { Button } from "../components/Button";
 import { Input } from "../components/ui/Input";
 import { Label } from "../components/ui/Label";
 import { maskPhone } from "../lib/masks";
-import { User, Lock, Shield, Save, Camera, Trash2, Moon, Sun, Send } from "lucide-react";
+import { User, Lock, Mail, Shield, Save, Camera, Trash2, Moon, Sun, Send } from "lucide-react";
 import { useTheme } from "../lib/useTheme";
 import api from "../lib/api";
 
@@ -22,6 +22,7 @@ export default function ConfiguracoesPage() {
   const { dark, toggle: toggleTheme } = useTheme();
   const [photoPreview, setPhotoPreview] = useState(user?.photo || null);
   const [testingSmtp, setTestingSmtp] = useState(false);
+  const [smtpLoading, setSmtpLoading] = useState(false);
 
   const handleTestSmtp = async () => {
     setTestingSmtp(true);
@@ -56,6 +57,33 @@ export default function ConfiguracoesPage() {
   const passwordForm = useForm({
     defaultValues: { password: "", confirm_password: "" },
   });
+
+  // ── Form: SMTP ──
+  const smtpForm = useForm({
+    defaultValues: {
+      smtp_server: "",
+      smtp_port: 587,
+      smtp_username: "",
+      smtp_password: "",
+      smtp_from_email: "",
+    },
+  });
+
+  // Carrega configurações SMTP se admin
+  useEffect(() => {
+    if (!isAdmin) return;
+    setSmtpLoading(true);
+    api.get("/api/system/settings")
+      .then((r) => smtpForm.reset({
+        smtp_server: r.data.smtp_server || "",
+        smtp_port: r.data.smtp_port || 587,
+        smtp_username: r.data.smtp_username || "",
+        smtp_password: r.data.smtp_password || "",
+        smtp_from_email: r.data.smtp_from_email || "",
+      }))
+      .catch(() => toast.error("Não foi possível carregar as configurações SMTP."))
+      .finally(() => setSmtpLoading(false));
+  }, [isAdmin]);
 
 
 
@@ -134,6 +162,20 @@ export default function ConfiguracoesPage() {
       passwordForm.reset();
       toast.success("Senha alterada com sucesso!");
     } catch (err) { toast.error(err.response?.data?.detail || "Erro ao alterar senha."); }
+  };
+
+  // ── Salvar SMTP ──
+  const handleSaveSmtp = async (data) => {
+    try {
+      await api.put("/api/system/settings", {
+        smtp_server: data.smtp_server || null,
+        smtp_port: Number(data.smtp_port) || 587,
+        smtp_username: data.smtp_username || null,
+        smtp_password: data.smtp_password || null,
+        smtp_from_email: data.smtp_from_email || null,
+      });
+      toast.success("Configurações SMTP salvas!");
+    } catch (err) { toast.error(err.response?.data?.detail || "Erro ao salvar configurações SMTP."); }
   };
 
 
@@ -287,6 +329,56 @@ export default function ConfiguracoesPage() {
             </button>
           </div>
         </Card>
+
+        {/* ── SMTP (só admin) ── */}
+        {isAdmin && (
+          <Card className="bg-white/90 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="rounded-lg bg-blue-100 dark:bg-blue-900/40 p-3 text-blue-700 dark:text-blue-400">
+                <Mail className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Configurações de e-mail (SMTP)</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Defina o servidor de envio de e-mails automáticos.</p>
+              </div>
+            </div>
+            {smtpLoading ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400 py-4">Carregando configurações...</p>
+            ) : (
+              <form onSubmit={smtpForm.handleSubmit(handleSaveSmtp)} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <Label>Servidor SMTP</Label>
+                    <Input placeholder="Ex: smtp.gmail.com" {...smtpForm.register("smtp_server")} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Porta</Label>
+                    <Input type="number" placeholder="587" {...smtpForm.register("smtp_port")} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Usuário / E-mail</Label>
+                    <Input type="email" placeholder="clinica@email.com" {...smtpForm.register("smtp_username")} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Senha do e-mail</Label>
+                    <Input type="password" placeholder="Senha ou App Password" {...smtpForm.register("smtp_password")} />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1.5">
+                    <Label>E-mail remetente</Label>
+                    <Input type="email" placeholder="noreply@clinica.com" {...smtpForm.register("smtp_from_email")} />
+                    <p className="text-xs text-slate-400 dark:text-slate-500">Este e-mail aparecerá como remetente nos lembretes de consulta.</p>
+                  </div>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button type="submit" disabled={smtpForm.formState.isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+                    <Save className="w-4 h-4 mr-2" />
+                    {smtpForm.formState.isSubmitting ? "Salvando..." : "Salvar configurações"}
+                  </Button>
+                </div>
+              </form>
+            )}
+          </Card>
+        )}
 
         {/* ── Diagnóstico SMTP (só admin) ── */}
         {isAdmin && (
